@@ -7,14 +7,7 @@ import BioChefLogo from '../../img/BioChefWhite.svg';
 const Navbar = () => {
     const theme = useTheme();
     const location = useLocation();
-    const [navColor, setNavColor] = useState(theme.palette.secondary.main);
-
-    useEffect(() => {
-        const newColor = location.pathname === '/workflow'
-            ? theme.palette.primary.main
-            : theme.palette.secondary.main;
-        setNavColor(newColor);
-    }, [location.pathname]);
+    const [navColor, setNavColor] = useState(theme.palette.primary.main);
 
     const isActive = (path) => location.pathname === path;
 
@@ -49,7 +42,6 @@ const Navbar = () => {
             color='transparent'
             sx={{
                 backgroundColor: navColor,
-                transition: 'background-color 0.5s ease-in-out',
             }}
         >
             <Toolbar>

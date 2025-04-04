@@ -2,8 +2,8 @@ import { Box, Container, Grid, Typography } from '@mui/material';
 import React, { useState } from 'react';
 import { loadWasmModule } from '../gtoWasm';
 import AllOperationsPanel from '/src/components/AllOperationsPanel';
-import OutputPanel from '/src/components/OutputPanel';
 import ToolInputPanel from '/src/components/ToolInputPanel';
+import ToolOutputPanel from '/src/components/ToolOutputPanel';
 import ToolTestingPanel from '/src/components/ToolTestingPanel';
 
 const ToolsPage = () => {
@@ -114,7 +114,7 @@ const ToolsPage = () => {
                                 overflowY: 'auto', // Independent scrolling
                             }}
                         >
-                            <OutputPanel outputData={outputData} setOutputData={setOutputData} tool={selectedTool} inputData={inputData} page={'ToolPage'} />
+                            <ToolOutputPanel outputData={outputData} setOutputData={setOutputData} tool={selectedTool} inputData={inputData} page={'ToolPage'} />
                         </Box>
                     </Grid>
                 </Grid>

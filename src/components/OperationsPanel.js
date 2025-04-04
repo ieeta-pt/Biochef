@@ -26,12 +26,15 @@ import { getCompatibleTools } from '../utils/compatibility';
 import operationCategories from '../utils/operationCategories';
 
 
-const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoading, insertAtIndex, setInsertAtIndex, addingATool, setAddingATool, filteredTools, setFilteredTools }) => {
+const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoading, insertAtIndex, setInsertAtIndex, addingATool, setAddingATool, filteredTools, setFilteredTools, selectedFiles, tabIndex }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedCategories, setExpandedCategories] = useState({});
   const { dataType } = useContext(DataTypeContext);
   const showNotification = useContext(NotificationContext);
   const { validationErrors } = useContext(ValidationErrorsContext); // Access validation errors
+  const hasValidationErrors = Object.values(validationErrors).some(error => Object.keys(error).length > 0);
+  const noFilesSelected = tabIndex === 1 && selectedFiles.size === 0;
+  const shouldDisableInteraction = hasValidationErrors || noFilesSelected;
 
   // Debounced search handler
   const handleSearch = useMemo(
@@ -172,7 +175,7 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
       )}
 
       {/* Overlay to block interaction */}
-      {Object.values(validationErrors).some(error => Object.keys(error).length > 0) && (
+      {shouldDisableInteraction && (
         <Box
           sx={{
             position: 'absolute',
@@ -180,7 +183,7 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
             left: 0,
             width: '100%',
             height: '100%',
-            backgroundColor: 'rgba(255, 255, 255, 1)',
+            backgroundColor: hasValidationErrors ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.7)',
             zIndex: 10,
             pointerEvents: 'all',
             display: 'flex',
@@ -189,13 +192,17 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
             alignItems: 'center',
           }}
         >
-          <Block sx={{
-            color: 'error.main',
-            fontSize: 60,
-          }} />
-          <Typography variant="body1" sx={{ color: 'error.main', textAlign: 'center' }}>
-            Correct the invalid parameters in the workflow to unlock the unavailable features.
-          </Typography>
+          {hasValidationErrors && (
+              <>
+                <Block sx={{
+                  color: 'error.main',
+                  fontSize: 60,
+                }} />
+                <Typography variant="body1" sx={{ color: 'error.main', textAlign: 'center' }}>
+                  Correct the invalid parameters in the workflow to unlock the unavailable features.
+                </Typography>
+              </>
+          )}
         </Box>
       )}
 

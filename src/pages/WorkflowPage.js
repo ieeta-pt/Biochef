@@ -6,23 +6,30 @@ import {
     useTheme
 } from '@mui/material';
 import React, { useContext, useEffect, useState } from 'react';
+import InputPanel from '../components/InputPanel';
 import ErrorBoundary from '/src/components/ErrorBoundary'; // Ensure this component exists
-import ExecutionControls from '/src/components/ExecutionControls';
-import InputPanel from '/src/components/InputPanel';
 import OperationsPanel from '/src/components/OperationsPanel';
-import OutputPanel from '/src/components/OutputPanel';
 import RecipePanel from '/src/components/RecipePanel';
 import { DataTypeContext } from '/src/contexts/DataTypeContext';
 
 const WorkflowPage = () => {
     const [workflow, setWorkflow] = useState([]);
     const [inputData, setInputData] = useState('');
-    const [outputData, setOutputData] = useState('');
     const [isLoading, setIsLoading] = useState(false); // State to control data type update loading
     const [insertAtIndex, setInsertAtIndex] = useState(null); // State to control the available tools to insert
     const [addingATool, setAddingATool] = useState(false); // State to control the adding of a tool
     const [filteredTools, setFilteredTools] = useState([]); // State for filtered tools
     const [isVariableLoaded, setIsVariableLoaded] = useState(false); // Control if the workflow was loaded
+    const [selectedFiles, setSelectedFiles] = useState(new Set()); // Track selected files
+    const [tabIndex, setTabIndex] = useState(0);    // Track the selected tab index for input mode
+
+    const initialTree = {
+        id: 'root',
+        name: 'Root',
+        type: 'folder',
+        children: [],
+    };
+    const [tree, setTree] = useState(initialTree);
 
     const { inputDataType, setInputDataType } = useContext(DataTypeContext);
 
@@ -62,7 +69,7 @@ const WorkflowPage = () => {
 
     // Save input data type in localStorage
     useEffect(() => {
-        if (isVariableLoaded) {
+        if (isVariableLoaded && tabIndex == 0) {
             localStorage.setItem('inputDataType', inputDataType);
         }
     }, [inputDataType, isVariableLoaded]);
@@ -97,7 +104,7 @@ const WorkflowPage = () => {
                 sx={{
                     display: 'flex',
                     flexDirection: 'column',
-                    overflowY: 'auto', // Enables vertical scrolling
+                    height: 'calc(100vh - 64px)',
                 }}
             >
                 {/* Main Content */}
@@ -111,17 +118,18 @@ const WorkflowPage = () => {
                         overflow: 'hidden', // Prevents overflow beyond the container
                     }}
                 >
-                    <Grid container spacing={2} sx={{ flex: 1, overflow: 'hidden' }}>
+                    <Grid container spacing={2} sx={{ flex: 1, height: '100%', overflow: 'hidden' }}>
                         {/* Operations Panel */}
                         <Grid
                             item
                             xs={12}
-                            md={3.2}
+                            md={3.1}
                             sx={{
                                 display: 'flex',
                                 flexDirection: 'column',
-                                overflowY: 'auto', // Independent scrolling
-                                maxHeight: 'calc(100vh - 150px)', // Adjusts height relative to header/footer
+                                flexGrow: 1, // Allow it to take available space without stretching
+                                overflowY: 'auto', // Enable independent scrolling
+                                height: '100%', // Ensure it does not overflow parent
                             }}
                         >
                             <OperationsPanel
@@ -135,6 +143,8 @@ const WorkflowPage = () => {
                                 setAddingATool={setAddingATool}
                                 filteredTools={filteredTools}
                                 setFilteredTools={setFilteredTools}
+                                selectedFiles={selectedFiles}
+                                tabIndex={tabIndex}
                             />
                         </Grid>
 
@@ -142,12 +152,13 @@ const WorkflowPage = () => {
                         <Grid
                             item
                             xs={12}
-                            md={5.8}
+                            md={5.2}
                             sx={{
                                 display: 'flex',
                                 flexDirection: 'column',
-                                overflowY: 'auto', // Independent scrolling
-                                maxHeight: 'calc(100vh - 150px)', // Adjusts height relative to header/footer
+                                flexGrow: 1, // Allow it to take available space without stretching
+                                overflowY: 'auto', // Enable independent scrolling
+                                height: '100%', // Ensure it does not overflow parent
                             }}
                         >
                             <RecipePanel
@@ -155,13 +166,18 @@ const WorkflowPage = () => {
                                 setWorkflow={setWorkflow}
                                 inputData={inputData}
                                 setInputData={setInputData}
-                                setOutputData={setOutputData}
                                 isLoading={isLoading}
                                 setIsLoading={setIsLoading}
                                 insertAtIndex={insertAtIndex}
                                 setInsertAtIndex={setInsertAtIndex}
                                 setAddingATool={setAddingATool}
                                 setFilteredTools={setFilteredTools}
+                                selectedFiles={selectedFiles}
+                                setSelectedFiles={setSelectedFiles}
+                                tabIndex={tabIndex}
+                                setTabIndex={setTabIndex}
+                                tree={tree}
+                                setTree={setTree}
                             />
                         </Grid>
 
@@ -169,49 +185,28 @@ const WorkflowPage = () => {
                         <Grid
                             item
                             xs={12}
-                            md={3}
+                            md={3.7}
                             sx={{
                                 display: 'flex',
                                 flexDirection: 'column',
-                                overflowY: 'auto', // Independent scrolling
-                                maxHeight: 'calc(100vh - 150px)', // Adjusts height relative to header/footer
+                                flexGrow: 1, // Allow it to take available space without stretching
+                                overflowY: 'auto', // Enable independent scrolling
+                                height: '100%', // Ensure it does not overflow parent
                             }}
                         >
-                            <Box
-                                sx={{
-                                    flexGrow: 1,
-                                    mb: 2,
-                                    overflowY: 'auto', // Independent scrolling
-                                }}
-                            >
-                                <InputPanel inputData={inputData} setInputData={setInputData} page={'WorkflowPage'} />
-                            </Box>
-                            <Box
-                                sx={{
-                                    flexGrow: 1,
-                                    overflowY: 'auto', // Independent scrolling
-                                }}
-                            >
-                                <OutputPanel outputData={outputData} setOutputData={setOutputData} workflow={workflow} inputData={inputData} page={'WorkflowPage'} />
-                            </Box>
+                            <InputPanel
+                                tabIndex={tabIndex}
+                                setTabIndex={setTabIndex}
+                                selectedFiles={selectedFiles}
+                                setSelectedFiles={setSelectedFiles}
+                                inputData={inputData}
+                                setInputData={setInputData}
+                                tree={tree}
+                                setTree={setTree}
+                            />
                         </Grid>
                     </Grid>
                 </Container>
-
-                {/* Execution Controls */}
-                <Box
-                    sx={{
-                        flexShrink: 0,
-                        padding: 2,
-                        backgroundColor: theme.palette.background.paper,
-                    }}
-                >
-                    <ExecutionControls
-                        workflow={workflow}
-                        inputData={inputData}
-                        setOutputData={setOutputData}
-                    />
-                </Box>
             </Box>
         </ErrorBoundary>
     );

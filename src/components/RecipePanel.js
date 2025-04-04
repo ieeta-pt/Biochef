@@ -13,7 +13,7 @@ import {
   arrayMove,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { AddCircle, ContentCopy, ExpandLess, ExpandMore, FileUpload, GetApp, HelpOutline, Visibility, VisibilityOff } from '@mui/icons-material';
+import { AddCircle, ContentCopy, ExpandLess, ExpandMore, FileUpload, GetApp, HelpOutline, Save, Visibility, VisibilityOff } from '@mui/icons-material';
 import {
   Box,
   Button,
@@ -25,7 +25,9 @@ import {
   Divider,
   FormControlLabel,
   IconButton,
+  MenuItem,
   Paper,
+  Select,
   Switch,
   Tab,
   Tabs,
@@ -33,6 +35,8 @@ import {
   Tooltip,
   Typography
 } from '@mui/material';
+import { saveAs } from 'file-saver';
+import JSZip from 'jszip';
 import React, { useContext, useEffect, useState } from 'react';
 import description from '../../description.json';
 import { DataTypeContext } from '../contexts/DataTypeContext';
@@ -46,7 +50,7 @@ import { importRecipeCommand } from '../utils/importRecipeCommand';
 import { importRecipeConfigFile } from '../utils/importRecipeConfigFile';
 import SortableItem from './SortableItem';
 
-const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, setOutputData, isLoading, setIsLoading, insertAtIndex, setInsertAtIndex, setAddingATool, setFilteredTools }) => {
+const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading, setIsLoading, insertAtIndex, setInsertAtIndex, setAddingATool, setFilteredTools, selectedFiles, setSelectedFiles, tabIndex, setTabIndex, tree, setTree }) => {
   const [activeId, setActiveId] = useState(null);
   const { setDataType, dataType, inputDataType, setInputDataType } = useContext(DataTypeContext); // To update data type context
   const [invalidItemIds, setInvalidItemIds] = useState([]); // To store invalid item IDs
@@ -64,7 +68,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, setOutput
   const [importError, setImportError] = useState(''); // State for import error
   const [expandedTools, setExpandedTools] = useState(() => {  // Track each tool's expanded state
     const saved = localStorage.getItem('expandedTools');
-    return saved ? JSON.parse(saved) : {};
+    return saved ? JSON.parse(saved) : [];
   });
   const [expandedOutputs, setExpandedOutputs] = useState({}); // Track each tool's output expanded state
   const [visibleOutputs, setVisibleOutputs] = useState({}); // Track visible outputs
@@ -72,6 +76,15 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, setOutput
   const [importFile, setImportFile] = useState(null); // To store the uploaded file for import
   const [partialExportIndex, setPartialExportIndex] = useState(null); // To store the index for partial export
   const [deleteOperation, setDeleteOperation] = useState(false); // To store the delete from here state
+  const [selectedInput, setSelectedInput] = useState(''); // Tracks selected input
+
+  const outputs = tabIndex === 1 && selectedInput ?
+    outputMap[selectedInput] :
+    outputMap["ManualInput"];   // Output data for the selected input
+
+  const workflowInput = tabIndex === 0
+    ? [{ id: "ManualInput", content: inputData }]
+    : Array.from(selectedFiles);
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
@@ -80,25 +93,68 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, setOutput
 
   const showNotification = useContext(NotificationContext);
 
-  // Save outputMap in localStorage
+  // Save only ManualInput outputMap in localStorage
   useEffect(() => {
-    if (Object.keys(outputMap).length > 0) {
-      localStorage.setItem('outputMap', JSON.stringify(outputMap));
-    }
+    // Extract only the ManualInput data from the outputMap
+    const manualInputData = outputMap["ManualInput"] ? { "ManualInput": outputMap["ManualInput"] } : {};
+
+    // Store only the ManualInput data in localStorage
+    localStorage.setItem('outputMap', JSON.stringify(manualInputData));
   }, [outputMap]);
 
   // Save expandedTools in localStorage
   useEffect(() => {
-    if (Object.keys(expandedTools).length > 0) {
-      localStorage.setItem('expandedTools', JSON.stringify(expandedTools));
-    }
+    localStorage.setItem('expandedTools', JSON.stringify(expandedTools));
   }, [expandedTools]);
+
+  // Update outputMap when selectedFiles change
+  useEffect(() => {
+    // Build a set of the IDs of the currently selected file inputs
+    const selectedFileIds = new Set(
+      workflowInput.filter(input => input.id !== "ManualInput").map(input => input.id)
+    );
+
+    // Remove keys from outputMap that are not in the selectedFileIds.
+    // We keep the "ManualInput" key unchanged.
+    setOutputMap((prevMap) => {
+      const newMap = { ...prevMap };
+      Object.keys(newMap).forEach((inputId) => {
+        if (inputId !== "ManualInput" && !selectedFileIds.has(inputId)) {
+          delete newMap[inputId];
+        }
+      });
+      return newMap;
+    });
+
+    console.log("outputMap: " + JSON.stringify(outputMap));
+  }, [selectedFiles]);
 
   // If a tool is inserted, update data type and outputs mapping
   useEffect(() => {
     const updateDataTypeAndOutputsMapping = async () => {
+      setIsLoading(true);
+
+      let input;
+
+      if (tabIndex === 0) {
+        input = { id: "ManualInput", content: inputData };
+      } else if (selectedInput) {
+        input = workflowInput.find(input => input.id === selectedInput);
+        if (!input) {
+          setIsLoading(false);
+          setInsertAtIndex(null);
+          return;
+        }
+      } else {
+        setIsLoading(false);
+        setInsertAtIndex(null);
+        return;
+      }
+
       if (workflow.length > 0) {
-        let data = (insertAtIndex !== null && insertAtIndex > 0) ? outputMap[workflow[insertAtIndex - 1].id] : inputData;
+        let data = (insertAtIndex !== null && insertAtIndex > 0)
+          ? outputMap[input.id]?.[workflow[insertAtIndex - 1].id]
+          : input.content;
 
         for (let i = (insertAtIndex !== null && insertAtIndex > 0) ? insertAtIndex : 0; i < workflow.length; i++) {
           const tool = workflow[i];
@@ -116,7 +172,10 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, setOutput
             // Store the output in the map
             setOutputMap((prevMap) => ({
               ...prevMap,
-              [tool.id]: output,
+              [input.id]: {
+                ...prevMap[input.id],
+                [tool.id]: output,
+              },
             }));
 
             // Detect the data type of the output
@@ -130,7 +189,6 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, setOutput
             console.error(`Failed to update data type for tool ${tool.toolName}:`, error);
           }
         }
-
       } else {
         if (dataType !== inputDataType) {
           setDataType(inputDataType);
@@ -138,8 +196,8 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, setOutput
         }
       }
 
-      setIsLoading(false);    // Stops Operations Panel loading
-      setInsertAtIndex(null);   // Resets the index of inserted tool
+      setIsLoading(false);
+      setInsertAtIndex(null);
     };
 
     // If deleteOperation triggered the useEffect, do not update the data type and outputs mapping
@@ -151,7 +209,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, setOutput
       setDeleteOperation(false);  // Reset the flag
     }
 
-  }, [workflow, inputData, inputDataType]);
+  }, [workflow, inputData, selectedInput, inputDataType]);
 
   // Run validateParameters when the page is loaded
   useEffect(() => {
@@ -180,18 +238,31 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, setOutput
         workflow,
         inputData,
         inputDataType,
-        outputMap,
+        outputs,
         exportFileName,
         showNotification,
         setOpenExportDialog,
         true, // Request the command
-        partialExportIndex
-      );
+        partialExportIndex, tabIndex, selectedFiles);
       setCommand(generatedCommand);
     } else {
       setCommand('');
     }
   }, [openExportDialog, workflow, inputData, inputDataType, outputMap]);
+
+  // Automatically select the first item in availableInputs when it has values
+  useEffect(() => {
+    if (workflowInput.length > 0 && tabIndex === 1) {
+      const selectedInputExists = workflowInput.some(input => input.id === selectedInput);
+
+      if (!selectedInput || !selectedInputExists) {
+        setSelectedInput(workflowInput[0].id);
+      }
+    } else if (tabIndex === 0) {
+      // No modo CLI, usar sempre "ManualInput"
+      setSelectedInput('');
+    }
+  }, [workflowInput, tabIndex]);
 
   // Load help message for a tool
   const loadHelpMessage = async (toolName) => {
@@ -381,27 +452,38 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, setOutput
       const isFirstToolWithoutInput = toolIndex === 0 && description.tools.find((tool) => `gto_${workflow[toolIndex].toolName}` === tool.name)?.input?.type === '';
 
       if (validateWorkflow(newWorkflow, inputDataType) && !isFirstToolWithoutInput) {
-        // Remove the tool from the outputMap
+        // Remove outputs of the deleted tool for all inputs
         setOutputMap((prevMap) => {
           const newMap = { ...prevMap };
-          delete newMap[id];
+          Object.keys(newMap).forEach((inputName) => {
+            if (newMap[inputName]?.[id]) {
+              delete newMap[inputName][id]; // Remove the specific tool's output
+            }
+          });
           return newMap;
         });
 
         // Execute the tools subsequent to the deleted one to update the outputMap
+        let allInputs = workflowInput;
         let previousTool = workflow[toolIndex - 1];
-        let data = previousTool ? outputMap[previousTool.id] || inputData : inputData;
 
-        for (let i = toolIndex; i < newWorkflow.length; i++) {
-          const tool = newWorkflow[i];
-          const output = await executeTool(tool, data);
-          data = output;
+        for (const input of allInputs) {
+          let data = previousTool ? outputMap[input.id]?.[previousTool.id] : input.content;
 
-          // Store the output in the map
-          setOutputMap((prevMap) => ({
-            ...prevMap,
-            [tool.id]: output,
-          }));
+          for (let i = toolIndex; i < newWorkflow.length; i++) {
+            const tool = newWorkflow[i];
+            const output = await executeTool(tool, data);
+            data = output;
+
+            // Store the output in the map
+            setOutputMap((prevMap) => ({
+              ...prevMap,
+              [input.id]: {
+                ...prevMap[input.id],
+                [tool.id]: output,
+              },
+            }));
+          }
         }
 
         // Remove the help message for the tool
@@ -414,8 +496,22 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, setOutput
         // Verify if the tool being removed is the last one, if so, update the data type
         if (toolIndex === newWorkflow.length) {
           const lastTool = newWorkflow[newWorkflow.length - 1];
-          const lastOutputType = detectDataType('output.txt', outputMap[lastTool.id]);
-          if (dataType !== lastOutputType) {
+          let lastOutputType = null;
+
+          // Try using the manual input first
+          if (outputMap["ManualInput"]?.[lastTool.id]) {
+            lastOutputType = detectDataType('output.txt', outputMap["ManualInput"]?.[lastTool.id]);
+          } else {
+            // If the manual input doesn't have the output, try using the other inputs
+            for (const inputName in outputMap) {
+              if (outputMap[inputName]?.[lastTool.id]) {
+                lastOutputType = detectDataType('output.txt', outputMap[inputName]?.[lastTool.id]);
+                break;
+              }
+            }
+          }
+
+          if (lastOutputType && dataType !== lastOutputType) {
             setDataType(lastOutputType);
             showNotification(`Data type updated to ${lastOutputType}`, 'info');
           }
@@ -464,9 +560,18 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, setOutput
       } else {
         // Update outputMap to keep only the outputs of the tools that are still in the workflow after slicing
         const newOutputMap = {};
-        newWorkflow.forEach((tool) => {
-          newOutputMap[tool.id] = outputMap[tool.id];
-        });
+
+        // Iterate over the inputs
+        for (const inputName in outputMap) {
+          newOutputMap[inputName] = {};
+
+          // Iterate over the tools in the new workflow
+          newWorkflow.forEach((tool) => {
+            if (outputMap[inputName]?.[tool.id]) {
+              newOutputMap[inputName][tool.id] = outputMap[inputName][tool.id];
+            }
+          });
+        }
         setOutputMap(newOutputMap);
 
         // Update help messages to keep only the messages of the tools that are still in the workflow after slicing
@@ -478,8 +583,22 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, setOutput
 
         // Verify if the data type should be updated
         const lastTool = newWorkflow[newWorkflow.length - 1];
-        const lastOutputType = detectDataType('output.txt', outputMap[lastTool.id]);
-        if (dataType !== lastOutputType) {
+        let lastOutputType = null;
+
+        // Try using the manual input first
+        if (outputMap["ManualInput"]?.[lastTool.id]) {
+          lastOutputType = detectDataType('output.txt', outputMap["ManualInput"]?.[lastTool.id]);
+        } else {
+          // If the manual input doesn't have the output, try using the other inputs
+          for (const inputName in outputMap) {
+            if (outputMap[inputName]?.[lastTool.id]) {
+              lastOutputType = detectDataType('output.txt', outputMap[inputName]?.[lastTool.id]);
+              break;
+            }
+          }
+        }
+
+        if (lastOutputType && dataType !== lastOutputType) {
           setDataType(lastOutputType);
           showNotification(`Data type updated to ${lastOutputType}`, 'info');
         }
@@ -523,7 +642,12 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, setOutput
 
   const handleListOperations = (index) => {
     const previous = workflow[index]
-    const previousOutputType = detectDataType('output.txt', outputMap[previous.id])
+    let previousOutputType = null
+    if (tabIndex === 0) {
+      previousOutputType = detectDataType('output.txt', outputMap["ManualInput"]?.[previous.id]);
+    } else {
+      previousOutputType = detectDataType('output.txt', outputMap[selectedInput]?.[previous.id]);
+    }
 
     const next = workflow[index + 1]
     const nextTool = description.tools.find((t) => t.name === `gto_${next.toolName}`)
@@ -635,11 +759,68 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, setOutput
     }));
   };
 
+  const handleSaveOutput = async (stopAtIndex) => {
+    const endIndex = stopAtIndex !== undefined ? stopAtIndex : workflow.length - 1;
+
+    const allInputs = tabIndex === 0
+      ? [{ id: "ManualInput", content: inputData }]
+      : Array.from(selectedFiles);
+
+    const exportOutputs = {};
+
+    for (const input of allInputs) {
+      let data = input.content;
+
+      for (let i = 0; i <= endIndex && i < workflow.length; i++) {
+        const tool = workflow[i];
+        try {
+
+          data = await executeTool(tool, data);
+
+          // If it's the last output, store to save it
+          if (i === endIndex) {
+            exportOutputs[input.id] = data;
+          }
+        } catch (error) {
+          console.error(`Failed to process input ${input.id} with tool ${tool.toolName}:`, error);
+          showNotification(`Error processing ${input.id}`, 'error');
+        }
+      }
+    }
+
+    if (Object.keys(exportOutputs).length === 1) {
+      const inputFileName = Object.keys(exportOutputs)[0];
+      const outputContent = exportOutputs[inputFileName];
+      const blob = new Blob([outputContent], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      if (tabIndex === 0) {
+        link.download = `output.txt`;
+      } else {
+        link.download = `${inputFileName}_output.txt`;
+      }
+      link.href = url;
+      link.click();
+      URL.revokeObjectURL(url);
+    } else {
+      const zip = new JSZip();
+      for (const [inputFileName, outputContent] of Object.entries(exportOutputs)) {
+        zip.file(`${inputFileName}_output.txt`, outputContent);
+      }
+      zip.generateAsync({ type: 'blob' }).then((content) => {
+        saveAs(content, 'outputs.zip');
+      });
+    }
+  };
+
   const toggleExpand = (toolId) => {
-    setExpandedTools((prev) => ({
-      ...prev,
-      [toolId]: !prev[toolId],
-    }));
+    setExpandedTools(prevState => {
+      if (prevState.includes(toolId)) {
+        return prevState.filter(id => id !== toolId); // Remove toolId if it exists
+      } else {
+        return [...prevState, toolId]; // Add toolId if it doesn't exist
+      }
+    });
   };
 
   const toggleOutputExpand = (toolId) => {
@@ -787,11 +968,11 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, setOutput
               >
                 Optional Flags
               </Typography>
-              {expandedTools[tool.id] ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
+              {expandedTools.includes(tool.id) ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
             </Box>
 
             {/* Collapse */}
-            <Collapse in={expandedTools[tool.id] || (validationErrors[tool.id] && Object.keys(validationErrors[tool.id]).length > 0)} timeout="auto" unmountOnExit>
+            <Collapse in={expandedTools.includes(tool.id) || (validationErrors[tool.id] && Object.keys(validationErrors[tool.id]).length > 0)} timeout="auto" unmountOnExit>
               {optionalFlags.map((flagObj) => {
                 const flagValue = !!tool.params[flagObj.flag];
                 const parameterValue = tool.params[flagObj.parameter] || '';
@@ -890,8 +1071,30 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, setOutput
   return (
     <Paper
       elevation={3}
-      sx={{ padding: 2, height: '100%', display: 'flex', flexDirection: 'column' }}
+      sx={{ padding: 2, height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}
     >
+      {/* Box to block interaction */}
+      {tabIndex === 1 && selectedFiles.size === 0 && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '88%',
+            backgroundColor: 'rgba(255, 255, 255, 0.7)',
+            zIndex: 10,
+            pointerEvents: 'all',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <Typography variant="body1" color="text.secondary">
+            Please select at least one file to work with
+          </Typography>
+        </Box>
+      )}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
         <Typography variant="h6" gutterBottom>
           Workflow
@@ -903,6 +1106,38 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, setOutput
         >
           Current Data Type: {dataType}
         </Typography>
+        {/* Dropdown for selecting input source */}
+        {tabIndex === 1 && (
+          <Select
+            value={selectedInput}
+            onChange={(e) => setSelectedInput(e.target.value)}
+            size="small"
+            sx={{ minWidth: 150 }}
+            displayEmpty
+          >
+            <MenuItem value="" disabled>
+              Inputs
+            </MenuItem>
+            {workflowInput.map((input) => {
+              const maxDisplayLength = 20;
+              let displayName;
+
+              if (input.name && input.name.length > maxDisplayLength) {
+                const start = input.name.substring(0, maxDisplayLength - 10);
+                const end = input.name.substring(input.name.length - 7);
+                displayName = `${start}...${end}`;
+              } else {
+                displayName = input.name || input.id;
+              }
+
+              return (
+                <MenuItem key={input.id} value={input.id} title={input.name || input.id}>
+                  {displayName}
+                </MenuItem>
+              );
+            })}
+          </Select>
+        )}
       </Box>
       <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
         <DndContext
@@ -926,6 +1161,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, setOutput
                     isInvalid={invalidItemIds.includes(tool.id)} // Is true if the tool is invalid
                     helpMessage={helpMessages[tool.toolName]?.general}
                     workflowLength={workflow.length}
+                    onPartialSave={() => handleSaveOutput(index)}
                   >
                     {renderParameters(tool)}
                     <Box sx={{ display: 'flex', alignItems: 'center', marginTop: 1 }}>
@@ -949,7 +1185,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, setOutput
                         </span>
                       </Tooltip>
                     </Box>
-                    {outputMap[tool.id] && visibleOutputs[tool.id] && !(workflow.slice(0, index).some((prevTool) => validationErrors[prevTool.id] && Object.keys(validationErrors[prevTool.id]).length > 0)) && (
+                    {outputs?.[tool.id] && visibleOutputs[tool.id] && !(workflow.slice(0, index).some((prevTool) => validationErrors[prevTool.id] && Object.keys(validationErrors[prevTool.id]).length > 0)) && (
                       <Box sx={{ marginTop: 1 }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <Typography variant="subtitle2">Output:</Typography>
@@ -963,14 +1199,14 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, setOutput
                         <Collapse in={expandedOutputs[tool.id]} timeout="auto" unmountOnExit>
                           <Paper sx={{ padding: 1, backgroundColor: '#f5f5f5', overflow: 'auto', maxHeight: '200px', wordWrap: 'break-word' }}>
                             <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', fontSize: '0.800rem' }}>
-                              {outputMap[tool.id]}
+                              {outputs?.[tool.id]}
                             </Typography>
                           </Paper>
                         </Collapse>
                         {!expandedOutputs[tool.id] && (
                           <Paper sx={{ padding: 1, backgroundColor: '#f5f5f5', overflow: 'auto', maxHeight: '200px', wordWrap: 'break-word' }}>
                             <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', fontSize: '0.800rem' }}>
-                              {outputMap[tool.id].length > 50 ? `${outputMap[tool.id].slice(0, 90)}...` : outputMap[tool.id]}
+                              {outputs?.[tool.id].length > 50 ? `${outputs?.[tool.id].slice(0, 90)}...` : outputs?.[tool.id]}
                             </Typography>
                           </Paper>
                         )}
@@ -1027,7 +1263,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, setOutput
                             transition: 'opacity 0.3s ease',
                           }}
                         >
-                          <Tooltip title="Add Operation">
+                          <Tooltip title="Add Tool">
                             <Button
                               color="primary"
                               onClick={() => handleListOperations(index)}
@@ -1036,7 +1272,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, setOutput
                               <AddCircle sx={{ fontSize: '24px' }} />
                             </Button>
                           </Tooltip>
-                          <Tooltip title="Export Until Here">
+                          <Tooltip title="Export Previous Steps">
                             <Button
                               color="primary"
                               onClick={() => handlePartialExport(index)}
@@ -1065,16 +1301,65 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, setOutput
           </DragOverlay>
         </DndContext>
       </Box>
+
+      <Divider />
+
+      {workflow.length > 0 && (
+        <Box sx={{ marginTop: 1 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
+            <Typography variant="h6" sx={{ paddingBottom: 2 }}>Output</Typography>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-end',
+                gap: 1,
+                position: 'absolute',
+                bottom: 0,
+                right: 0,
+              }}
+            >
+              <Tooltip title="Save Output">
+                <IconButton color="primary" onClick={() => handleSaveOutput(workflow.length - 1)}>
+                  <Save />
+                </IconButton>
+              </Tooltip>
+              <Button
+                size="small"
+                onClick={() => toggleOutputExpand("OutputBox")}
+              >
+                {expandedOutputs["OutputBox"] ? 'Collapse' : 'Expand'}
+              </Button>
+            </Box>
+          </Box>
+          <Collapse in={expandedOutputs["OutputBox"]} timeout="auto" unmountOnExit>
+            <Paper sx={{ padding: 1, backgroundColor: '#f5f5f5', overflow: 'auto', maxHeight: '200px', wordWrap: 'break-word' }}>
+              <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', fontSize: '0.800rem' }}>
+                {outputs?.[workflow[workflow.length - 1].id]}
+              </Typography>
+            </Paper>
+          </Collapse>
+          {!expandedOutputs["OutputBox"] && (
+            <Paper sx={{ padding: 1, backgroundColor: '#f5f5f5', overflow: 'auto', maxHeight: '200px', wordWrap: 'break-word' }}>
+              <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', fontSize: '0.800rem' }}>
+                {outputs?.[workflow[workflow.length - 1].id]?.length > 50 ? `${outputs?.[workflow[workflow.length - 1].id].slice(0, 90)}...` : outputs?.[workflow[workflow.length - 1].id]}
+              </Typography>
+            </Paper>
+          )}
+        </Box>
+      )}
+
       <Divider sx={{ marginY: 2 }} />
+
       <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, position: 'relative' }}>
         {/* Overlay to block interaction */}
-        {Object.values(validationErrors).some(error => Object.keys(error).length > 0) && (
+        {(Object.values(validationErrors).some(error => Object.keys(error).length > 0)) || (tabIndex === 1 && selectedFiles.size === 0) && (
           <Box
             sx={{
               position: 'absolute',
               top: 0,
               left: 0,
-              width: '100%',
+              width: tabIndex === 1 && selectedFiles.size === 0 ? '50%' : '100%',
               height: '100%',
               backgroundColor: 'rgba(255, 255, 255, 0.7)',
               zIndex: 10,
@@ -1213,13 +1498,12 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, setOutput
                 workflow,
                 inputData,
                 inputDataType,
-                outputMap,
+                outputs,
                 exportFileName,
                 showNotification,
                 setOpenExportDialog,
                 false,
-                partialExportIndex
-              );
+                partialExportIndex, tabIndex, selectedFiles);
               setPartialExportIndex(null);
             }}
             color="primary"
@@ -1235,7 +1519,9 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, setOutput
                 exportFileName,
                 showNotification,
                 setOpenExportDialog,
-                partialExportIndex
+                partialExportIndex,
+                tabIndex,
+                selectedFiles
               );
               setPartialExportIndex(null);
             }}
@@ -1349,7 +1635,11 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, setOutput
                   setInputData,
                   setInputDataType,
                   showNotification,
-                  setOpenImportDialog
+                  setOpenImportDialog,
+                  setTabIndex,
+                  tree,
+                  setTree,
+                  setSelectedFiles,
                 );
               } else {
                 showNotification('Please provide a valid input for import.', 'error');

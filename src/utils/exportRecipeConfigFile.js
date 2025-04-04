@@ -1,4 +1,4 @@
-export const exportRecipeConfigFile = (workflow, inputData, inputDataType, exportFileName, showNotification, setOpenExportDialog, partialExportIndex = null) => {
+export const exportRecipeConfigFile = (workflow, inputData, inputDataType, exportFileName, showNotification, setOpenExportDialog, partialExportIndex = null, tabIndex = 0, selectedFiles = null) => {
     if (workflow.length === 0) {
         showNotification('Cannot export an empty workflow.', 'error');
         return;
@@ -8,18 +8,37 @@ export const exportRecipeConfigFile = (workflow, inputData, inputDataType, expor
         ? workflow.slice(0, partialExportIndex + 1)
         : workflow;
 
-    // Generation of the configuration file
-    const recipe = {
-        name: exportFileName,
-        created_at: new Date().toISOString(),
-        workflow: {
-            input: {
-                format: inputDataType,
-                data: inputData,
+    const isFileManagerMode = tabIndex === 1;
+    
+    let recipe;
+    
+    if (isFileManagerMode && selectedFiles && selectedFiles.size > 0) {
+        const files = Array.from(selectedFiles);
+        
+        recipe = {
+            name: exportFileName,
+            created_at: new Date().toISOString(),
+            workflow: {
+                input: {
+                    format: inputDataType,
+                    files: files
+                },
+                tools: exportWorkflow.map((tool) => ({ ...tool })),
             },
-            tools: exportWorkflow.map((tool) => ({ ...tool })),
-        },
-    };
+        };
+    } else {
+        recipe = {
+            name: exportFileName,
+            created_at: new Date().toISOString(),
+            workflow: {
+                input: {
+                    format: inputDataType,
+                    data: inputData,
+                },
+                tools: exportWorkflow.map((tool) => ({ ...tool })),
+            },
+        };
+    }
 
     const fileContent = JSON.stringify(recipe, null, 2);
 
