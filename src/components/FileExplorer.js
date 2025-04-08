@@ -69,17 +69,30 @@ const FileExplorer = ({ selectedFiles, setSelectedFiles, tree, setTree }) => {
             let lineCount = 0;
             let result = '';
 
-            // Create a stream reader from the file
+            // Create a FileReader to read the file
             const reader = new FileReader();
             const chunkSize = 64 * 1024; // 64KB chunks
             let offset = 0;
 
             const readNextChunk = () => {
+                // Stop reading once maxLines is reached or end-of-file is encountered
                 if (lineCount >= maxLines || offset >= file.size) {
+                    // Split the accumulated text into lines for post processing
+                    const lines = result.split('\n');
+
+                    // Check if there is more than one header line — if so, treat as multi-FASTA
+                    const headerCount = lines.filter(line => line.trim().startsWith('>')).length;
+
+                    // If multi-FASTA and the last line is an orphan header, discard it
+                    if (headerCount > 1 && lines.length && lines[lines.length - 1].trim().startsWith('>')) {
+                        lines.pop();
+                        result = lines.join('\n');
+                    }
                     resolve(result);
                     return;
                 }
 
+                // Read the next chunk of text
                 const chunk = file.slice(offset, offset + chunkSize);
                 reader.readAsText(chunk);
             };
@@ -88,17 +101,17 @@ const FileExplorer = ({ selectedFiles, setSelectedFiles, tree, setTree }) => {
                 const chunkText = e.target.result;
                 const lines = chunkText.split('\n');
 
-                // Handle the case where a line spans across chunks
+                // If the previously accumulated chunk did not end with a newline,
+                // merge the first line of this chunk with the tail end of the previous one.
                 if (offset > 0 && result.endsWith('\n') === false) {
-                    // Append the first line of this chunk to the last line of the previous chunk
-                    result = result.slice(0, result.lastIndexOf('\n') + 1) +
-                        result.slice(result.lastIndexOf('\n') + 1) + lines[0];
-                    lines.shift(); // Remove the first line as it's been processed
+                    const lastNewline = result.lastIndexOf('\n');
+                    result = result.slice(0, lastNewline + 1) +
+                        result.slice(lastNewline + 1) + lines[0];
+                    lines.shift(); // Remove the merged line from this chunk.
                 }
 
-                // Add lines until we reach maxLines
+                // Add lines until we've reached maxLines
                 for (let i = 0; i < lines.length && lineCount < maxLines; i++) {
-                    // Add newline character except for the first line if it's a continuation
                     if (lineCount > 0 || offset > 0) {
                         result += '\n';
                     }
@@ -106,7 +119,6 @@ const FileExplorer = ({ selectedFiles, setSelectedFiles, tree, setTree }) => {
                     lineCount++;
                 }
 
-                // Move to the next chunk
                 offset += chunkSize;
                 readNextChunk();
             };
