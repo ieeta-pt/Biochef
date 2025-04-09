@@ -102,6 +102,7 @@ for ((i=0; i<tool_count; i++)); do
     source_file=$(echo "$tool" | jq -r '.source // empty')  # Use // empty to avoid null
     input_type=$(echo "$tool" | jq -r '.input.type // "unknown"')
     output_type=$(echo "$tool" | jq -r '.output.type // "unknown"')
+    is_multi_output=$(echo "$tool" | jq -r '.is_multi_output // false')
 
     if [[ -z "$source_file" ]]; then
         echo "Skipping $prog: no source file specified." | tee -a "$MAIN_LOG_FILE"
@@ -170,7 +171,7 @@ for ((i=0; i<tool_count; i++)); do
 
             # Generate the wrapper script
             echo "Generating wrapper for ${module_name} with input_type='${input_type}' and output_type='${output_type}'..." | tee -a "$MAIN_LOG_FILE"
-            python "$SCRIPT_DIR/generate_wrapper.py" "$module_name" "$input_type" "$output_type" >> "$MAIN_LOG_FILE" 2>&1
+            python "$SCRIPT_DIR/generate_wrapper.py" "$module_name" "$input_type" "$output_type" "$is_multi_output" >> "$MAIN_LOG_FILE" 2>&1
 
             # Verify if wrapper was generated successfully
             wrapper_file="$WASM_DIR/${module_name}_wrapper.js"

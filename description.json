@@ -19,6 +19,7 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
       "source": "gto/src/FastqToFasta.c"
     },
     {
@@ -40,6 +41,7 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
       "source": "gto/src/FastqToMFasta.c"
     },
     {
@@ -71,6 +73,7 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/FastqExcludeN.c"
     },
     {
@@ -92,6 +95,7 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
       "source": "gto/src/FastqExtractQS.c"
     },
     {
@@ -113,6 +117,7 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
       "source": "gto/src/FastqInfo.c"
     },
     {
@@ -144,6 +149,7 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/FastqMaximumReadSize.c"
     },
     {
@@ -175,6 +181,7 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/FastqMinimumQualityScore.c"
     },
     {
@@ -206,6 +213,7 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/FastqMinimumReadSize.c"
     },
     {
@@ -227,6 +235,7 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
       "source": "gto/src/FastqRandExtraChars.c"
     },
     {
@@ -267,6 +276,7 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/FastqFromSeq.c"
     },
     {
@@ -337,6 +347,7 @@
           "max": 1
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/FastqMutate.c"
     },
     {
@@ -377,6 +388,7 @@
           "type": "string"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/FastqSplit.c"
     },
     {
@@ -403,6 +415,7 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
       "source": "gto/src/FastqPack.c"
     },
     {
@@ -429,6 +442,7 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
       "source": "gto/src/FastqUnpack.c"
     },
     {
@@ -460,6 +474,7 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/FastqQualityScoreInfo.c"
     },
     {
@@ -491,6 +506,7 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/FastqQualityScoreMin.c"
     },
     {
@@ -522,6 +538,7 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/FastqQualityScoreMax.c"
     },
     {
@@ -562,6 +579,7 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/FastqCut.c"
     },
     {
@@ -611,6 +629,7 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/FastqMinimumQualityScoreForward.c"
     },
     {
@@ -660,6 +679,7 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/FastqMinimumQualityScoreReverse.c"
     },
     {
@@ -785,6 +805,7 @@
           "type": "string"
         }
       ],
+      "is_multi_output": false,
       "source": "external_tool"
     },
     {
@@ -808,6 +829,7 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
       "source": "Not found in Makefile"
     },
     {
@@ -829,6 +851,7 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
       "source": "gto/src/FastqComplement.c"
     },
     {
@@ -850,6 +873,7 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
       "source": "gto/src/FastqReverse.c"
     },
     {
@@ -898,6 +922,7 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
       "source": "external_tool (CHESTER)"
     },
     {
@@ -941,6 +966,7 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
       "source": "external_tool (CHESTER)"
     },
     {
@@ -974,6 +1000,7 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
       "source": "external_tool (CHESTER)"
     },
     {
@@ -1039,6 +1066,7 @@
           "type": "string"
         }
       ],
+      "is_multi_output": false,
       "source": "external_tool"
     },
     {
@@ -1060,6 +1088,7 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
       "source": "gto/src/FastaToSeq.c"
     },
     {
@@ -1100,6 +1129,7 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/FastaFromSeq.c"
     },
     {
@@ -1140,6 +1170,7 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/FastaExtract.c"
     },
     {
@@ -1180,6 +1211,7 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/FastaExtractByRead.c"
     },
     {
@@ -1201,6 +1233,7 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
       "source": "gto/src/FastaInfo.c"
     },
     {
@@ -1271,6 +1304,7 @@
           "max": 1
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/FastaMutate.c"
     },
     {
@@ -1292,6 +1326,7 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
       "source": "gto/src/FastaRandExtraChars.c"
     },
     {
@@ -1323,6 +1358,7 @@
           "type": "string"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/FastaExtractReadByIdPattern.c"
     },
     {
@@ -1344,6 +1380,7 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
       "source": "gto/src/FastaFindNPos.c"
     },
     {
@@ -1354,8 +1391,8 @@
         "format": "Multi-FASTA"
       },
       "output": {
-        "type": "stdout",
-        "format": "text"
+        "type": "file",
+        "format": "FASTA"
       },
       "flags": [
         {
@@ -1375,6 +1412,7 @@
           "type": "string"
         }
       ],
+      "is_multi_output": true,
       "source": "gto/src/FastaSplitReads.c"
     },
     {
@@ -1396,6 +1434,7 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
       "source": "gto/src/FastaRenameHumanHeaders.c"
     },
     {
@@ -1427,6 +1466,7 @@
           "type": "string"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/FastaExtractPatternCoords.c"
     },
     {
@@ -1448,6 +1488,7 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
       "source": "gto/src/FastaComplement.c"
     },
     {
@@ -1469,6 +1510,7 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
       "source": "gto/src/FastaReverse.c"
     },
     {
@@ -1517,6 +1559,7 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
       "source": "external_tool (CHESTER)"
     },
     {
@@ -1560,6 +1603,7 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
       "source": "external_tool (CHESTER)"
     },
     {
@@ -1593,6 +1637,7 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
       "source": "external_tool (CHESTER)"
     },
     {
@@ -1642,6 +1687,7 @@
           "type": "string"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/FastaSplitStreams.c"
     },
     {
@@ -1691,6 +1737,7 @@
           "type": "string"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/FastaMergeStreams.c"
     },
     {
@@ -1712,6 +1759,7 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
       "source": "gto/src/AminoAcidToGroup.c"
     },
     {
@@ -1733,6 +1781,7 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
       "source": "gto/src/AminoAcidToPseudoDNA.c"
     },
     {
@@ -1796,6 +1845,7 @@
           "type": "string"
         }
       ],
+      "is_multi_output": false,
       "source": "external_tool"
     },
     {
@@ -1827,6 +1877,7 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/AminoAcidFromFasta.c"
     },
     {
@@ -1858,6 +1909,7 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/AminoAcidFromFastq.c"
     },
     {
@@ -1889,6 +1941,7 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/AminoAcidFromSeq.c"
     },
     {
@@ -1941,6 +1994,7 @@
           "type": "string"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/GenomicGenRandomDNA.c"
     },
     {
@@ -1962,6 +2016,7 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
       "source": "gto/src/GenomicRandSeqExtraChars.c"
     },
     {
@@ -2032,6 +2087,7 @@
           "max": 1
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/GenomicDNAMutate.c"
     },
     {
@@ -2072,6 +2128,7 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/GenomicExtract.c"
     },
     {
@@ -2093,6 +2150,7 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
       "source": "gto/src/GenomicPeriod.c"
     },
     {
@@ -2114,6 +2172,7 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
       "source": "gto/src/GenomicCountBases.c"
     },
     {
@@ -2182,6 +2241,7 @@
           "type": "string"
         }
       ],
+      "is_multi_output": false,
       "source": "external_tool"
     },
     {
@@ -2203,6 +2263,7 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
       "source": "gto/src/GenomicComplement.c"
     },
     {
@@ -2224,6 +2285,7 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
       "source": "gto/src/Reverse.c"
     },
     {
@@ -2245,6 +2307,7 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
       "source": "gto/src/CharToLine.c"
     },
     {
@@ -2266,6 +2329,7 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
       "source": "gto/src/NewLineForNewValue.c"
     },
     {
@@ -2297,6 +2361,7 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/UpperBound.c"
     },
     {
@@ -2328,6 +2393,7 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/LowerBound.c"
     },
     {
@@ -2368,6 +2434,7 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/BruteForceString.c"
     },
     {
@@ -2399,6 +2466,7 @@
           "type": "float"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/RealToBinaryWithThreshold.c"
     },
     {
@@ -2430,6 +2498,7 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
       "source": "gto/src/Sum.c"
     },
     {
@@ -2494,6 +2563,7 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/Filter.c"
     },
     {
@@ -2525,6 +2595,7 @@
           "type": "string"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/WordSearch.c"
     },
     {
@@ -2566,6 +2637,7 @@
           "maxLength": 9
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/PermuteByBlocks.c"
     },
     {
@@ -2592,6 +2664,7 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
       "source": "gto/src/Info.c"
     },
     {
@@ -2623,6 +2696,7 @@
           "type": "float"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/Segment.c"
     },
     {
@@ -2728,6 +2802,7 @@
           "type": "string"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/ComparativeMap.c"
     },
     {
@@ -2768,6 +2843,7 @@
           "type": "string"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/Max.c"
     },
     {
@@ -2808,6 +2884,7 @@
           "type": "string"
         }
       ],
+      "is_multi_output": false,
       "source": "gto/src/Min.c"
     }
   ]
