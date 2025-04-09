@@ -52,19 +52,53 @@
       const module = await moduleFactory(options);
 
       // Write input data to 'input.txt' in the virtual filesystem
-      module.FS.writeFile('input.txt', inputData);
+      // For multi-output tools, create a dedicated output directory.
+      try {
+        module.FS.mkdir('/outputs');
+      } catch (e) {
+        console.log('Output directory already exists.');
+      }
+      // Optionally add output directory to arguments if not provided.
+      let fullArgs = args.slice();
+      if (!fullArgs.includes('-l')) {
+        fullArgs.push('-l', '/outputs');
+      }
 
-      // Execute the module's main function
-      const fullArgs = args;
+      module.FS.writeFile('input.txt', inputData);
       console.log("Executing module.callMain with arguments:", fullArgs);
       module.callMain(fullArgs);
 
-      // Read the output directly after callMain
-      const outputData = stdoutBuffer.trim();
-
+      // Multi-output: enumerate /outputs and load files.
+      let outputFiles = {};
+      try {
+        let files = module.FS.readdir('/outputs').filter(f => f !== '.' && f !== '..');
+        for (let file of files) {
+          try {
+            outputFiles[file] = module.FS.readFile(`/outputs/${file}`, { encoding: 'utf8' });
+          } catch (err) {
+            console.error(`Error reading file ${file}:`, err);
+          }
+        }
+        // Cleanup: remove all files in /outputs and remove the directory.
+        for (let file of files) {
+          try {
+            module.FS.unlink(`/outputs/${file}`);
+          } catch (err) {
+            console.error(`Error deleting file ${file}:`, err);
+          }
+        }
+        try {
+          module.FS.rmdir('/outputs');
+        } catch (err) {
+          console.error("Error removing /outputs directory:", err);
+        }
+      } catch (err) {
+        console.error("Error listing output files:", err);
+      }
       return {
-        stdout: outputData,
-        stderr: stderrBuffer.trim()
+        stdout: stdoutBuffer.trim(),
+        stderr: stderrBuffer.trim(),
+        outputs: outputFiles
       };
 
     } catch (err) {

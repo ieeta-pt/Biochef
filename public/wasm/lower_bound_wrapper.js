@@ -52,16 +52,14 @@
       const module = await moduleFactory(options);
 
       // Write input data to 'input.txt' in the virtual filesystem
-      module.FS.writeFile('input.txt', inputData);
+      let fullArgs = args;
 
-      // Execute the module's main function
-      const fullArgs = args;
+      module.FS.writeFile('input.txt', inputData);
       console.log("Executing module.callMain with arguments:", fullArgs);
       module.callMain(fullArgs);
 
-      // Read the output directly after callMain
+      // Single-output: capture stdout normally.
       const outputData = stdoutBuffer.trim();
-
       return {
         stdout: outputData,
         stderr: stderrBuffer.trim()
