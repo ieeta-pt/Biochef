@@ -1399,19 +1399,9 @@
           "flag": "-h",
           "parameter": null,
           "required": false
-        },
-        {
-          "flag": "-l",
-          "parameter": "location",
-          "required": false
         }
       ],
-      "parameters": [
-        {
-          "name": "location",
-          "type": "string"
-        }
-      ],
+      "parameters": [],
       "is_multi_output": true,
       "source": "gto/src/FastaSplitReads.c"
     },

@@ -1,10 +1,25 @@
 /**
  * Detects the data type based on file name or content.
  * @param {string} fileName - Name of the file.
- * @param {string} content - Content of the file.
+ * @param {string|object} content - Content of the file or object containing multiple outputs.
  * @returns {string} - Detected data type (e.g., 'FASTA', 'FASTQ', 'DNA', 'RNA', 'AminoAcids', 'UNKNOWN').
  */
 export const detectDataType = (fileName, content) => {
+  // Handle object content (multiple outputs)
+  if (typeof content === 'object' && content !== null) {
+    // Try to detect type from the first output file
+    const firstOutput = Object.values(content)[0];
+    if (firstOutput) {
+      return detectDataType(fileName, firstOutput);
+    }
+    return 'UNKNOWN';
+  }
+
+  // Handle string content
+  if (typeof content !== 'string') {
+    return 'UNKNOWN';
+  }
+
   // Trim content to remove leading/trailing whitespace
   const trimmedContent = content.trim();
 
