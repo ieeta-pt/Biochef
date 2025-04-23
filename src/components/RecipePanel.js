@@ -1219,7 +1219,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
             top: 0,
             left: 0,
             width: '100%',
-            height: '88%',
+            height: '90%',
             backgroundColor: 'rgba(255, 255, 255, 0.7)',
             zIndex: 10,
             pointerEvents: 'all',
