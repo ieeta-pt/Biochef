@@ -1635,7 +1635,7 @@
       "description": "Splits and writes a FASTA file into three channels of information: headers, extra and DNA.",
       "input": {
         "type": "stdin",
-        "format": "FASTA"
+        "format": "FASTA, Multi-FASTA"
       },
       "output": {
         "type": "stdout",
@@ -1685,11 +1685,11 @@
       "description": "It merges the three channels of information (headers, extra and DNA) and writes it into a FASTA file.",
       "input": {
         "type": "stdin",
-        "format": "FASTA"
+        "format": "file"
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "FASTA, Multi-FASTA"
       },
       "flags": [
         {

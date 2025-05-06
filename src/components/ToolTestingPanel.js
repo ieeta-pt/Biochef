@@ -238,7 +238,16 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
                 }
             }
 
-            setOutputData(outputData.stdout);
+            if (toolConfig.is_multi_output) {
+                // outputData has a outputData.outputs that is an object with keys as output names and values as the output data
+                const output = {};
+                for (const [key, value] of Object.entries(outputData.outputs)) {
+                    output[key] = value;
+                }
+                return setOutputData(output);
+            } else {
+                return setOutputData(outputData.stdout);
+            }
         } catch (error) {
             console.error(`Failed to execute tool ${tool.name}:`, error);
             throw error;

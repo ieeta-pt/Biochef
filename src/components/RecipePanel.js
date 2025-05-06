@@ -843,7 +843,6 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
           for (const [key, value] of Object.entries(outputData.outputs)) {
             output[key] = value;
           }
-          console.log("output: " + JSON.stringify(output));
           return output;
         } else {
           return outputData.stdout;
