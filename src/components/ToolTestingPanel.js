@@ -264,6 +264,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
         // Filter flags based on required and optionals
         const requiredFlags = toolConfig.flags.filter((flagObj) => flagObj.required && flagObj.flag !== '-h');
         const optionalFlags = toolConfig.flags.filter((flagObj) => !flagObj.required && flagObj.flag !== '-h');
+        const toolParameters = toolConfig.parameters;
 
         return (
             <Box sx={{ marginTop: 1 }}>
@@ -310,7 +311,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
                                                 }}
                                             >
                                                 <span>
-                                                    {flagObj.flag} <span style={{ color: 'red' }}>*</span>
+                                                    {flagObj.parameter} <span style={{ color: 'red' }}>*</span>
                                                 </span>
                                             </Tooltip>
                                         }
@@ -324,7 +325,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
                                                 handleParameterChange(flagObj.parameter, e.target.value)
                                             }
                                             size="small"
-                                            label={flagObj.parameter}
+                                            label={toolParameters.find((p) => p.name === flagObj.parameter)?.type}
                                             error={!!error}
                                             helperText={error}
                                             sx={{
@@ -416,7 +417,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
                                                     },
                                                 }}
                                             >
-                                                <span>{flagObj.flag}</span>
+                                                <span>{flagObj.parameter}</span>
                                             </Tooltip>
                                         }
                                         sx={{ alignItems: 'center', margin: 0 }}
@@ -428,7 +429,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
                                                 handleParameterChange(flagObj.parameter, e.target.value)
                                             }
                                             size="small"
-                                            label={flagObj.parameter}
+                                            label={toolParameters.find((p) => p.name === flagObj.parameter)?.type}
                                             error={!!error}
                                             helperText={error}
                                             sx={{

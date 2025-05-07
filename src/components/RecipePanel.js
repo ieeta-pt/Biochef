@@ -46,6 +46,7 @@ import { loadWasmModule } from '../gtoWasm';
 import { detectDataType } from '../utils/detectDataType';
 import { exportRecipeConfigFile } from '../utils/exportRecipeConfigFile';
 import { exportRecipeScript } from '../utils/exportRecipeScript';
+import { getExtensionForType } from '../utils/getExtensionDataType';
 import { importRecipeCommand } from '../utils/importRecipeCommand';
 import { importRecipeConfigFile } from '../utils/importRecipeConfigFile';
 import SortableItem from './SortableItem';
@@ -181,13 +182,21 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
                 const result = await executeTool(tool, content);
                 if (typeof result === 'object') {
                   // If the tool also produces multiple outputs, merge them with unique names
+                  // AS THERE IS ONLY ONE MULTI-OUTPUT TOOL, FOR NOW THIS DOES NOT APPLY
                   for (const [resultFilename, resultContent] of Object.entries(result)) {
                     const uniqueFilename = `${filename}_${resultFilename}`;
                     output[uniqueFilename] = resultContent;
                   }
                 } else {
+                  // Detect the output type
+                  const detectedType = detectDataType("output.txt", result);
+
+                  // Update the extension of filename based on the detected type
+                  const baseFilename = filename.split('.')[0];
+                  const newFilename = `${baseFilename}${getExtensionForType(detectedType)}`;
+
                   // If the tool produces single output, store it with the input filename
-                  output[filename] = result;
+                  output[newFilename] = result;
                 }
               }
             } else {
@@ -886,7 +895,35 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
       for (let i = 0; i <= endIndex && i < workflow.length; i++) {
         const tool = workflow[i];
         try {
-          data = await executeTool(tool, data);
+          // Handle multi-output data from previous steps
+          if (typeof data === 'object' && !Array.isArray(data)) {
+            // If data is a multi-output object, process each file
+            const output = {};
+            for (const [filename, content] of Object.entries(data)) {
+              const result = await executeTool(tool, content);
+              if (typeof result === 'object') {
+                // If the tool also produces multiple outputs, merge them with unique names
+                for (const [resultFilename, resultContent] of Object.entries(result)) {
+                  const uniqueFilename = `${filename}_${resultFilename}`;
+                  output[uniqueFilename] = resultContent;
+                }
+              } else {
+                // Detect the output type
+                const detectedType = detectDataType("output.txt", result);
+
+                // Update the extension of filename based on the detected type
+                const baseFilename = filename.split('.')[0];
+                const newFilename = `${baseFilename}${getExtensionForType(detectedType)}`;
+
+                // If the tool produces single output, store it with the input filename
+                output[newFilename] = result;
+              }
+            }
+            data = output;
+          } else {
+            // Single input case
+            data = await executeTool(tool, data);
+          }
 
           // If it's the last output, store to save it
           if (i === endIndex) {
@@ -900,6 +937,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
     }
 
     if (Object.keys(exportOutputs).length === 1) {
+      // Single input
       const inputFileName = Object.keys(exportOutputs)[0];
       const outputContent = exportOutputs[inputFileName];
 
@@ -978,6 +1016,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
     // Filter flags based on required and optionals
     const requiredFlags = toolConfig.flags.filter((flagObj) => flagObj.required && flagObj.flag !== '-h');
     const optionalFlags = toolConfig.flags.filter((flagObj) => !flagObj.required && flagObj.flag !== '-h');
+    const toolParameters = toolConfig.parameters;
 
     return (
       <Box sx={{ marginTop: 2 }}>
@@ -1024,7 +1063,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
                         }}
                       >
                         <span>
-                          {flagObj.flag} <span style={{ color: 'red' }}>*</span>
+                          {flagObj.parameter} <span style={{ color: 'red' }}>*</span>
                         </span>
                       </Tooltip>
                     }
@@ -1038,7 +1077,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
                         handleParameterChange(tool.id, flagObj.parameter, e.target.value)
                       }
                       size="small"
-                      label={flagObj.parameter}
+                      label={toolParameters.find((p) => p.name === flagObj.parameter)?.type}
                       error={!!error}
                       helperText={error}
                       sx={{
@@ -1147,7 +1186,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
                             },
                           }}
                         >
-                          <span>{flagObj.flag}</span>
+                          <span>{flagObj.parameter}</span>
                         </Tooltip>
                       }
                       sx={{ alignItems: 'center', margin: 0 }}
@@ -1159,7 +1198,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
                           handleParameterChange(tool.id, flagObj.parameter, e.target.value)
                         }
                         size="small"
-                        label={flagObj.parameter}
+                        label={toolParameters.find((p) => p.name === flagObj.parameter)?.type}
                         error={!!error}
                         helperText={error}
                         sx={{
