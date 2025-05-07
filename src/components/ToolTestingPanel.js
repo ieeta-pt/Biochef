@@ -317,7 +317,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
                                         }
                                         sx={{ alignItems: 'center', margin: 0 }}
                                     />
-                                    {flagObj.parameter && (
+                                    {toolParameters.find((p) => p.name === flagObj.parameter) && (
                                         <TextField
                                             key={flagObj.parameter}
                                             value={parameterValue}
@@ -422,7 +422,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
                                         }
                                         sx={{ alignItems: 'center', margin: 0 }}
                                     />
-                                    {flagObj.parameter && flagValue && (
+                                    {toolParameters.find((p) => p.name === flagObj.parameter) && flagValue && (
                                         <TextField
                                             value={parameterValue}
                                             onChange={(e) =>

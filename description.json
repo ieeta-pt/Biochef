@@ -318,7 +318,7 @@
         },
         {
           "flag": "-a",
-          "parameter": null,
+          "parameter": "ACGTN-alphabet",
           "required": false
         }
       ],
@@ -400,7 +400,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "FASTQ"
+        "format": "PackagedFASTQ"
       },
       "flags": [
         {
@@ -410,7 +410,7 @@
         },
         {
           "flag": "-s",
-          "parameter": null,
+          "parameter": "scores",
           "required": false
         }
       ],
@@ -423,7 +423,7 @@
       "description": "Unpacks the FASTQ reads packaged using the gto_fastq_pack tool.",
       "input": {
         "type": "stdin",
-        "format": "FASTQ"
+        "format": "PackagedFASTQ"
       },
       "output": {
         "type": "stdout",
@@ -437,7 +437,7 @@
         },
         {
           "flag": "-s",
-          "parameter": null,
+          "parameter": "scores",
           "required": false
         }
       ],
@@ -1275,7 +1275,7 @@
         },
         {
           "flag": "-a",
-          "parameter": null,
+          "parameter": "ACGTN-alphabet",
           "required": false
         }
       ],
@@ -2048,7 +2048,7 @@
         },
         {
           "flag": "-a",
-          "parameter": null,
+          "parameter": "ACGTN-alphabet",
           "required": false
         }
       ],
@@ -2478,12 +2478,12 @@
         },
         {
           "flag": "-r",
-          "parameter": null,
+          "parameter": "sumrows",
           "required": false
         },
         {
           "flag": "-a",
-          "parameter": null,
+          "parameter": "sumall",
           "required": false
         }
       ],
@@ -2525,17 +2525,17 @@
         },
         {
           "flag": "-c",
-          "parameter": null,
+          "parameter": "onecolumn",
           "required": false
         },
         {
           "flag": "-p",
-          "parameter": null,
+          "parameter": "printone",
           "required": false
         },
         {
           "flag": "-r",
-          "parameter": null,
+          "parameter": "reverse",
           "required": false
         }
       ],
@@ -2649,7 +2649,7 @@
         },
         {
           "flag": "-a",
-          "parameter": null,
+          "parameter": "ascii",
           "required": false
         }
       ],
@@ -2708,12 +2708,12 @@
         },
         {
           "flag": "-V",
-          "parameter": null,
+          "parameter": "versionNumber",
           "required": false
         },
         {
           "flag": "-v",
-          "parameter": null,
+          "parameter": "verboseMode",
           "required": false
         },
         {
@@ -2748,12 +2748,12 @@
         },
         {
           "flag": "-i",
-          "parameter": null,
+          "parameter": "notShowInversion",
           "required": false
         },
         {
           "flag": "-r",
-          "parameter": null,
+          "parameter": "notShowRegular",
           "required": false
         },
         {

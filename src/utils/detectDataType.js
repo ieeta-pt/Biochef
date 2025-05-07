@@ -32,9 +32,10 @@ export const detectDataType = (fileName, content) => {
     fa: ['Multi-FASTA', 'FASTA'],
     fastq: ['FASTQ'],
     fq: ['FASTQ'],
+    fastqpack: ['PackagedFASTQ'],
     pos: ['POS'],
     svg: ['SVG'],
-    txt: ['Multi-FASTA', 'FASTA', 'FASTQ', 'DNA', 'RNA', 'AminoAcids', 'text'], // Prioritize specific types
+    txt: ['Multi-FASTA', 'FASTA', 'FASTQ', 'PackagedFASTQ', 'DNA', 'RNA', 'AminoAcids', 'text'], // Prioritize specific types
     num: ['NUM'],
     // Add more mappings if necessary
   };
@@ -54,6 +55,25 @@ export const detectDataType = (fileName, content) => {
   if (extensionToTypeMap[extension]) {
     for (const type of extensionToTypeMap[extension]) {
       switch (type) {
+        case 'PackagedFASTQ':
+          // Check if this is a packaged FASTQ file
+          // Each line contains ESCAPE (ASCII 127) characters and ends with a tab followed by a number
+          const lines = trimmedContent.split(/\r?\n/);
+
+          // Check at least the first few lines to confirm pattern
+          const isPackagedFastq = lines.slice(0, Math.min(5, lines.length)).every(line => {
+            // Count escape characters (ASCII 127 or char code 127)
+            const escapeCount = (line.match(/\x7F/g) || []).length;
+
+            // Should have at least 3 escape characters and end with \t followed by a number
+            return escapeCount >= 3 && /\t\d+$/.test(line);
+          });
+
+          if (isPackagedFastq && lines.length > 0) {
+            return 'PackagedFASTQ';
+          }
+          break;
+
         case 'Multi-FASTA':
           if (trimmedContent.startsWith('>')) {
             const headers = countHeaders(trimmedContent);

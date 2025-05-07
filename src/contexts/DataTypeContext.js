@@ -53,6 +53,22 @@ export const DataTypeProvider = ({ children }) => {
         }
         return false;
 
+      case 'PackagedFASTQ':
+        // Validation for PackagedFASTQ: lines contain ESCAPE characters and end with tab+number
+        const packagedLines = trimmedData.split(/\r?\n/);
+        const isPackagedFASTQValid = packagedLines.length > 0 &&
+          packagedLines.every(line => {
+            // Count escape characters (ASCII 127 or char code 127)
+            const escapeCount = (line.match(/\x7F/g) || []).length;
+            // Each packaged FASTQ line should have at least 3 escape characters 
+            // and end with a tab followed by a number (index)
+            return escapeCount >= 3 && /\t\d+$/.test(line);
+          });
+        if (!isPackagedFASTQValid) {
+          console.error('PackagedFASTQ validation failed.');
+        }
+        return isPackagedFASTQValid;
+
       case 'FASTQ':
         // Validation for FASTQ: starts with '@' and follows FASTQ format structure
         const lines = trimmedData.split(/\r?\n/);
