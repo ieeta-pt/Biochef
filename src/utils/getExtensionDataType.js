@@ -12,7 +12,8 @@ export const typeToExtensionMap = {
     'POS': '.pos',
     'NUM': '.num',
     'BIN': '.bin',
-    'UNKNOWN': '.txt'
+    'UNKNOWN': '.txt',
+    'Group': '.txt',
 };
 
 /**

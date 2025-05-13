@@ -136,6 +136,14 @@ export const DataTypeProvider = ({ children }) => {
         }
         return isRNAValid;
 
+      case 'Group':
+        // Validation for Group: only standard single-letter codes and whitespace
+        const isGroupValid = /^[PNUSHpnush\*X]+$/.test(trimmedData);
+        if (!isGroupValid) {
+          console.error('Group validation failed.');
+        }
+        return isGroupValid;
+
       case 'AminoAcids':
         // Validation for AminoAcids: only standard single-letter codes and whitespace
         const isAminoAcidsValid = /^[ACDEFGHIKLMNPQRSTVWYacdefghiklmnpqrstvwy\s]+$/.test(trimmedData);

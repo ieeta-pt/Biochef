@@ -1739,7 +1739,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "GROUP"
+        "format": "Group"
       },
       "flags": [
         {
