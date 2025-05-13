@@ -76,7 +76,6 @@ const operationCategories = {
         { name: 'char_to_line', description: 'Splits a sequence into lines, creating an output sequence which has a char for each line. \nInput: DNA, RNA, AminoAcids \nOutput: DNA, RNA, AminoAcids' },
         { name: 'new_line_on_new_x', description: 'Splits different rows with a new empty row. \nInput: NUM \nOutput: NUM' },
         { name: 'filter', description: 'Filters numerical sequences using a low-pass filter. \nInput: NUM \nOutput: NUM' },
-        { name: 'reverse', description: 'Reverses the ACGT bases order for each read in a sequence file' },
         { name: 'segment', description: 'Segments a filtered sequence based on a threshold. \nInput: NUM \nOutput: text' },
         { name: 'word_search', description: 'Search for a word in a file. \nInput: text \nOutput: text' },
         { name: 'brute_force_string', description: 'Generates all combinations, line by line, for an inputted alphabet and specific size. \nOutput: text' },

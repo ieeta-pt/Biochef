@@ -35,7 +35,7 @@ export const detectDataType = (fileName, content) => {
     fastqpack: ['PackagedFASTQ'],
     pos: ['POS'],
     svg: ['SVG'],
-    txt: ['Multi-FASTA', 'FASTA', 'FASTQ', 'PackagedFASTQ', 'DNA', 'RNA', 'AminoAcids', 'text'], // Prioritize specific types
+    txt: ['Multi-FASTA', 'FASTA', 'FASTQ', 'PackagedFASTQ', 'DNA', 'RNA', 'AminoAcids', 'text', 'NUM'], // Prioritize specific types
     num: ['NUM'],
     // Add more mappings if necessary
   };

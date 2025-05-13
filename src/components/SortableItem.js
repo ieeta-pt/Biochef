@@ -13,14 +13,17 @@ import {
   MenuItem, Paper, Tooltip, Typography,
 } from '@mui/material';
 import React, { useState } from 'react';
+import ToolMessageIcons from './ToolMessageIcons';
 
-const SortableItem = ({ id, toolName, onDelete, onDeleteFromHere, children, isDragging, isInvalid, helpMessage, workflowLength, onPartialSave }) => {
+const SortableItem = ({ id, toolName, onDelete, onDeleteFromHere, children, isDragging, isInvalid, helpMessage, workflowLength, onPartialSave, toolMessageMap }) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id,
   });
   const [anchorEl, setAnchorEl] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteAction, setDeleteAction] = useState(null);
+
+  const msgs = toolMessageMap || { info: [], error: [] };
 
   const handleMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
@@ -69,9 +72,14 @@ const SortableItem = ({ id, toolName, onDelete, onDeleteFromHere, children, isDr
     >
       <Box sx={{ display: 'flex', alignItems: 'center' }}>
         <DragIndicator sx={{ marginRight: 1, color: 'text.secondary' }} />
-        <Typography variant="body1" sx={{ flexGrow: 1 }}>
-          {toolName}
-        </Typography>
+
+        <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
+          <Typography variant="body1">
+            {toolName}
+          </Typography>
+          <ToolMessageIcons messages={msgs} sx={{ marginLeft: 1 }} />
+        </Box>
+
         <Tooltip
           title={<pre style={{ whiteSpace: 'pre-wrap' }}>{helpMessage || 'Loading help...'}</pre>}
           arrow

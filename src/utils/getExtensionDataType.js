@@ -10,7 +10,7 @@ export const typeToExtensionMap = {
     'AminoAcids': '.txt',
     'SVG': '.svg',
     'POS': '.pos',
-    'NUM': '.txt',
+    'NUM': '.num',
     'UNKNOWN': '.txt'
 };
 

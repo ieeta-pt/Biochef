@@ -51,6 +51,19 @@ import { importRecipeCommand } from '../utils/importRecipeCommand';
 import { importRecipeConfigFile } from '../utils/importRecipeConfigFile';
 import SortableItem from './SortableItem';
 
+export function classifyStderrLines(stderr) {
+  const result = { info: [], error: [] };
+  stderr
+    .split('\n')
+    .filter(Boolean)
+    .forEach(line => {
+      const isError = /^error:?/i.test(line.trim());
+      if (isError) result.error.push(line);
+      else result.info.push(line);
+    });
+  return result;
+}
+
 const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading, setIsLoading, insertAtIndex, setInsertAtIndex, setAddingATool, setFilteredTools, selectedFiles, setSelectedFiles, tabIndex, setTabIndex, tree, setTree }) => {
   const [activeId, setActiveId] = useState(null);
   const { setDataType, dataType, inputDataType, setInputDataType } = useContext(DataTypeContext); // To update data type context
@@ -59,6 +72,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
     const savedMap = localStorage.getItem('outputMap');
     return savedMap ? JSON.parse(savedMap) : {};
   });
+  const [toolMessageMap, setToolMessageMap] = useState({}); // To store messages for each tool
   const { validationErrors, setValidationErrors } = useContext(ValidationErrorsContext); // Access validation errors of parameters
   const [helpMessages, setHelpMessages] = useState({}); // To store help messages for tools
   const [exportFileName, setExportFileName] = useState('my_workflow'); // Default export name
@@ -178,30 +192,71 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
             if (typeof data === 'object' && !Array.isArray(data)) {
               // If data is a multi-output object, process each file
               output = {};
+
+              // First clear the messages for the current tool
+              setToolMessageMap(prev => ({
+                ...prev,
+                [tool.id]: { info: [], error: [] },
+              }));
+
               for (const [filename, content] of Object.entries(data)) {
                 const result = await executeTool(tool, content);
-                if (typeof result === 'object') {
+
+                // Handle messages in stderr
+                const toolMessages = classifyStderrLines(result.stderr);
+
+                setToolMessageMap(prev => {
+                  const prevMsgs = prev[tool.id] || { info: [], error: [] };
+                  return {
+                    ...prev,
+                    [tool.id]: {
+                      info: [...prevMsgs.info, ...toolMessages.info],
+                      error: [...prevMsgs.error, ...toolMessages.error],
+                    },
+                  };
+                });
+
+                // If results is an object with the key "outputs" (multiple outputs)
+                if (typeof result === 'object' && result.outputs) {
                   // If the tool also produces multiple outputs, merge them with unique names
                   // AS THERE IS ONLY ONE MULTI-OUTPUT TOOL, FOR NOW THIS DOES NOT APPLY
-                  for (const [resultFilename, resultContent] of Object.entries(result)) {
+                  for (const [resultFilename, resultContent] of Object.entries(result.outputs)) {
                     const uniqueFilename = `${filename}_${resultFilename}`;
                     output[uniqueFilename] = resultContent;
                   }
                 } else {
                   // Detect the output type
-                  const detectedType = detectDataType("output.txt", result);
+                  const detectedType = detectDataType("output.txt", result.stdout);
 
                   // Update the extension of filename based on the detected type
                   const baseFilename = filename.split('.')[0];
                   const newFilename = `${baseFilename}${getExtensionForType(detectedType)}`;
 
                   // If the tool produces single output, store it with the input filename
-                  output[newFilename] = result;
+                  output[newFilename] = result.stdout;
                 }
               }
             } else {
               // Single input case
-              output = await executeTool(tool, data);
+              const result = await executeTool(tool, data);
+
+              // Handle messages in stderr
+              const toolMessages = classifyStderrLines(result.stderr);
+
+              setToolMessageMap((prev) => ({
+                ...prev,
+                [tool.id]: {
+                  info: toolMessages.info,
+                  error: toolMessages.error,
+                },
+              }));
+
+              // result can return an object with the key "outputs" (multiple outputs) or the key "stdout" (single output)
+              if (typeof result === 'object' && result.outputs) {
+                output = result.outputs;
+              } else {
+                output = result.stdout;
+              }
             }
             data = output;
 
@@ -481,6 +536,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
     const newWorkflow = workflow.filter((item) => item.id !== id);
 
     if (newWorkflow.length === 0) {
+      setToolMessageMap({});
       setOutputMap({});
       setHelpMessages({});
       setDataType(inputDataType);
@@ -492,6 +548,13 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
       const isFirstToolWithoutInput = toolIndex === 0 && description.tools.find((tool) => `gto_${workflow[toolIndex].toolName}` === tool.name)?.input?.type === '';
 
       if (validateWorkflow(newWorkflow, inputDataType) && !isFirstToolWithoutInput) {
+        // Remove the messages for the deleted tool
+        setToolMessageMap((prev) => {
+          const newMessages = { ...prev };
+          delete newMessages[id];
+          return newMessages;
+        });
+
         // Remove outputs of the deleted tool for all inputs
         setOutputMap((prevMap) => {
           const newMap = { ...prevMap };
@@ -512,7 +575,27 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
 
           for (let i = toolIndex; i < newWorkflow.length; i++) {
             const tool = newWorkflow[i];
-            const output = await executeTool(tool, data);
+            const result = await executeTool(tool, data);
+
+            // Handle messages in stderr
+            const toolMessages = classifyStderrLines(result.stderr);
+
+            setToolMessageMap((prev) => ({
+              ...prev,
+              [tool.id]: {
+                info: toolMessages.info,
+                error: toolMessages.error,
+              },
+            }));
+
+            let output;
+            // Handle multi-output vs. single output
+            if (typeof result === 'object' && result.outputs) {
+              output = result.outputs;
+            } else {
+              output = result.stdout;
+            }
+
             data = output;
 
             // Store the output in the map
@@ -605,6 +688,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
       const newWorkflow = workflow.slice(0, index);
 
       if (newWorkflow.length === 0) {
+        setToolMessageMap({});
         setOutputMap({});
         setHelpMessages({});
         setDataType(inputDataType);
@@ -627,6 +711,13 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
           });
         }
         setOutputMap(newOutputMap);
+
+        // Update toolMessageMap to keep only the messages of the tools that are still in the workflow after slicing
+        const newToolMessageMap = {};
+        newWorkflow.forEach((tool) => {
+          newToolMessageMap[tool.id] = toolMessageMap[tool.id];
+        });
+        setToolMessageMap(newToolMessageMap);
 
         // Update help messages to keep only the messages of the tools that are still in the workflow after slicing
         const newHelpMessages = {};
@@ -808,13 +899,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
           //   }
           // }
 
-          if (toolConfig.is_multi_output) {
-            // For multi-output tools, store each output file
-            results[filename] = outputData.outputs;
-          } else {
-            // For single output tools, store the stdout
-            results[filename] = outputData.stdout;
-          }
+          results[filename] = outputData;
         }
         return results;
       } else {
@@ -846,16 +931,8 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
         //   }
         // }
 
-        if (toolConfig.is_multi_output) {
-          // outputData has a outputData.outputs that is an object with keys as output names and values as the output data
-          const output = {};
-          for (const [key, value] of Object.entries(outputData.outputs)) {
-            output[key] = value;
-          }
-          return output;
-        } else {
-          return outputData.stdout;
-        }
+        // Return the output data
+        return outputData;
       }
     } catch (error) {
       console.error(`Failed to execute tool ${tool.toolName}:`, error);
@@ -901,28 +978,37 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
             const output = {};
             for (const [filename, content] of Object.entries(data)) {
               const result = await executeTool(tool, content);
-              if (typeof result === 'object') {
+              if (typeof result === 'object' && result.outputs) {
                 // If the tool also produces multiple outputs, merge them with unique names
-                for (const [resultFilename, resultContent] of Object.entries(result)) {
+                for (const [resultFilename, resultContent] of Object.entries(result.outputs)) {
                   const uniqueFilename = `${filename}_${resultFilename}`;
                   output[uniqueFilename] = resultContent;
                 }
               } else {
                 // Detect the output type
-                const detectedType = detectDataType("output.txt", result);
+                const detectedType = detectDataType("output.txt", result.stdout);
 
                 // Update the extension of filename based on the detected type
                 const baseFilename = filename.split('.')[0];
                 const newFilename = `${baseFilename}${getExtensionForType(detectedType)}`;
 
                 // If the tool produces single output, store it with the input filename
-                output[newFilename] = result;
+                output[newFilename] = result.stdout;
               }
             }
             data = output;
           } else {
             // Single input case
-            data = await executeTool(tool, data);
+            const result = await executeTool(tool, data);
+
+            let output;
+            // result can return an object with the key "outputs" (multiple outputs) or the key "stdout" (single output)
+            if (typeof result === 'object' && result.outputs) {
+              output = result.outputs;
+            } else {
+              output = result.stdout;
+            }
+            data = output;
           }
 
           // If it's the last output, store to save it
@@ -1338,6 +1424,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
                     helpMessage={helpMessages[tool.toolName]?.general}
                     workflowLength={workflow.length}
                     onPartialSave={() => handleSaveOutput(index)}
+                    toolMessageMap={toolMessageMap[tool.id]}
                   >
                     {renderParameters(tool)}
                     <Box sx={{ display: 'flex', alignItems: 'center', marginTop: 1 }}>
