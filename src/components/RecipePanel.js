@@ -880,25 +880,6 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
           // Execute the tool for this input
           const outputData = await runFunction(content, args);
 
-          // Handle messages in stderr
-          // if (outputData.stderr) {
-          //   const stderrLines = outputData.stderr.split('\n');
-          //   let infoMessages = []; // Accumulate all informational messages
-
-          //   stderrLines.forEach((line) => {
-          //     if (line.trim().startsWith('ERROR:')) {
-          //       throw new Error(line.trim()); // Treat as an error
-          //     } else if (line.trim()) {
-          //       infoMessages.push(line.trim()); // Accumulate info messages
-          //     }
-          //   });
-
-          //   // Display all accumulated informational messages together
-          //   if (infoMessages.length > 0) {
-          //     showNotification(infoMessages.join('\n'), 'info');
-          //   }
-          // }
-
           results[filename] = outputData;
         }
         return results;
@@ -911,25 +892,6 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
 
         // Execute the tool
         const outputData = await runFunction(input, args);
-
-        // // Handle messages in stderr
-        // if (outputData.stderr) {
-        //   const stderrLines = outputData.stderr.split('\n');
-        //   let infoMessages = []; // Accumulate all informational messages
-
-        //   stderrLines.forEach((line) => {
-        //     if (line.trim().startsWith('ERROR:')) {
-        //       throw new Error(line.trim()); // Treat as an error
-        //     } else if (line.trim()) {
-        //       infoMessages.push(line.trim()); // Accumulate info messages
-        //     }
-        //   });
-
-        //   // Display all accumulated informational messages together
-        //   if (infoMessages.length > 0) {
-        //     showNotification(infoMessages.join('\n'), 'info');
-        //   }
-        // }
 
         // Return the output data
         return outputData;
@@ -1041,7 +1003,9 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
         const blob = new Blob([outputContent], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.download = `output.txt`;
+        const detectedType = detectDataType("output.txt", outputContent);
+        const extension = getExtensionForType(detectedType);
+        link.download = `output${extension}`;
         link.href = url;
         link.click();
         URL.revokeObjectURL(url);
@@ -1058,7 +1022,9 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
           }
         } else {
           // Single output file for this input
-          zip.file(`${inputFileName}_output.txt`, outputContent);
+          const detectedType = detectDataType("output.txt", outputContent);
+          const extension = getExtensionForType(detectedType);
+          zip.file(`${inputFileName}_output${extension}`, outputContent);
         }
       }
       zip.generateAsync({ type: 'blob' }).then((content) => {

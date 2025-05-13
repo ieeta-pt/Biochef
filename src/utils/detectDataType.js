@@ -35,8 +35,9 @@ export const detectDataType = (fileName, content) => {
     fastqpack: ['PackagedFASTQ'],
     pos: ['POS'],
     svg: ['SVG'],
-    txt: ['Multi-FASTA', 'FASTA', 'FASTQ', 'PackagedFASTQ', 'DNA', 'RNA', 'AminoAcids', 'text', 'NUM'], // Prioritize specific types
+    txt: ['Multi-FASTA', 'FASTA', 'FASTQ', 'PackagedFASTQ', 'DNA', 'RNA', 'AminoAcids', 'text', 'NUM', 'BIN'], // Prioritize specific types
     num: ['NUM'],
+    bin: ['BIN'],
     // Add more mappings if necessary
   };
 
@@ -144,6 +145,10 @@ export const detectDataType = (fileName, content) => {
   }
   if (aminoAcidsPattern.test(trimmedContent)) {
     return 'AminoAcids';
+  }
+
+  if (/^[01\s\r\n]+$/.test(trimmedContent)) {
+    return 'BIN';
   }
 
   if (/^\d+(\.\d+)?(\s+\d+(\.\d+)?)*/.test(trimmedContent)) {

@@ -104,6 +104,14 @@ export const DataTypeProvider = ({ children }) => {
         }
         return isSVGValid;
 
+      case 'BIN':
+        // Validation for BIN: binary data, no specific validation
+        const isBINValid = /^[01\s\r\n]+$/.test(trimmedData);
+        if (!isBINValid) {
+          console.error('BIN validation failed.');
+        }
+        return isBINValid;
+
       case 'NUM':
         // Validation for NUM: all content is numeric, possibly separated by whitespace
         const isNUMValid = /^\d+(\.\d+)?(\s+\d+(\.\d+)?)*/.test(trimmedData);

@@ -13,16 +13,6 @@ export default function ToolMessageIcons({ messages = {} }) {
     const { info = [], error = [] } = messages;
     if (info.length === 0 && error.length === 0) return null;
 
-    const renderList = (items) => (
-        <ul style={{ margin: 0, paddingLeft: '1em' }}>
-            {items.map((txt, i) => (
-                <li key={i} style={{ lineHeight: 1.4 }}>
-                    <Typography variant="body2">{txt}</Typography>
-                </li>
-            ))}
-        </ul>
-    );
-
     const pulse = keyframes`
     0%, 100% { transform: scale(1); }
     50%     { transform: scale(1.15); }
@@ -35,7 +25,9 @@ export default function ToolMessageIcons({ messages = {} }) {
                     title={
                         <Box>
                             <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>Info</Typography>
-                            {renderList(info)}
+                            {info.map((txt, i) => (
+                                <Typography variant="body2">{txt}</Typography>
+                            ))}
                         </Box>
                     }
                     arrow
@@ -61,7 +53,9 @@ export default function ToolMessageIcons({ messages = {} }) {
                             <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
                                 Errors
                             </Typography>
-                            {renderList(error)}
+                            {error.map((txt, i) => (
+                                <Typography variant="body2">{txt}</Typography>
+                            ))}
                         </Box>
                     }
                     arrow

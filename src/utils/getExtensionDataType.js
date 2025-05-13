@@ -11,6 +11,7 @@ export const typeToExtensionMap = {
     'SVG': '.svg',
     'POS': '.pos',
     'NUM': '.num',
+    'BIN': '.bin',
     'UNKNOWN': '.txt'
 };
 
