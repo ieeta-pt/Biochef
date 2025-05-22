@@ -50,6 +50,7 @@ def main():
             input_type=input_type,
             output_type=output_type,
             is_multi_output=is_multi_output,
+            is_file_based=(input_type == 'file')
         )
     except TemplateError as e:
         print(f"Error rendering template: {e}")

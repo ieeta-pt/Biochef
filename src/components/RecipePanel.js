@@ -46,6 +46,7 @@ import { loadWasmModule } from '../gtoWasm';
 import { detectDataType } from '../utils/detectDataType';
 import { exportRecipeConfigFile } from '../utils/exportRecipeConfigFile';
 import { exportRecipeScript } from '../utils/exportRecipeScript';
+import { processFile } from '../utils/fileProcessor';
 import { getExtensionForType } from '../utils/getExtensionDataType';
 import { importRecipeCommand } from '../utils/importRecipeCommand';
 import { importRecipeConfigFile } from '../utils/importRecipeConfigFile';
@@ -57,7 +58,7 @@ export function classifyStderrLines(stderr) {
     .split('\n')
     .filter(Boolean)
     .forEach(line => {
-      const isError = /^error:?/i.test(line.trim());
+      const isError = /error/i.test(line.trim());
       if (isError) result.error.push(line);
       else result.info.push(line);
     });
@@ -93,6 +94,9 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
   const [partialExportIndex, setPartialExportIndex] = useState(null); // To store the index for partial export
   const [deleteOperation, setDeleteOperation] = useState(false); // To store the delete from here state
   const [selectedInput, setSelectedInput] = useState(''); // Tracks selected input
+  const [toolParameterFiles, setToolParameterFiles] = useState({}); // To store tool parameter files
+  const { validateData } = useContext(DataTypeContext);
+  const showNotification = useContext(NotificationContext);
 
   // Update outputs initialization to handle both modes
   const outputs = React.useMemo(() => {
@@ -113,15 +117,30 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
   );
 
-  const showNotification = useContext(NotificationContext);
-
   // Save only ManualInput outputMap in localStorage
   useEffect(() => {
     // Extract only the ManualInput data from the outputMap
     const manualInputData = outputMap["ManualInput"] ? { "ManualInput": outputMap["ManualInput"] } : {};
 
-    // Store only the ManualInput data in localStorage
-    localStorage.setItem('outputMap', JSON.stringify(manualInputData));
+    // Create a filtered copy for localStorage
+    const filteredManualInputData = { "ManualInput": {} };
+
+    // Find the index of the first tool with file input
+    const fileInputToolIndex = workflow.findIndex(tool => {
+      const toolConfig = description.tools.find(t => t.name === `gto_${tool.toolName}`);
+      return toolConfig && toolConfig.input.type === "file";
+    });
+
+    // Copy only outputs from tools before the first file input tool
+    Object.entries(manualInputData["ManualInput"] || {}).forEach(([toolId, output]) => {
+      const toolIndex = workflow.findIndex(t => t.id === toolId);
+      if (toolIndex < fileInputToolIndex || fileInputToolIndex === -1) {
+        filteredManualInputData["ManualInput"][toolId] = output;
+      }
+    });
+
+    // Store only the filtered ManualInput data in localStorage
+    localStorage.setItem('outputMap', JSON.stringify(filteredManualInputData));
   }, [outputMap]);
 
   // Save expandedTools in localStorage
@@ -781,10 +800,30 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
     }
   };
 
-  const handleParameterChange = (id, name, value) => {
+  const handleParameterChange = async (id, name, value) => {
     // Store the index of the tool in the workflow
     const toolIndex = workflow.findIndex((t) => t.id === id);
     setInsertAtIndex(toolIndex);
+
+    // If it's a File, process it using processFile
+    let paramValue = value;
+    if (value instanceof File) {
+      const processedFile = await processFile(value, validateData, showNotification);
+      if (!processedFile) {
+        return; // Stop if file processing failed
+      }
+      paramValue = processedFile.name;
+
+      // Store the processed file in toolParameterFiles
+      const fileObj = { name: processedFile.name, data: processedFile.content };
+      setToolParameterFiles((prev) => ({
+        ...prev,
+        [id]: {
+          ...prev[id],
+          [name]: fileObj,
+        },
+      }));
+    }
 
     const newWorkflow = workflow.map((item) =>
       item.id === id
@@ -792,7 +831,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
           ...item,
           params: {
             ...item.params,
-            [name]: value, // Sets either flag toggle or parameter value
+            [name]: paramValue, // Sets either flag toggle or parameter value
           },
         }
         : item
@@ -890,8 +929,14 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
           input = '';
         }
 
-        // Execute the tool
-        const outputData = await runFunction(input, args);
+        let outputData;
+        if (input === '' && toolParameterFiles[tool.id] && Object.keys(toolParameterFiles[tool.id]).length > 0) {
+          // If input is empty and there are parameter files for the tool, use them
+          outputData = await runFunction(toolParameterFiles[tool.id], args);
+        } else {
+          // Execute the tool
+          outputData = await runFunction(input, args);
+        }
 
         // Return the output data
         return outputData;
@@ -1086,6 +1131,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
             </Typography>
             {requiredFlags.map((flagObj) => {
               const flagValue = !!tool.params[flagObj.flag];
+              const paramConfig = toolParameters.find((p) => p.name === flagObj.parameter);
               const parameterValue = tool.params[flagObj.parameter] || '';
               const error = toolErrors[flagObj.parameter] || '';
 
@@ -1121,47 +1167,40 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
                     }
                     sx={{ alignItems: 'center', margin: 0 }}
                   />
-                  {toolParameters.find((p) => p.name === flagObj.parameter) && (
-                    <TextField
-                      key={flagObj.parameter}
-                      value={parameterValue}
-                      onChange={(e) =>
-                        handleParameterChange(tool.id, flagObj.parameter, e.target.value)
-                      }
-                      size="small"
-                      label={toolParameters.find((p) => p.name === flagObj.parameter)?.type}
-                      error={!!error}
-                      helperText={error}
-                      sx={{
-                        flexGrow: 1,
-                        '& .MuiOutlinedInput-root': {
-                          borderColor: error ? 'red' : 'default',
-                        },
-                        '& .MuiOutlinedInput-notchedOutline': error
-                          ? {
-                            borderColor: 'red',
-                            borderWidth: '1px',
-                          }
-                          : {},
-                      }}
-                      type={
-                        toolConfig.parameters.find((p) => p.name === flagObj.parameter)?.type ===
-                          'integer'
-                          ? 'number'
-                          : toolConfig.parameters.find((p) => p.name === flagObj.parameter)
-                            ?.type === 'float'
-                            ? 'number'
-                            : 'text'
-                      }
-                      inputProps={
-                        toolConfig.parameters.find((p) => p.name === flagObj.parameter)?.type ===
-                          'integer' ||
-                          toolConfig.parameters.find((p) => p.name === flagObj.parameter)?.type ===
-                          'float'
-                          ? { step: 'any' }
-                          : {}
-                      }
-                    />
+                  {paramConfig && (
+                    paramConfig.type === 'file' ? (
+                      <>
+                        <Button variant="outlined" component="label" size="small">
+                          {parameterValue ? 'Change File' : 'Upload File'}
+                          <input
+                            type="file"
+                            hidden
+                            onChange={(e) =>
+                              handleParameterChange(tool.id, flagObj.parameter, e.target.files[0])
+                            }
+                          />
+                        </Button>
+                        {parameterValue && (
+                          <Typography variant="caption" sx={{ ml: 1 }}>
+                            {parameterValue.name || parameterValue}
+                          </Typography>
+                        )}
+                      </>
+                    ) : (
+                      <TextField
+                        value={parameterValue}
+                        onChange={(e) =>
+                          handleParameterChange(tool.id, flagObj.parameter, e.target.value)
+                        }
+                        size="small"
+                        label={paramConfig.type}
+                        error={!!toolErrors[flagObj.parameter]}
+                        helperText={toolErrors[flagObj.parameter]}
+                        type={paramConfig.type === 'integer' || paramConfig.type === 'float' ? 'number' : 'text'}
+                        inputProps={paramConfig.type === 'integer' || paramConfig.type === 'float' ? { step: 'any' } : {}}
+                        sx={{ flexGrow: 1 }}
+                      />
+                    )
                   )}
                 </Box>
               );
@@ -1202,6 +1241,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
             {/* Collapse */}
             <Collapse in={expandedTools.includes(tool.id) || (validationErrors[tool.id] && Object.keys(validationErrors[tool.id]).length > 0)} timeout="auto" unmountOnExit>
               {optionalFlags.map((flagObj) => {
+                const paramConfig = toolParameters.find((p) => p.name === flagObj.parameter);
                 const flagValue = !!tool.params[flagObj.flag];
                 const parameterValue = tool.params[flagObj.parameter] || '';
                 const error = toolErrors[flagObj.parameter] || '';
@@ -1243,47 +1283,40 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
                       }
                       sx={{ alignItems: 'center', margin: 0 }}
                     />
-                    {toolParameters.find((p) => p.name === flagObj.parameter) && flagValue && (
-                      <TextField
-                        value={parameterValue}
-                        onChange={(e) =>
-                          handleParameterChange(tool.id, flagObj.parameter, e.target.value)
-                        }
-                        size="small"
-                        label={toolParameters.find((p) => p.name === flagObj.parameter)?.type}
-                        error={!!error}
-                        helperText={error}
-                        sx={{
-                          flexGrow: 1,
-                          '& .MuiOutlinedInput-root': {
-                            borderColor: error ? 'red' : 'default',
-                          },
-                          '& .MuiOutlinedInput-notchedOutline': error
-                            ? {
-                              borderColor: 'red',
-                              borderWidth: '1px',
-                            }
-                            : {},
-                          alignSelf: 'center',
-                        }}
-                        type={
-                          toolConfig.parameters.find((p) => p.name === flagObj.parameter)?.type ===
-                            'integer'
-                            ? 'number'
-                            : toolConfig.parameters.find((p) => p.name === flagObj.parameter)
-                              ?.type === 'float'
-                              ? 'number'
-                              : 'text'
-                        }
-                        inputProps={
-                          toolConfig.parameters.find((p) => p.name === flagObj.parameter)?.type ===
-                            'integer' ||
-                            toolConfig.parameters.find((p) => p.name === flagObj.parameter)?.type ===
-                            'float'
-                            ? { step: 'any' }
-                            : {}
-                        }
-                      />
+                    {paramConfig && flagValue && (
+                      paramConfig.type === 'file' ? (
+                        <>
+                          <Button variant="outlined" component="label" size="small">
+                            {parameterValue ? 'Change File' : 'Upload File'}
+                            <input
+                              type="file"
+                              hidden
+                              onChange={(e) =>
+                                handleParameterChange(tool.id, flagObj.parameter, e.target.files[0])
+                              }
+                            />
+                          </Button>
+                          {parameterValue && (
+                            <Typography variant="caption" sx={{ ml: 1 }}>
+                              {parameterValue.name || parameterValue}
+                            </Typography>
+                          )}
+                        </>
+                      ) : (
+                        <TextField
+                          value={parameterValue}
+                          onChange={(e) =>
+                            handleParameterChange(tool.id, flagObj.parameter, e.target.value)
+                          }
+                          size="small"
+                          label={paramConfig.type}
+                          error={!!toolErrors[flagObj.parameter]}
+                          helperText={toolErrors[flagObj.parameter]}
+                          type={paramConfig.type === 'integer' || paramConfig.type === 'float' ? 'number' : 'text'}
+                          inputProps={paramConfig.type === 'integer' || paramConfig.type === 'float' ? { step: 'any' } : {}}
+                          sx={{ flexGrow: 1 }}
+                        />
+                      )
                     )}
                   </Box>
                 );

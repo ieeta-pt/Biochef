@@ -2799,8 +2799,8 @@
       "name": "gto_max",
       "description": "Computes the maximum value in each row between two files.",
       "input": {
-        "type": "stdin",
-        "format": "NUM"
+        "type": "file",
+        "format": ""
       },
       "output": {
         "type": "stdout",
@@ -2826,11 +2826,11 @@
       "parameters": [
         {
           "name": "first_file",
-          "type": "string"
+          "type": "file"
         },
         {
           "name": "second_file",
-          "type": "string"
+          "type": "file"
         }
       ],
       "is_multi_output": false,
@@ -2840,8 +2840,8 @@
       "name": "gto_min",
       "description": "Computes the minium value in each row between two files.",
       "input": {
-        "type": "stdin",
-        "format": "NUM"
+        "type": "file",
+        "format": ""
       },
       "output": {
         "type": "stdout",
@@ -2867,11 +2867,11 @@
       "parameters": [
         {
           "name": "first_file",
-          "type": "string"
+          "type": "file"
         },
         {
           "name": "second_file",
-          "type": "string"
+          "type": "file"
         }
       ],
       "is_multi_output": false,

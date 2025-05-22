@@ -6,11 +6,13 @@ import {
     useTheme
 } from '@mui/material';
 import React, { useContext, useEffect, useState } from 'react';
+import description from '../../description.json';
 import InputPanel from '../components/InputPanel';
 import ErrorBoundary from '/src/components/ErrorBoundary'; // Ensure this component exists
 import OperationsPanel from '/src/components/OperationsPanel';
 import RecipePanel from '/src/components/RecipePanel';
 import { DataTypeContext } from '/src/contexts/DataTypeContext';
+
 
 const WorkflowPage = () => {
     const [workflow, setWorkflow] = useState([]);
@@ -58,7 +60,19 @@ const WorkflowPage = () => {
     // Save workflow in localStorage
     useEffect(() => {
         if (isVariableLoaded) {
-            localStorage.setItem('workflow', JSON.stringify(workflow));
+            // Create a copy of the workflow and remove file input parameters
+            const workflowToSave = workflow.map(tool => {
+                const toolConfig = description.tools.find(t => t.name === `gto_${tool.toolName}`);
+                if (toolConfig && toolConfig.input.type === "file") {
+                    // For tools with file input, create a copy without parameters
+                    return {
+                        ...tool,
+                        params: {}
+                    };
+                }
+                return tool;
+            });
+            localStorage.setItem('workflow', JSON.stringify(workflowToSave));
         }
     }, [workflow, isVariableLoaded]);
 
