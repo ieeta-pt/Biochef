@@ -43,6 +43,7 @@
       module.FS.writeFile('input.txt', inputData);
       let fullArgs = args.slice();
 
+
       console.log("Executing module.callMain with arguments:", fullArgs);
       module.callMain(fullArgs);
 

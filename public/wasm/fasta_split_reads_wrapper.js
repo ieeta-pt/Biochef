@@ -43,6 +43,7 @@
       module.FS.writeFile('input.txt', inputData);
       let fullArgs = args.slice();
 
+
       console.log("Executing module.callMain with arguments:", fullArgs);
       module.callMain(fullArgs);
 
@@ -60,7 +61,7 @@
         for (const fname of filesOut) module.FS.unlink(`/outputs/${fname}`);
         module.FS.rmdir('/outputs');
       } catch (e) {
-        console.error('Error reading multi-output files:', e);
+        console.error('Error reading output files:', e);
       }
       return { stdout: stdoutBuffer.trim(), stderr: stderrBuffer.trim(), outputs: outputFiles };
 

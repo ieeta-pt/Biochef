@@ -358,37 +358,18 @@
         "format": "FASTQ"
       },
       "output": {
-        "type": "stdout",
-        "format": "text"
+        "type": "file",
+        "format": "FASTQ"
       },
       "flags": [
         {
           "flag": "-h",
           "parameter": null,
           "required": false
-        },
-        {
-          "flag": "-f",
-          "parameter": "forward",
-          "required": true
-        },
-        {
-          "flag": "-r",
-          "parameter": "reverse",
-          "required": true
         }
       ],
-      "parameters": [
-        {
-          "name": "forward",
-          "type": "file"
-        },
-        {
-          "name": "reverse",
-          "type": "file"
-        }
-      ],
-      "is_multi_output": false,
+      "parameters": [],
+      "is_multi_output": true,
       "source": "gto/src/FastqSplit.c"
     },
     {

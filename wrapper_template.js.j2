@@ -58,6 +58,14 @@
       let fullArgs = args;
       {% endif %}
 
+      {% if tool_name == 'fastq_split' %}
+      // Special handling for fastq_split - add -f and -r flags with output filenames
+      // Only add flags if -h is not present
+      if (!fullArgs.includes('-h')) {
+        fullArgs = ['-f', 'forward.fastq', '-r', 'reverse.fastq', ...fullArgs];
+      }
+      {% endif %}
+
       console.log("Executing module.callMain with arguments:", fullArgs);
       module.callMain(fullArgs);
 
@@ -68,6 +76,17 @@
       // Multi-output: read all files from /outputs
       let outputFiles = {};
       try {
+        {% if tool_name == 'fastq_split' %}
+        // Special handling for fastq_split - read files directly from root directory
+        if (module.FS.analyzePath('forward.fastq').exists) {
+          outputFiles['forward.fastq'] = module.FS.readFile('forward.fastq', { encoding: 'utf8' });
+          module.FS.unlink('forward.fastq');
+        }
+        if (module.FS.analyzePath('reverse.fastq').exists) {
+          outputFiles['reverse.fastq'] = module.FS.readFile('reverse.fastq', { encoding: 'utf8' });
+          module.FS.unlink('reverse.fastq');
+        }
+        {% else %}
         const filesOut = module.FS.readdir('/outputs').filter(f => f !== '.' && f !== '..');
         for (const fname of filesOut) {
           outputFiles[fname] = module.FS.readFile(`/outputs/${fname}`, { encoding: 'utf8' });
@@ -75,8 +94,9 @@
         // cleanup outputs directory
         for (const fname of filesOut) module.FS.unlink(`/outputs/${fname}`);
         module.FS.rmdir('/outputs');
+        {% endif %}
       } catch (e) {
-        console.error('Error reading multi-output files:', e);
+        console.error('Error reading output files:', e);
       }
       return { stdout: stdoutBuffer.trim(), stderr: stderrBuffer.trim(), outputs: outputFiles };
       {% else %}

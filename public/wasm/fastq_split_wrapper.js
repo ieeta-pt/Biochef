@@ -7,7 +7,7 @@
   /**
    * Runs the FastqSplit tool.
    * Uses a single stdin data string.   * @param {string} inputData - The input data.   * @param {Array<string>} args - CLI arguments (include flags and filenames for file inputs).
-   * @returns {Promise<Object>} An object containing stdout and stderr outputs.
+   * @returns {Promise<Object>} An object containing stdout and stderr outputs and output files.
    */
   async function runFastqSplit(inputData, args = []) {
     console.log("Starting runFastqSplit");
@@ -43,15 +43,34 @@
       module.FS.writeFile('input.txt', inputData);
       let fullArgs = args.slice();
 
+      // Special handling for fastq_split - add -f and -r flags with output filenames
+      // Only add flags if -h is not present
+      if (!fullArgs.includes('-h')) {
+        fullArgs = ['-f', 'forward.fastq', '-r', 'reverse.fastq', ...fullArgs];
+      }
+
       console.log("Executing module.callMain with arguments:", fullArgs);
       module.callMain(fullArgs);
 
       // ------------------------------------------------------------------
       // Collect outputs
       // ------------------------------------------------------------------
-      // Single-output: capture stdout
-      const outData = stdoutBuffer.trim();
-      return { stdout: outData, stderr: stderrBuffer.trim() };
+      // Multi-output: read all files from /outputs
+      let outputFiles = {};
+      try {
+        // Special handling for fastq_split - read files directly from root directory
+        if (module.FS.analyzePath('forward.fastq').exists) {
+          outputFiles['forward.fastq'] = module.FS.readFile('forward.fastq', { encoding: 'utf8' });
+          module.FS.unlink('forward.fastq');
+        }
+        if (module.FS.analyzePath('reverse.fastq').exists) {
+          outputFiles['reverse.fastq'] = module.FS.readFile('reverse.fastq', { encoding: 'utf8' });
+          module.FS.unlink('reverse.fastq');
+        }
+      } catch (e) {
+        console.error('Error reading output files:', e);
+      }
+      return { stdout: stdoutBuffer.trim(), stderr: stderrBuffer.trim(), outputs: outputFiles };
 
     } catch (err) {
       console.error(`Error in runFastqSplit:`, err);

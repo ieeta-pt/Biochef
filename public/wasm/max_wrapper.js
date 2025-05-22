@@ -47,6 +47,7 @@
       // For file-based tools, just pass the args as is
       let fullArgs = args;
 
+
       console.log("Executing module.callMain with arguments:", fullArgs);
       module.callMain(fullArgs);
 
