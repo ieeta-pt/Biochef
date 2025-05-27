@@ -85,7 +85,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         {
@@ -107,7 +107,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         {
@@ -435,7 +435,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         {
@@ -467,7 +467,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         {
@@ -499,7 +499,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         {
@@ -866,7 +866,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         "-h",
@@ -911,11 +911,11 @@
       "description": "Filters and segments the regions of singularity from the output of gto_fastq_variation_map.",
       "input": {
         "type": "stdin",
-        "format": "text"
+        "format": "TEXT"
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         "-h",
@@ -955,7 +955,7 @@
       "description": "Depicts the regions of singularity using the output from gto_fastq_variation_filter into an SVG image.",
       "input": {
         "type": "stdin",
-        "format": "text"
+        "format": "TEXT"
       },
       "output": {
         "type": "stdout",
@@ -1204,7 +1204,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         {
@@ -1351,7 +1351,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         {
@@ -1417,7 +1417,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         {
@@ -1493,7 +1493,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         "-h",
@@ -1538,11 +1538,11 @@
       "description": "This tool is an alias to gto_fastq_variation_filter tool. Please check the documentation of this tool in the in the section of FASTQ tools.",
       "input": {
         "type": "stdin",
-        "format": "text"
+        "format": "TEXT"
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         "-h",
@@ -1582,7 +1582,7 @@
       "description": "This tool is an alias to gto_fastq_variation_visual tool. Please check the documentation of this tool in the in the section of FASTQ tools.",
       "input": {
         "type": "stdin",
-        "format": "text"
+        "format": "TEXT"
       },
       "output": {
         "type": "stdout",
@@ -1620,7 +1620,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         {
@@ -2133,7 +2133,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         {
@@ -2376,7 +2376,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         {
@@ -2542,11 +2542,11 @@
       "description": "Search for a word in a file. It is case sensitive.",
       "input": {
         "type": "stdin",
-        "format": "text"
+        "format": "TEXT, Multi-FASTA, FASTA, FASTQ, NUM, DNA, RNA, AminoAcids"
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         {
@@ -2620,7 +2620,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         {

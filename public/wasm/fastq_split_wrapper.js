@@ -42,6 +42,15 @@
       inputData = inputData.replace(/\r\n/g, '\n');
       module.FS.writeFile('input.txt', inputData);
       let fullArgs = args.slice();
+      
+      // For multi-output tools, create a dedicated output directory
+      try {
+        module.FS.mkdir('/outputs');
+      } catch (e) {
+        console.log('Output directory already exists.');
+      }
+
+      
 
       // Special handling for fastq_split - add -f and -r flags with output filenames
       // Only add flags if -h is not present

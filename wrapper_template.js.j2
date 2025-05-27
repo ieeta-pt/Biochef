@@ -48,6 +48,23 @@
       inputData = inputData.replace(/\r\n/g, '\n');
       module.FS.writeFile('input.txt', inputData);
       let fullArgs = args.slice();
+      
+      {% if is_multi_output %}
+      // For multi-output tools, create a dedicated output directory
+      try {
+        module.FS.mkdir('/outputs');
+      } catch (e) {
+        console.log('Output directory already exists.');
+      }
+
+      {% if tool_name == 'fasta_split_reads' %}
+      // Add output directory to arguments if not provided
+      if (!fullArgs.includes('-l')) {
+        fullArgs.push('-l', '/outputs');
+      }
+      {% endif %}
+      
+      {% endif %}
       {% else %}
       // Write each file parameter into MEMFS
       for (const [param, file] of Object.entries(files)) {

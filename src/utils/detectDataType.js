@@ -2,7 +2,7 @@
  * Detects the data type based on file name or content.
  * @param {string} fileName - Name of the file.
  * @param {string|object} content - Content of the file or object containing multiple outputs.
- * @returns {string} - Detected data type (e.g., 'FASTA', 'FASTQ', 'DNA', 'RNA', 'AminoAcids', 'UNKNOWN').
+ * @returns {string} - Detected data type (e.g., 'FASTA', 'FASTQ', 'DNA', 'RNA', 'AminoAcids', 'TEXT', 'UNKNOWN').
  */
 export const detectDataType = (fileName, content) => {
   // Handle object content (multiple outputs)
@@ -162,6 +162,11 @@ export const detectDataType = (fileName, content) => {
     return 'NUM';
   }
 
-  // Fallback to 'UNKNOWN' if no type matches
+  // Check if content is readable text (contains mostly printable ASCII characters)
+  if (/^[\x20-\x7E\s\r\n]+$/.test(trimmedContent)) {
+    return 'TEXT';
+  }
+
+  // Fallback to 'UNKNOWN' if the content doesn't match any known type or isn't readable text
   return 'UNKNOWN';
 };

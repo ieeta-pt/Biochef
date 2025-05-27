@@ -152,17 +152,17 @@ export const DataTypeProvider = ({ children }) => {
         }
         return isAminoAcidsValid;
 
-      case 'text':
-        // For text, any non-empty string is considered valid
-        const isTextValid = trimmedData.length > 0;
+      case 'TEXT':
+        // For TEXT type, validate that it contains only printable ASCII characters
+        const isTextValid = /^[\x20-\x7E\s\r\n]+$/.test(trimmedData);
         if (!isTextValid) {
-          console.error('Text validation failed: Input is empty.');
+          console.error('TEXT validation failed: Contains non-printable or non-ASCII characters.');
         }
         return isTextValid;
 
       default:
-        // For UNKNOWN or unhandled types, consider them invalid
-        console.error('Validation failed: Unknown data type.');
+        // For unhandled types, consider them invalid
+        console.error('Validation failed: Unrecognized data type.');
         return false;
     }
   };

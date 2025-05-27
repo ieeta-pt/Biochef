@@ -42,6 +42,19 @@
       inputData = inputData.replace(/\r\n/g, '\n');
       module.FS.writeFile('input.txt', inputData);
       let fullArgs = args.slice();
+      
+      // For multi-output tools, create a dedicated output directory
+      try {
+        module.FS.mkdir('/outputs');
+      } catch (e) {
+        console.log('Output directory already exists.');
+      }
+
+      // Add output directory to arguments if not provided
+      if (!fullArgs.includes('-l')) {
+        fullArgs.push('-l', '/outputs');
+      }
+      
 
 
       console.log("Executing module.callMain with arguments:", fullArgs);

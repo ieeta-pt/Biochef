@@ -42,6 +42,7 @@
       inputData = inputData.replace(/\r\n/g, '\n');
       module.FS.writeFile('input.txt', inputData);
       let fullArgs = args.slice();
+      
 
 
       console.log("Executing module.callMain with arguments:", fullArgs);

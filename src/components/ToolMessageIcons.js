@@ -26,7 +26,7 @@ export default function ToolMessageIcons({ messages = {} }) {
                         <Box>
                             <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>Info</Typography>
                             {info.map((txt, i) => (
-                                <Typography variant="body2">{txt}</Typography>
+                                <Typography key={`info-${i}`} variant="body2">{txt}</Typography>
                             ))}
                         </Box>
                     }
@@ -54,7 +54,7 @@ export default function ToolMessageIcons({ messages = {} }) {
                                 Errors
                             </Typography>
                             {error.map((txt, i) => (
-                                <Typography variant="body2">{txt}</Typography>
+                                <Typography key={`error-${i}`} variant="body2">{txt}</Typography>
                             ))}
                         </Box>
                     }

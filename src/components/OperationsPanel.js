@@ -193,15 +193,15 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
           }}
         >
           {hasValidationErrors && (
-              <>
-                <Block sx={{
-                  color: 'error.main',
-                  fontSize: 60,
-                }} />
-                <Typography variant="body1" sx={{ color: 'error.main', textAlign: 'center' }}>
-                  Correct the invalid parameters in the workflow to unlock the unavailable features.
-                </Typography>
-              </>
+            <>
+              <Block sx={{
+                color: 'error.main',
+                fontSize: 60,
+              }} />
+              <Typography variant="body1" sx={{ color: 'error.main', textAlign: 'center' }}>
+                Correct the invalid parameters in the workflow to unlock the unavailable features.
+              </Typography>
+            </>
           )}
         </Box>
       )}

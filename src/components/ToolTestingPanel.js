@@ -19,14 +19,18 @@ import {
 } from '@mui/material';
 import React, { useContext, useEffect, useState } from 'react';
 import description from '../../description.json';
+import { DataTypeContext } from '../contexts/DataTypeContext';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { loadWasmModule } from '../gtoWasm';
 import { detectDataType } from '../utils/detectDataType';
+import { processFile } from '../utils/fileProcessor';
 
 const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
     const [validationErrors, setValidationErrors] = useState({}); // To store validation errors
     const [parameters, setParameters] = useState({});   // To store parameters
     const [helpMessages, setHelpMessages] = useState({}); // To store help messages
+    const [toolParameterFiles, setToolParameterFiles] = useState({}); // To store tool parameter files
+    const { validateData } = useContext(DataTypeContext);
 
     // Find tool configuration and supported input formats
     const toolConfig = description.tools.find((t) => t.name === `gto_${tool.name}`);
@@ -150,10 +154,27 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
         return Object.keys(errors).length === 0;
     };
 
-    const handleParameterChange = (name, value) => {
+    const handleParameterChange = async (name, value) => {
+        // If it's a File, process it using processFile
+        let paramValue = value;
+        if (value instanceof File) {
+            const processedFile = await processFile(value, validateData, showNotification);
+            if (!processedFile) {
+                return; // Stop if file processing failed
+            }
+            paramValue = processedFile.name;
+
+            // Store the processed file in toolParameterFiles
+            const fileObj = { name: processedFile.name, data: processedFile.content };
+            setToolParameterFiles((prev) => ({
+                ...prev,
+                [name]: fileObj,
+            }));
+        }
+
         setParameters((prevParams) => ({
             ...prevParams,
-            [name]: value,
+            [name]: paramValue,
         }));
     };
 
@@ -200,7 +221,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
 
             // Verify if the input data is compatible with the tool
             const inputDataType = detectDataType("input.txt", inputData);
-            if (!inputFormats.includes(inputDataType) && toolConfig.input.type !== '') {
+            if (!inputFormats.includes(inputDataType) && toolConfig.input.type !== '' && toolConfig.input.type !== 'file') {
                 showNotification(
                     `Input data type ${inputDataType} is not supported by tool ${tool.name}.`,
                     'error'
@@ -217,7 +238,14 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
             }
 
             // Execute the tool
-            const outputData = await runFunction(inputData, args);
+            let outputData;
+            if (inputData === '' && toolParameterFiles && Object.keys(toolParameterFiles).length > 0) {
+                // If input is empty and there are parameter files for the tool, use them
+                outputData = await runFunction(toolParameterFiles, args);
+            } else {
+                // Execute the tool
+                outputData = await runFunction(inputData, args);
+            }
 
             // Handle messages in stderr
             if (outputData.stderr) {
@@ -282,6 +310,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
                         </Typography>
                         {requiredFlags.map((flagObj) => {
                             const flagValue = !!parameters[flagObj.flag];
+                            const paramConfig = toolParameters.find((p) => p.name === flagObj.parameter);
                             const parameterValue = parameters[flagObj.parameter] || '';
                             const error = validationErrors[flagObj.parameter] || '';
 
@@ -317,47 +346,66 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
                                         }
                                         sx={{ alignItems: 'center', margin: 0 }}
                                     />
-                                    {toolParameters.find((p) => p.name === flagObj.parameter) && (
-                                        <TextField
-                                            key={flagObj.parameter}
-                                            value={parameterValue}
-                                            onChange={(e) =>
-                                                handleParameterChange(flagObj.parameter, e.target.value)
-                                            }
-                                            size="small"
-                                            label={toolParameters.find((p) => p.name === flagObj.parameter)?.type}
-                                            error={!!error}
-                                            helperText={error}
-                                            sx={{
-                                                flexGrow: 1,
-                                                '& .MuiOutlinedInput-root': {
-                                                    borderColor: error ? 'red' : 'default',
-                                                },
-                                                '& .MuiOutlinedInput-notchedOutline': error
-                                                    ? {
-                                                        borderColor: 'red',
-                                                        borderWidth: '1px',
-                                                    }
-                                                    : {},
-                                            }}
-                                            type={
-                                                toolConfig.parameters.find((p) => p.name === flagObj.parameter)?.type ===
-                                                    'integer'
-                                                    ? 'number'
-                                                    : toolConfig.parameters.find((p) => p.name === flagObj.parameter)
-                                                        ?.type === 'float'
-                                                        ? 'number'
-                                                        : 'text'
-                                            }
-                                            inputProps={
-                                                toolConfig.parameters.find((p) => p.name === flagObj.parameter)?.type ===
-                                                    'integer' ||
+                                    {paramConfig && (
+                                        paramConfig.type === 'file' ? (
+                                            <>
+                                                <Button variant="outlined" component="label" size="small">
+                                                    {parameterValue ? 'Change File' : 'Upload File'}
+                                                    <input
+                                                        type="file"
+                                                        hidden
+                                                        onChange={(e) =>
+                                                            handleParameterChange(flagObj.parameter, e.target.files[0])
+                                                        }
+                                                    />
+                                                </Button>
+                                                {parameterValue && (
+                                                    <Typography variant="caption" sx={{ ml: 1 }}>
+                                                        {parameterValue.name || parameterValue}
+                                                    </Typography>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <TextField
+                                                value={parameterValue}
+                                                onChange={(e) =>
+                                                    handleParameterChange(flagObj.parameter, e.target.value)
+                                                }
+                                                size="small"
+                                                label={paramConfig.type}
+                                                error={!!error}
+                                                helperText={error}
+                                                sx={{
+                                                    flexGrow: 1,
+                                                    '& .MuiOutlinedInput-root': {
+                                                        borderColor: error ? 'red' : 'default',
+                                                    },
+                                                    '& .MuiOutlinedInput-notchedOutline': error
+                                                        ? {
+                                                            borderColor: 'red',
+                                                            borderWidth: '1px',
+                                                        }
+                                                        : {},
+                                                }}
+                                                type={
                                                     toolConfig.parameters.find((p) => p.name === flagObj.parameter)?.type ===
-                                                    'float'
-                                                    ? { step: 'any' }
-                                                    : {}
-                                            }
-                                        />
+                                                        'integer'
+                                                        ? 'number'
+                                                        : toolConfig.parameters.find((p) => p.name === flagObj.parameter)
+                                                            ?.type === 'float'
+                                                            ? 'number'
+                                                            : 'text'
+                                                }
+                                                inputProps={
+                                                    toolConfig.parameters.find((p) => p.name === flagObj.parameter)?.type ===
+                                                        'integer' ||
+                                                        toolConfig.parameters.find((p) => p.name === flagObj.parameter)?.type ===
+                                                        'float'
+                                                        ? { step: 'any' }
+                                                        : {}
+                                                }
+                                            />
+                                        )
                                     )}
                                 </Box>
                             );
@@ -381,6 +429,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
 
                         {optionalFlags.map((flagObj) => {
                             const flagValue = !!parameters[flagObj.flag];
+                            const paramConfig = toolParameters.find((p) => p.name === flagObj.parameter);
                             const parameterValue = parameters[flagObj.parameter] || '';
                             const error = validationErrors[flagObj.parameter] || '';
 
@@ -422,47 +471,67 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
                                         }
                                         sx={{ alignItems: 'center', margin: 0 }}
                                     />
-                                    {toolParameters.find((p) => p.name === flagObj.parameter) && flagValue && (
-                                        <TextField
-                                            value={parameterValue}
-                                            onChange={(e) =>
-                                                handleParameterChange(flagObj.parameter, e.target.value)
-                                            }
-                                            size="small"
-                                            label={toolParameters.find((p) => p.name === flagObj.parameter)?.type}
-                                            error={!!error}
-                                            helperText={error}
-                                            sx={{
-                                                flexGrow: 1,
-                                                '& .MuiOutlinedInput-root': {
-                                                    borderColor: error ? 'red' : 'default',
-                                                },
-                                                '& .MuiOutlinedInput-notchedOutline': error
-                                                    ? {
-                                                        borderColor: 'red',
-                                                        borderWidth: '1px',
-                                                    }
-                                                    : {},
-                                                alignSelf: 'center',
-                                            }}
-                                            type={
-                                                toolConfig.parameters.find((p) => p.name === flagObj.parameter)?.type ===
-                                                    'integer'
-                                                    ? 'number'
-                                                    : toolConfig.parameters.find((p) => p.name === flagObj.parameter)
-                                                        ?.type === 'float'
-                                                        ? 'number'
-                                                        : 'text'
-                                            }
-                                            inputProps={
-                                                toolConfig.parameters.find((p) => p.name === flagObj.parameter)?.type ===
-                                                    'integer' ||
+                                    {paramConfig && flagValue && (
+                                        paramConfig.type === 'file' ? (
+                                            <>
+                                                <Button variant="outlined" component="label" size="small">
+                                                    {parameterValue ? 'Change File' : 'Upload File'}
+                                                    <input
+                                                        type="file"
+                                                        hidden
+                                                        onChange={(e) =>
+                                                            handleParameterChange(flagObj.parameter, e.target.files[0])
+                                                        }
+                                                    />
+                                                </Button>
+                                                {parameterValue && (
+                                                    <Typography variant="caption" sx={{ ml: 1 }}>
+                                                        {parameterValue.name || parameterValue}
+                                                    </Typography>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <TextField
+                                                value={parameterValue}
+                                                onChange={(e) =>
+                                                    handleParameterChange(flagObj.parameter, e.target.value)
+                                                }
+                                                size="small"
+                                                label={paramConfig.type}
+                                                error={!!error}
+                                                helperText={error}
+                                                sx={{
+                                                    flexGrow: 1,
+                                                    '& .MuiOutlinedInput-root': {
+                                                        borderColor: error ? 'red' : 'default',
+                                                    },
+                                                    '& .MuiOutlinedInput-notchedOutline': error
+                                                        ? {
+                                                            borderColor: 'red',
+                                                            borderWidth: '1px',
+                                                        }
+                                                        : {},
+                                                    alignSelf: 'center',
+                                                }}
+                                                type={
                                                     toolConfig.parameters.find((p) => p.name === flagObj.parameter)?.type ===
-                                                    'float'
-                                                    ? { step: 'any' }
-                                                    : {}
-                                            }
-                                        />
+                                                        'integer'
+                                                        ? 'number'
+                                                        : toolConfig.parameters.find((p) => p.name === flagObj.parameter)
+                                                            ?.type === 'float'
+                                                            ? 'number'
+                                                            : 'text'
+                                                }
+                                                inputProps={
+                                                    toolConfig.parameters.find((p) => p.name === flagObj.parameter)?.type ===
+                                                        'integer' ||
+                                                        toolConfig.parameters.find((p) => p.name === flagObj.parameter)?.type ===
+                                                        'float'
+                                                        ? { step: 'any' }
+                                                        : {}
+                                                }
+                                            />
+                                        )
                                     )}
                                 </Box>
                             );
