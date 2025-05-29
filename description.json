@@ -1667,7 +1667,7 @@
       },
       "output": {
         "type": "file",
-        "format": "TEXT, DNA"
+        "format": "TEXT, DNA, AminoAcids, RNA"
       },
       "flags": [
         {
@@ -1686,7 +1686,7 @@
       "description": "It merges the three channels of information (headers, extra and DNA) and writes it into a FASTA file.",
       "input": {
         "type": "file",
-        "format": "TEXT, DNA"
+        "format": "TEXT, DNA, AminoAcids, RNA"
       },
       "output": {
         "type": "stdout",
@@ -1697,39 +1697,26 @@
           "flag": "-h",
           "parameter": null,
           "required": false
-        },
-        {
-          "flag": "-e",
-          "parameter": "extra",
-          "required": true
-        },
-        {
-          "flag": "-d",
-          "parameter": "dna",
-          "required": true
-        },
-        {
-          "flag": "-H",
-          "parameter": "headers",
-          "required": true
         }
       ],
       "parameters": [
         {
-          "name": "extra",
-          "type": "string"
+          "name": "headers"
         },
         {
-          "name": "dna",
-          "type": "string"
+          "name": "extra"
         },
         {
-          "name": "headers",
-          "type": "string"
+          "name": "dna"
         }
       ],
       "is_multi_output": false,
       "is_multi_type_output": false,
+      "related_tools": [
+        {
+          "name": "gto_fasta_split_streams"
+        }
+      ],
       "source": "gto/src/FastaMergeStreams.c"
     },
     {
