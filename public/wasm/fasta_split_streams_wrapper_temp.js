@@ -7,7 +7,7 @@
   /**
    * Runs the FastaSplitStreams tool.
    * Uses a single stdin data string.   * @param {string} inputData - The input data.   * @param {Array<string>} args - CLI arguments (include flags and filenames for file inputs).
-   * @returns {Promise<Object>} An object containing stdout and stderr outputs.
+   * @returns {Promise<Object>} An object containing stdout and stderr outputs and output files.
    */
   async function runFastaSplitStreams(inputData, args = []) {
     console.log("Starting runFastaSplitStreams");
@@ -43,6 +43,14 @@
       module.FS.writeFile('input.txt', inputData);
       let fullArgs = args.slice();
       
+      // For multi-output tools, create a dedicated output directory
+      try {
+        module.FS.mkdir('/outputs');
+      } catch (e) {
+        console.log('Output directory already exists.');
+      }
+
+      
 
 
       console.log("Executing module.callMain with arguments:", fullArgs);
@@ -51,9 +59,40 @@
       // ------------------------------------------------------------------
       // Collect outputs
       // ------------------------------------------------------------------
-      // Single-output: capture stdout
-      const outData = stdoutBuffer.trim();
-      return { stdout: outData, stderr: stderrBuffer.trim() };
+      // Multi-output: read all files from /outputs
+      let outputFiles = {};
+      try {
+        // Special handling for fasta_split_streams - read the three specific output files
+        const headerFile = 'HEADERS.JV2';
+        const extraFile = 'EXTRA.JV2';
+        const dnaFile = 'DNA.JV2';
+        
+        try {
+          outputFiles['headers'] = module.FS.readFile(headerFile, { encoding: 'utf8' });
+        } catch (err) {
+          console.warn(`Could not read headers file ${headerFile}:`, err);
+        }
+        
+        try {
+          outputFiles['extra'] = module.FS.readFile(extraFile, { encoding: 'utf8' });
+        } catch (err) {
+          console.warn(`Could not read extra file ${extraFile}:`, err);
+        }
+        
+        try {
+          outputFiles['dna'] = module.FS.readFile(dnaFile, { encoding: 'utf8' });
+        } catch (err) {
+          console.warn(`Could not read DNA file ${dnaFile}:`, err);
+        }
+        
+        // Clean up the files after reading
+        try { module.FS.unlink(headerFile); } catch (e) {}
+        try { module.FS.unlink(extraFile); } catch (e) {}
+        try { module.FS.unlink(dnaFile); } catch (e) {}
+      } catch (e) {
+        console.error('Error reading output files:', e);
+      }
+      return { stdout: stdoutBuffer.trim(), stderr: stderrBuffer.trim(), outputs: outputFiles };
 
     } catch (err) {
       console.error(`Error in runFastaSplitStreams:`, err);

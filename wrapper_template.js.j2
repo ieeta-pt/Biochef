@@ -103,6 +103,34 @@
           outputFiles['reverse.fastq'] = module.FS.readFile('reverse.fastq', { encoding: 'utf8' });
           module.FS.unlink('reverse.fastq');
         }
+        {% elif tool_name == 'fasta_split_streams' %}
+        // Special handling for fasta_split_streams - read the three specific output files
+        const headerFile = 'HEADERS.JV2';
+        const extraFile = 'EXTRA.JV2';
+        const dnaFile = 'DNA.JV2';
+        
+        try {
+          outputFiles['headers'] = module.FS.readFile(headerFile, { encoding: 'utf8' });
+        } catch (err) {
+          console.warn(`Could not read headers file ${headerFile}:`, err);
+        }
+        
+        try {
+          outputFiles['extra'] = module.FS.readFile(extraFile, { encoding: 'utf8' });
+        } catch (err) {
+          console.warn(`Could not read extra file ${extraFile}:`, err);
+        }
+        
+        try {
+          outputFiles['dna'] = module.FS.readFile(dnaFile, { encoding: 'utf8' });
+        } catch (err) {
+          console.warn(`Could not read DNA file ${dnaFile}:`, err);
+        }
+        
+        // Clean up the files after reading
+        try { module.FS.unlink(headerFile); } catch (e) {}
+        try { module.FS.unlink(extraFile); } catch (e) {}
+        try { module.FS.unlink(dnaFile); } catch (e) {}
         {% else %}
         const filesOut = module.FS.readdir('/outputs').filter(f => f !== '.' && f !== '..');
         for (const fname of filesOut) {

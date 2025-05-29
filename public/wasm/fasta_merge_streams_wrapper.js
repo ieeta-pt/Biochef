@@ -6,10 +6,10 @@
 (function() {
   /**
    * Runs the FastaMergeStreams tool.
-   * Uses a single stdin data string.   * @param {string} inputData - The input data.   * @param {Array<string>} args - CLI arguments (include flags and filenames for file inputs).
+   * Accepts file inputs for parameters.   * @param {Object.<string,{name:string,data:(string|Uint8Array)}> } files - Mapping of parameter names to file objects.   * @param {Array<string>} args - CLI arguments (include flags and filenames for file inputs).
    * @returns {Promise<Object>} An object containing stdout and stderr outputs.
    */
-  async function runFastaMergeStreams(inputData, args = []) {
+  async function runFastaMergeStreams(files, args = []) {
     console.log("Starting runFastaMergeStreams");
     console.log("Arguments:", args);
 
@@ -25,6 +25,7 @@
         noInitialRun: true,
         print: (text) => { stdoutBuffer += text + '\n'; },
         printErr: (text) => { stderrBuffer += text + '\n'; },
+        stdin: null,  // Disable stdin for file-based tools
       };
 
       // Load the WASM module script
@@ -38,11 +39,13 @@
       // ------------------------------------------------------------------
       // Write inputs into the virtual filesystem
       // ------------------------------------------------------------------
-      // Normalize and write single stdin input
-      inputData = inputData.replace(/\r\n/g, '\n');
-      module.FS.writeFile('input.txt', inputData);
-      let fullArgs = args.slice();
-      
+      // Write each file parameter into MEMFS
+      for (const [param, file] of Object.entries(files)) {
+        // file.name is the filename, file.data is string or Uint8Array
+        module.FS.writeFile(file.name, file.data);
+      }
+      // For file-based tools, just pass the args as is
+      let fullArgs = args;
 
 
       console.log("Executing module.callMain with arguments:", fullArgs);

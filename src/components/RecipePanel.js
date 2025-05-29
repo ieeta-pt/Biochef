@@ -23,8 +23,10 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
+  FormControl,
   FormControlLabel,
   IconButton,
+  InputLabel,
   MenuItem,
   Paper,
   Select,
@@ -95,6 +97,10 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
   const [deleteOperation, setDeleteOperation] = useState(false); // To store the delete from here state
   const [selectedInput, setSelectedInput] = useState(''); // Tracks selected input
   const [toolParameterFiles, setToolParameterFiles] = useState({}); // To store tool parameter files
+  const [selectedOutputTypes, setSelectedOutputTypes] = useState(() => {
+    const savedTypes = localStorage.getItem('selectedOutputTypes');
+    return savedTypes ? JSON.parse(savedTypes) : {};
+  }); // Track which output type is selected for multi-type output tools
   const { validateData } = useContext(DataTypeContext);
   const showNotification = useContext(NotificationContext);
 
@@ -148,6 +154,11 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
     localStorage.setItem('expandedTools', JSON.stringify(expandedTools));
   }, [expandedTools]);
 
+  // Save selectedOutputTypes in localStorage
+  useEffect(() => {
+    localStorage.setItem('selectedOutputTypes', JSON.stringify(selectedOutputTypes));
+  }, [selectedOutputTypes]);
+
   // Update outputMap when selectedFiles change
   useEffect(() => {
     // Build a set of the IDs of the currently selected file inputs
@@ -199,6 +210,12 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
 
         for (let i = (insertAtIndex !== null && insertAtIndex > 0) ? insertAtIndex : 0; i < workflow.length; i++) {
           const tool = workflow[i];
+
+          // Get tool configuration at the beginning of each loop iteration
+          // This ensures it's available throughout the entire iteration
+          const toolConfig = description.tools.find((t) => t.name === `gto_${tool.toolName}`);
+          const isMultiTypeOutput = toolConfig && toolConfig.is_multi_type_output;
+
           try {
             // Validate parameters
             const isValid = validateParameters(tool, data);
@@ -208,6 +225,20 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
             }
 
             let output;
+
+            // Check if previous tool was multi-type and we have a selection
+            if (i > 0) {
+              const prevTool = workflow[i - 1];
+              const prevToolConfig = description.tools.find((t) => t.name === `gto_${prevTool.toolName}`);
+              const isPrevMultiTypeOutput = prevToolConfig && prevToolConfig.is_multi_type_output;
+
+              // If previous tool is multi-type and we have a selection, use only that selected output
+              if (isPrevMultiTypeOutput && selectedOutputTypes[prevTool.id] && typeof data === 'object' && data.hasOwnProperty(selectedOutputTypes[prevTool.id])) {
+                console.log(`Using selected output stream ${selectedOutputTypes[prevTool.id]} from ${prevTool.toolName} for tool ${tool.toolName}`);
+                data = data[selectedOutputTypes[prevTool.id]];
+              }
+            }
+
             if (typeof data === 'object' && !Array.isArray(data)) {
               // If data is a multi-output object, process each file
               output = {};
@@ -273,11 +304,23 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
               // result can return an object with the key "outputs" (multiple outputs) or the key "stdout" (single output)
               if (typeof result === 'object' && result.outputs) {
                 output = result.outputs;
+
+                // If it's a multi-type output tool and no output type is selected yet, select the first one by default
+                if (isMultiTypeOutput && !selectedOutputTypes[tool.id]) {
+                  const outputKeys = Object.keys(result.outputs);
+                  if (outputKeys.length > 0) {
+                    console.log(`Setting default output type for ${tool.toolName}: ${outputKeys[0]}`);
+                    setSelectedOutputTypes(prev => ({
+                      ...prev,
+                      [tool.id]: outputKeys[0]
+                    }));
+
+                  }
+                }
               } else {
                 output = result.stdout;
               }
             }
-            data = output;
 
             // Store the output in the map
             setOutputMap((prevMap) => ({
@@ -288,13 +331,32 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
               },
             }));
 
-            // Detect the data type of the output
+            // For the next tool in the loop, use the appropriate output
+            if (isMultiTypeOutput && selectedOutputTypes[tool.id] && typeof output === 'object') {
+              // For subsequent tools, data should be the selected output type
+              data = output[selectedOutputTypes[tool.id]];
+              console.log(`Using selected output type ${selectedOutputTypes[tool.id]} for next tool`);
+            } else {
+              data = output;
+            }
+
+            // Detect the data type of the output for the final output display
             let detectedType = 'UNKNOWN';
             if (typeof output === 'object') {
-              // For multiple outputs, try to detect type from the first output file
-              const firstOutput = Object.values(output)[0];
-              if (firstOutput) {
-                detectedType = detectDataType('output.txt', firstOutput);
+              // For multiple outputs, use selected output type if available
+              if (isMultiTypeOutput && selectedOutputTypes[tool.id]) {
+                const selectedOutput = output[selectedOutputTypes[tool.id]];
+                if (selectedOutput) {
+                  detectedType = detectDataType('output.txt', selectedOutput);
+                  console.log(`Detected type for selected output ${selectedOutputTypes[tool.id]}: ${detectedType}`);
+                }
+              } else {
+                // Otherwise try to detect type from the first output file
+                const firstOutput = Object.values(output)[0];
+                if (firstOutput) {
+                  detectedType = detectDataType('output.txt', firstOutput);
+                  console.log(`Detected type from first output: ${detectedType}`);
+                }
               }
             } else {
               detectedType = detectDataType('output.txt', output);
@@ -324,7 +386,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
     } else {
       setDeleteOperation(false);
     }
-  }, [workflow, inputData, selectedInput, inputDataType]);
+  }, [workflow, inputData, selectedInput, inputDataType, selectedOutputTypes]);
 
   // Run validateParameters when the page is loaded
   useEffect(() => {
@@ -560,6 +622,10 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
       setHelpMessages({});
       setDataType(inputDataType);
       setValidationErrors({});
+
+      // Also clear selectedOutputTypes when workflow is empty
+      setSelectedOutputTypes({});
+
       setWorkflow(newWorkflow);
       showNotification('All operations removed. Data type reset to input type.', 'info');
     } else {
@@ -583,6 +649,16 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
             }
           });
           return newMap;
+        });
+
+        // Remove selectedOutputType for the deleted tool
+        setSelectedOutputTypes((prev) => {
+          const newSelectedTypes = { ...prev };
+          // Only attempt to delete if the id exists in the object
+          if (newSelectedTypes.hasOwnProperty(id)) {
+            delete newSelectedTypes[id];
+          }
+          return newSelectedTypes;
         });
 
         // Execute the tools subsequent to the deleted one to update the outputMap
@@ -640,14 +716,27 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
           const lastTool = newWorkflow[newWorkflow.length - 1];
           let lastOutputType = null;
 
+          // Check if the last tool is a multi-type output tool
+          const lastToolConfig = description.tools.find((t) => t.name === `gto_${lastTool.toolName}`);
+          const isLastToolMultiType = lastToolConfig && lastToolConfig.is_multi_type_output;
+
           // Try using the manual input first
           if (outputMap["ManualInput"]?.[lastTool.id]) {
             const lastOutput = outputMap["ManualInput"]?.[lastTool.id];
             if (typeof lastOutput === 'object') {
-              // For multiple outputs, try to detect type from the first output file
-              const firstOutput = Object.values(lastOutput)[0];
-              if (firstOutput) {
-                lastOutputType = detectDataType('output.txt', firstOutput);
+              if (isLastToolMultiType && selectedOutputTypes[lastTool.id]) {
+                // If it's a multi-type output tool and we have a selection, use that specific output
+                const selectedOutput = lastOutput[selectedOutputTypes[lastTool.id]];
+                if (selectedOutput) {
+                  lastOutputType = detectDataType('output.txt', selectedOutput);
+                  console.log(`Using selected output type ${selectedOutputTypes[lastTool.id]} for data type detection`);
+                }
+              } else {
+                // For multiple outputs, try to detect type from the first output file
+                const firstOutput = Object.values(lastOutput)[0];
+                if (firstOutput) {
+                  lastOutputType = detectDataType('output.txt', firstOutput);
+                }
               }
             } else {
               lastOutputType = detectDataType('output.txt', lastOutput);
@@ -658,11 +747,21 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
               if (outputMap[inputName]?.[lastTool.id]) {
                 const lastOutput = outputMap[inputName]?.[lastTool.id];
                 if (typeof lastOutput === 'object') {
-                  // For multiple outputs, try to detect type from the first output file
-                  const firstOutput = Object.values(lastOutput)[0];
-                  if (firstOutput) {
-                    lastOutputType = detectDataType('output.txt', firstOutput);
-                    break;
+                  if (isLastToolMultiType && selectedOutputTypes[lastTool.id]) {
+                    // If it's a multi-type output tool and we have a selection, use that specific output
+                    const selectedOutput = lastOutput[selectedOutputTypes[lastTool.id]];
+                    if (selectedOutput) {
+                      lastOutputType = detectDataType('output.txt', selectedOutput);
+                      console.log(`Using selected output type ${selectedOutputTypes[lastTool.id]} for data type detection`);
+                      break;
+                    }
+                  } else {
+                    // For multiple outputs, try to detect type from the first output file
+                    const firstOutput = Object.values(lastOutput)[0];
+                    if (firstOutput) {
+                      lastOutputType = detectDataType('output.txt', firstOutput);
+                      break;
+                    }
                   }
                 } else {
                   lastOutputType = detectDataType('output.txt', lastOutput);
@@ -712,6 +811,10 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
         setHelpMessages({});
         setDataType(inputDataType);
         setValidationErrors({});
+
+        // Also clear selectedOutputTypes when workflow is empty
+        setSelectedOutputTypes({});
+
         setWorkflow(newWorkflow);
         showNotification('All operations removed. Data type reset to input type.', 'info');
       } else {
@@ -749,14 +852,27 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
         const lastTool = newWorkflow[newWorkflow.length - 1];
         let lastOutputType = null;
 
+        // Check if the last tool is a multi-type output tool
+        const lastToolConfig = description.tools.find((t) => t.name === `gto_${lastTool.toolName}`);
+        const isLastToolMultiType = lastToolConfig && lastToolConfig.is_multi_type_output;
+
         // Try using the manual input first
         if (outputMap["ManualInput"]?.[lastTool.id]) {
           const lastOutput = outputMap["ManualInput"]?.[lastTool.id];
           if (typeof lastOutput === 'object') {
-            // For multiple outputs, try to detect type from the first output file
-            const firstOutput = Object.values(lastOutput)[0];
-            if (firstOutput) {
-              lastOutputType = detectDataType('output.txt', firstOutput);
+            if (isLastToolMultiType && selectedOutputTypes[lastTool.id]) {
+              // If it's a multi-type output tool and we have a selection, use that specific output
+              const selectedOutput = lastOutput[selectedOutputTypes[lastTool.id]];
+              if (selectedOutput) {
+                lastOutputType = detectDataType('output.txt', selectedOutput);
+                console.log(`Using selected output type ${selectedOutputTypes[lastTool.id]} for data type detection`);
+              }
+            } else {
+              // For multiple outputs, try to detect type from the first output file
+              const firstOutput = Object.values(lastOutput)[0];
+              if (firstOutput) {
+                lastOutputType = detectDataType('output.txt', firstOutput);
+              }
             }
           } else {
             lastOutputType = detectDataType('output.txt', lastOutput);
@@ -767,11 +883,21 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
             if (outputMap[inputName]?.[lastTool.id]) {
               const lastOutput = outputMap[inputName]?.[lastTool.id];
               if (typeof lastOutput === 'object') {
-                // For multiple outputs, try to detect type from the first output file
-                const firstOutput = Object.values(lastOutput)[0];
-                if (firstOutput) {
-                  lastOutputType = detectDataType('output.txt', firstOutput);
-                  break;
+                if (isLastToolMultiType && selectedOutputTypes[lastTool.id]) {
+                  // If it's a multi-type output tool and we have a selection, use that specific output
+                  const selectedOutput = lastOutput[selectedOutputTypes[lastTool.id]];
+                  if (selectedOutput) {
+                    lastOutputType = detectDataType('output.txt', selectedOutput);
+                    console.log(`Using selected output type ${selectedOutputTypes[lastTool.id]} for data type detection`);
+                    break;
+                  }
+                } else {
+                  // For multiple outputs, try to detect type from the first output file
+                  const firstOutput = Object.values(lastOutput)[0];
+                  if (firstOutput) {
+                    lastOutputType = detectDataType('output.txt', firstOutput);
+                    break;
+                  }
                 }
               } else {
                 lastOutputType = detectDataType('output.txt', lastOutput);
@@ -793,6 +919,18 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
             newErrors[tool.id] = prevErrors[tool.id];
           });
           return newErrors;
+        });
+
+        // Update selectedOutputTypes to remove tools that were deleted
+        setSelectedOutputTypes((prev) => {
+          const newSelectedTypes = {};
+          // Only keep selections for tools that are still in the workflow
+          newWorkflow.forEach((tool) => {
+            if (prev[tool.id]) {
+              newSelectedTypes[tool.id] = prev[tool.id];
+            }
+          });
+          return newSelectedTypes;
         });
 
         setWorkflow(newWorkflow);
@@ -1102,6 +1240,138 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
     }));
   };
 
+  const handleOutputTypeSelection = (toolId, outputType) => {
+    console.log(`Selecting output type ${outputType} for tool ${toolId}`);
+
+    setSelectedOutputTypes(prev => ({
+      ...prev,
+      [toolId]: outputType
+    }));
+
+    // Find the tool in the workflow to trigger reprocessing from this point
+    const toolIndex = workflow.findIndex(tool => tool.id === toolId);
+    if (toolIndex >= 0) {
+      // Set insertAtIndex to trigger reprocessing from this tool onwards
+      setInsertAtIndex(toolIndex);
+    }
+  };
+
+  // Render multi-type output selector for tools like fasta_split_streams
+  const renderOutputTypeSelector = (tool) => {
+    const toolConfig = description.tools.find((t) => t.name === `gto_${tool.toolName}`);
+    if (!toolConfig || !toolConfig.is_multi_type_output) {
+      return null;
+    }
+
+    // Get the output for this tool
+    const output = outputs?.[tool.id];
+    if (!output || typeof output !== 'object') {
+      console.log(`No output available for ${tool.toolName} or output is not an object`);
+      return (
+        <Box
+          sx={{
+            marginTop: 2,
+            backgroundColor: 'rgba(255, 235, 205, 0.5)', // Light warning background
+            padding: 2,
+            borderRadius: 1,
+            border: '1px solid rgba(255, 152, 0, 0.3)' // Warning border
+          }}
+        >
+          <Typography variant="body2" color="warning.main">
+            No output data available yet. Run the tool to see output options.
+          </Typography>
+        </Box>
+      );
+    }
+
+    // Get output types, ensuring we have valid output keys
+    let outputTypes = [];
+    try {
+      if (output.outputs && typeof output.outputs === 'object') {
+        // If the tool returned a properly structured output with an outputs property
+        outputTypes = Object.keys(output.outputs);
+      } else {
+        // Fallback to top-level keys
+        outputTypes = Object.keys(output);
+      }
+    } catch (err) {
+      console.error(`Error getting output types for ${tool.toolName}:`, err);
+      outputTypes = [];
+    }
+
+    if (outputTypes.length === 0) {
+      console.log(`No output types available for ${tool.toolName}`);
+      return (
+        <Box
+          sx={{
+            marginTop: 2,
+            backgroundColor: 'rgba(255, 235, 205, 0.5)', // Light warning background
+            padding: 2,
+            borderRadius: 1,
+            border: '1px solid rgba(255, 152, 0, 0.3)' // Warning border
+          }}
+        >
+          <Typography variant="body2" color="warning.main">
+            No output streams available. There might be an issue with the tool execution.
+          </Typography>
+        </Box>
+      );
+    }
+
+    // Get selected output type with fallback to first type if needed
+    const selectedType = selectedOutputTypes[tool.id] || outputTypes[0];
+    console.log(`Selected output type for ${tool.toolName}: ${selectedType}`);
+
+    return (
+      <Box
+        sx={{
+          marginTop: 2,
+          backgroundColor: 'rgba(173, 216, 230, 0.2)', // Light blue background
+          padding: 2,
+          borderRadius: 1,
+          border: '1px solid rgba(173, 216, 230, 0.5)' // Light blue border
+        }}
+      >
+        <Typography
+          variant="subtitle2"
+          gutterBottom
+          sx={{
+            color: 'primary.main',
+            display: 'flex',
+            alignItems: 'center'
+          }}
+        >
+          Select Output Stream for Next Steps
+          <Tooltip
+            title="This tool produces multiple types of outputs (streams). You need to select which one to use for the next steps in your workflow."
+            arrow
+            placement="right"
+          >
+            <IconButton size="small" sx={{ ml: 0.5, p: 0 }}>
+              <HelpOutline fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Typography>
+
+        <FormControl fullWidth size="small" sx={{ mt: 1 }}>
+          <InputLabel id={`output-type-select-${tool.id}`}>Output Stream</InputLabel>
+          <Select
+            labelId={`output-type-select-${tool.id}`}
+            value={selectedType}
+            onChange={(e) => handleOutputTypeSelection(tool.id, e.target.value)}
+            label="Output Stream"
+          >
+            {outputTypes.map((type) => (
+              <MenuItem key={type} value={type}>
+                {type}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
+    );
+  };
+
   const renderParameters = (tool) => {
     const toolConfig = description.tools.find((t) => t.name === `gto_${tool.toolName}`);
     if (!toolConfig) return null;
@@ -1115,8 +1385,19 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
     const optionalFlags = toolConfig.flags.filter((flagObj) => !flagObj.required && flagObj.flag !== '-h');
     const toolParameters = toolConfig.parameters;
 
+    // Check if this is a multi-type output tool that has output
+    const isMultiTypeOutputTool = toolConfig.is_multi_type_output && outputs?.[tool.id];
+
     return (
       <Box sx={{ marginTop: 2 }}>
+        {/* Add the output type selector at the top for multi-type output tools */}
+        {isMultiTypeOutputTool && (
+          <>
+            {renderOutputTypeSelector(tool)}
+            <Divider sx={{ my: 2 }} />
+          </>
+        )}
+
         {/* Required Flags */}
         {requiredFlags.length > 0 && (
           <Box>
