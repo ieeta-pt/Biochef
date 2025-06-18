@@ -96,11 +96,13 @@
         {% if tool_name == 'fastq_split' %}
         // Special handling for fastq_split - read files directly from root directory
         if (module.FS.analyzePath('forward.fastq').exists) {
-          outputFiles['forward.fastq'] = module.FS.readFile('forward.fastq', { encoding: 'utf8' });
+          const forwardData = module.FS.readFile('forward.fastq', { encoding: 'binary' });
+          outputFiles['forward.fastq'] = new TextDecoder('utf-8', { fatal: false }).decode(forwardData);
           module.FS.unlink('forward.fastq');
         }
         if (module.FS.analyzePath('reverse.fastq').exists) {
-          outputFiles['reverse.fastq'] = module.FS.readFile('reverse.fastq', { encoding: 'utf8' });
+          const reverseData = module.FS.readFile('reverse.fastq', { encoding: 'binary' });
+          outputFiles['reverse.fastq'] = new TextDecoder('utf-8', { fatal: false }).decode(reverseData);
           module.FS.unlink('reverse.fastq');
         }
         {% elif tool_name == 'fasta_split_streams' %}
@@ -110,19 +112,22 @@
         const dnaFile = 'DNA.JV2';
         
         try {
-          outputFiles['headers'] = module.FS.readFile(headerFile, { encoding: 'utf8' });
+          const headerData = module.FS.readFile(headerFile, { encoding: 'binary' });
+          outputFiles['headers'] = new TextDecoder('utf-8', { fatal: false }).decode(headerData);
         } catch (err) {
           console.warn(`Could not read headers file ${headerFile}:`, err);
         }
         
         try {
-          outputFiles['extra'] = module.FS.readFile(extraFile, { encoding: 'utf8' });
+          const extraData = module.FS.readFile(extraFile, { encoding: 'binary' });
+          outputFiles['extra'] = new TextDecoder('utf-8', { fatal: false }).decode(extraData);
         } catch (err) {
           console.warn(`Could not read extra file ${extraFile}:`, err);
         }
         
         try {
-          outputFiles['dna'] = module.FS.readFile(dnaFile, { encoding: 'utf8' });
+          const dnaData = module.FS.readFile(dnaFile, { encoding: 'binary' });
+          outputFiles['dna'] = new TextDecoder('utf-8', { fatal: false }).decode(dnaData);
         } catch (err) {
           console.warn(`Could not read DNA file ${dnaFile}:`, err);
         }
@@ -134,7 +139,8 @@
         {% else %}
         const filesOut = module.FS.readdir('/outputs').filter(f => f !== '.' && f !== '..');
         for (const fname of filesOut) {
-          outputFiles[fname] = module.FS.readFile(`/outputs/${fname}`, { encoding: 'utf8' });
+          const fileData = module.FS.readFile(`/outputs/${fname}`, { encoding: 'binary' });
+          outputFiles[fname] = new TextDecoder('utf-8', { fatal: false }).decode(fileData);
         }
         // cleanup outputs directory
         for (const fname of filesOut) module.FS.unlink(`/outputs/${fname}`);

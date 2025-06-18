@@ -1756,14 +1756,14 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
                                   <Collapse in={expandedOutputFiles[`${tool.id}_${filename}`]} timeout="auto" unmountOnExit>
                                     <Paper sx={{ padding: 1, backgroundColor: '#f5f5f5', overflow: 'auto', maxHeight: '100px', wordWrap: 'break-word' }}>
                                       <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', fontSize: '0.800rem' }}>
-                                        {content}
+                                        {content?.replace(/\x00/g, '\\x00').replace(/\x01/g, '\\x01')}
                                       </Typography>
                                     </Paper>
                                   </Collapse>
                                   {!expandedOutputFiles[`${tool.id}_${filename}`] && (
                                     <Paper sx={{ padding: 1, backgroundColor: '#f5f5f5', overflow: 'auto', maxHeight: '100px', wordWrap: 'break-word' }}>
                                       <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', fontSize: '0.800rem' }}>
-                                        {content.length > 50 ? `${content.slice(0, 90)}...` : content}
+                                        {content.length > 50 ? `${content.slice(0, 90).replace(/\x00/g, '\\x00').replace(/\x01/g, '\\x01')}...` : content?.replace(/\x00/g, '\\x00').replace(/\x01/g, '\\x01')}
                                       </Typography>
                                     </Paper>
                                   )}
@@ -1773,7 +1773,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
                           ) : (
                             <Paper sx={{ padding: 1, backgroundColor: '#f5f5f5', overflow: 'auto', maxHeight: '100px', wordWrap: 'break-word' }}>
                               <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', fontSize: '0.800rem' }}>
-                                {outputs?.[tool.id]}
+                                {outputs?.[tool.id]?.replace(/\x00/g, '\\x00').replace(/\x01/g, '\\x01')}
                               </Typography>
                             </Paper>
                           )}
@@ -1785,8 +1785,8 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
                                 typeof outputs?.[tool.id] === 'object'
                                   ? `Multiple output files available: ${Object.keys(outputs?.[tool.id]).join(', ')}`
                                   : outputs?.[tool.id].length > 50
-                                    ? `${outputs?.[tool.id].slice(0, 90)}...`
-                                    : outputs?.[tool.id]
+                                    ? `${outputs?.[tool.id].slice(0, 90).replace(/\x00/g, '\\x00').replace(/\x01/g, '\\x01')}...`
+                                    : outputs?.[tool.id].replace(/\x00/g, '\\x00').replace(/\x01/g, '\\x01')
                               ) : (
                                 'No output available yet'
                               )}
