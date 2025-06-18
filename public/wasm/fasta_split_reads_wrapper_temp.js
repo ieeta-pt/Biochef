@@ -68,7 +68,8 @@
       try {
         const filesOut = module.FS.readdir('/outputs').filter(f => f !== '.' && f !== '..');
         for (const fname of filesOut) {
-          outputFiles[fname] = module.FS.readFile(`/outputs/${fname}`, { encoding: 'utf8' });
+          const fileData = module.FS.readFile(`/outputs/${fname}`, { encoding: 'binary' });
+          outputFiles[fname] = new TextDecoder('utf-8', { fatal: false }).decode(fileData);
         }
         // cleanup outputs directory
         for (const fname of filesOut) module.FS.unlink(`/outputs/${fname}`);

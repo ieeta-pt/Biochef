@@ -68,19 +68,22 @@
         const dnaFile = 'DNA.JV2';
         
         try {
-          outputFiles['headers'] = module.FS.readFile(headerFile, { encoding: 'utf8' });
+          const headerData = module.FS.readFile(headerFile, { encoding: 'binary' });
+          outputFiles['headers'] = new TextDecoder('utf-8', { fatal: false }).decode(headerData);
         } catch (err) {
           console.warn(`Could not read headers file ${headerFile}:`, err);
         }
         
         try {
-          outputFiles['extra'] = module.FS.readFile(extraFile, { encoding: 'utf8' });
+          const extraData = module.FS.readFile(extraFile, { encoding: 'binary' });
+          outputFiles['extra'] = new TextDecoder('utf-8', { fatal: false }).decode(extraData);
         } catch (err) {
           console.warn(`Could not read extra file ${extraFile}:`, err);
         }
         
         try {
-          outputFiles['dna'] = module.FS.readFile(dnaFile, { encoding: 'utf8' });
+          const dnaData = module.FS.readFile(dnaFile, { encoding: 'binary' });
+          outputFiles['dna'] = new TextDecoder('utf-8', { fatal: false }).decode(dnaData);
         } catch (err) {
           console.warn(`Could not read DNA file ${dnaFile}:`, err);
         }

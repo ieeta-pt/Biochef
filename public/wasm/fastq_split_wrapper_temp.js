@@ -69,11 +69,13 @@
       try {
         // Special handling for fastq_split - read files directly from root directory
         if (module.FS.analyzePath('forward.fastq').exists) {
-          outputFiles['forward.fastq'] = module.FS.readFile('forward.fastq', { encoding: 'utf8' });
+          const forwardData = module.FS.readFile('forward.fastq', { encoding: 'binary' });
+          outputFiles['forward.fastq'] = new TextDecoder('utf-8', { fatal: false }).decode(forwardData);
           module.FS.unlink('forward.fastq');
         }
         if (module.FS.analyzePath('reverse.fastq').exists) {
-          outputFiles['reverse.fastq'] = module.FS.readFile('reverse.fastq', { encoding: 'utf8' });
+          const reverseData = module.FS.readFile('reverse.fastq', { encoding: 'binary' });
+          outputFiles['reverse.fastq'] = new TextDecoder('utf-8', { fatal: false }).decode(reverseData);
           module.FS.unlink('reverse.fastq');
         }
       } catch (e) {

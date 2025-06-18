@@ -29,7 +29,8 @@ int needs_stdin(int argc, char **argv)
     const char *no_stdin_tools[] = {
         "min",
         "max",
-        "genomic_gen_random_dna"};
+        "genomic_gen_random_dna",
+        "fasta_merge_streams"};
 
     // Check if this tool is in the no_stdin_tools list
     for (int i = 0; i < sizeof(no_stdin_tools) / sizeof(no_stdin_tools[0]); i++)

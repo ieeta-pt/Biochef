@@ -48,6 +48,7 @@ import { loadWasmModule } from '../gtoWasm';
 import { detectDataType } from '../utils/detectDataType';
 import { exportRecipeConfigFile } from '../utils/exportRecipeConfigFile';
 import { exportRecipeScript } from '../utils/exportRecipeScript';
+import { handleFastaMergeStreams, isFastaMergeStreams } from '../utils/fastaMergeStreamsHandler';
 import { processFile } from '../utils/fileProcessor';
 import { getExtensionForType } from '../utils/getExtensionDataType';
 import { importRecipeCommand } from '../utils/importRecipeCommand';
@@ -1023,6 +1024,20 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
       if (!toolConfig) {
         showNotification(`Configuration for tool ${tool.toolName} not found.`, 'error');
         throw new Error(`Configuration for tool ${tool.toolName} not found.`);
+      }
+
+      // Special handling for fasta_merge_streams
+      if (isFastaMergeStreams(tool)) {
+        return await handleFastaMergeStreams(
+          tool,
+          input,
+          workflow,
+          outputMap,
+          selectedOutputTypes,
+          tabIndex,
+          selectedInput,
+          runFunction
+        );
       }
 
       // Prepare arguments based on tool configuration and user-set parameters
