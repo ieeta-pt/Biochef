@@ -26,7 +26,7 @@ import { getCompatibleTools } from '../utils/compatibility';
 import operationCategories from '../utils/operationCategories';
 
 
-const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoading, insertAtIndex, setInsertAtIndex, addingATool, setAddingATool, filteredTools, setFilteredTools, selectedFiles, tabIndex }) => {
+const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoading, insertAtIndex, setInsertAtIndex, addingATool, setAddingATool, filteredTools, setFilteredTools, selectedFiles, tabIndex, workflow }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedCategories, setExpandedCategories] = useState({});
   const { dataType } = useContext(DataTypeContext);
@@ -66,15 +66,15 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
   const compatibleTools = useMemo(() => {
     if (isWorkflowEmpty) {
       // Execute getCompatibleTools even if dataType is 'UNKNOWN' when the workflow is empty
-      const compatible = getCompatibleTools(dataType, isWorkflowEmpty);
+      const compatible = getCompatibleTools(dataType, isWorkflowEmpty, workflow);
       return new Set(compatible.map((tool) => tool.name.replace(/^gto_/, '')));
     }
 
     if (!dataType || dataType === 'UNKNOWN') return new Set();
-    const compatible = getCompatibleTools(dataType, isWorkflowEmpty);
+    const compatible = getCompatibleTools(dataType, isWorkflowEmpty, workflow);
     // Assuming tool names in operationCategories do not have the 'gto_' prefix
     return new Set(compatible.map((tool) => tool.name.replace(/^gto_/, '')));
-  }, [dataType, isWorkflowEmpty]);
+  }, [dataType, isWorkflowEmpty, workflow]);
 
   // Expand categories with available tools
   useEffect(() => {
@@ -193,15 +193,15 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
           }}
         >
           {hasValidationErrors && (
-              <>
-                <Block sx={{
-                  color: 'error.main',
-                  fontSize: 60,
-                }} />
-                <Typography variant="body1" sx={{ color: 'error.main', textAlign: 'center' }}>
-                  Correct the invalid parameters in the workflow to unlock the unavailable features.
-                </Typography>
-              </>
+            <>
+              <Block sx={{
+                color: 'error.main',
+                fontSize: 60,
+              }} />
+              <Typography variant="body1" sx={{ color: 'error.main', textAlign: 'center' }}>
+                Correct the invalid parameters in the workflow to unlock the unavailable features.
+              </Typography>
+            </>
           )}
         </Box>
       )}

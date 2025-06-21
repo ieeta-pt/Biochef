@@ -23,8 +23,10 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
+  FormControl,
   FormControlLabel,
   IconButton,
+  InputLabel,
   MenuItem,
   Paper,
   Select,
@@ -46,9 +48,25 @@ import { loadWasmModule } from '../gtoWasm';
 import { detectDataType } from '../utils/detectDataType';
 import { exportRecipeConfigFile } from '../utils/exportRecipeConfigFile';
 import { exportRecipeScript } from '../utils/exportRecipeScript';
+import { handleFastaMergeStreams, isFastaMergeStreams } from '../utils/fastaMergeStreamsHandler';
+import { processFile } from '../utils/fileProcessor';
+import { getExtensionForType } from '../utils/getExtensionDataType';
 import { importRecipeCommand } from '../utils/importRecipeCommand';
 import { importRecipeConfigFile } from '../utils/importRecipeConfigFile';
 import SortableItem from './SortableItem';
+
+export function classifyStderrLines(stderr) {
+  const result = { info: [], error: [] };
+  stderr
+    .split('\n')
+    .filter(Boolean)
+    .forEach(line => {
+      const isError = /error/i.test(line.trim());
+      if (isError) result.error.push(line);
+      else result.info.push(line);
+    });
+  return result;
+}
 
 const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading, setIsLoading, insertAtIndex, setInsertAtIndex, setAddingATool, setFilteredTools, selectedFiles, setSelectedFiles, tabIndex, setTabIndex, tree, setTree }) => {
   const [activeId, setActiveId] = useState(null);
@@ -58,6 +76,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
     const savedMap = localStorage.getItem('outputMap');
     return savedMap ? JSON.parse(savedMap) : {};
   });
+  const [toolMessageMap, setToolMessageMap] = useState({}); // To store messages for each tool
   const { validationErrors, setValidationErrors } = useContext(ValidationErrorsContext); // Access validation errors of parameters
   const [helpMessages, setHelpMessages] = useState({}); // To store help messages for tools
   const [exportFileName, setExportFileName] = useState('my_workflow'); // Default export name
@@ -71,41 +90,75 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
     return saved ? JSON.parse(saved) : [];
   });
   const [expandedOutputs, setExpandedOutputs] = useState({}); // Track each tool's output expanded state
+  const [expandedOutputFiles, setExpandedOutputFiles] = useState({}); // Track expanded state for each output file
   const [visibleOutputs, setVisibleOutputs] = useState({}); // Track visible outputs
   const [importMode, setImportMode] = useState('command'); // To track the selected import mode
   const [importFile, setImportFile] = useState(null); // To store the uploaded file for import
   const [partialExportIndex, setPartialExportIndex] = useState(null); // To store the index for partial export
   const [deleteOperation, setDeleteOperation] = useState(false); // To store the delete from here state
   const [selectedInput, setSelectedInput] = useState(''); // Tracks selected input
+  const [toolParameterFiles, setToolParameterFiles] = useState({}); // To store tool parameter files
+  const [selectedOutputTypes, setSelectedOutputTypes] = useState(() => {
+    const savedTypes = localStorage.getItem('selectedOutputTypes');
+    return savedTypes ? JSON.parse(savedTypes) : {};
+  }); // Track which output type is selected for multi-type output tools
+  const { validateData } = useContext(DataTypeContext);
+  const showNotification = useContext(NotificationContext);
 
-  const outputs = tabIndex === 1 && selectedInput ?
-    outputMap[selectedInput] :
-    outputMap["ManualInput"];   // Output data for the selected input
+  // Update outputs initialization to handle both modes
+  const outputs = React.useMemo(() => {
+    if (tabIndex === 1) {
+      return selectedInput ? outputMap[selectedInput] : {};
+    }
+    return outputMap["ManualInput"] || {};
+  }, [tabIndex, selectedInput, outputMap]);
 
-  const workflowInput = tabIndex === 0
-    ? [{ id: "ManualInput", content: inputData }]
-    : Array.from(selectedFiles);
+  const workflowInput = React.useMemo(() => {
+    return tabIndex === 0
+      ? [{ id: "ManualInput", content: inputData }]
+      : Array.from(selectedFiles);
+  }, [tabIndex, inputData, selectedFiles]);
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
   );
 
-  const showNotification = useContext(NotificationContext);
-
   // Save only ManualInput outputMap in localStorage
   useEffect(() => {
     // Extract only the ManualInput data from the outputMap
     const manualInputData = outputMap["ManualInput"] ? { "ManualInput": outputMap["ManualInput"] } : {};
 
-    // Store only the ManualInput data in localStorage
-    localStorage.setItem('outputMap', JSON.stringify(manualInputData));
+    // Create a filtered copy for localStorage
+    const filteredManualInputData = { "ManualInput": {} };
+
+    // Find the index of the first tool with file input
+    const fileInputToolIndex = workflow.findIndex(tool => {
+      const toolConfig = description.tools.find(t => t.name === `gto_${tool.toolName}`);
+      return toolConfig && toolConfig.input.type === "file";
+    });
+
+    // Copy only outputs from tools before the first file input tool
+    Object.entries(manualInputData["ManualInput"] || {}).forEach(([toolId, output]) => {
+      const toolIndex = workflow.findIndex(t => t.id === toolId);
+      if (toolIndex < fileInputToolIndex || fileInputToolIndex === -1) {
+        filteredManualInputData["ManualInput"][toolId] = output;
+      }
+    });
+
+    // Store only the filtered ManualInput data in localStorage
+    localStorage.setItem('outputMap', JSON.stringify(filteredManualInputData));
   }, [outputMap]);
 
   // Save expandedTools in localStorage
   useEffect(() => {
     localStorage.setItem('expandedTools', JSON.stringify(expandedTools));
   }, [expandedTools]);
+
+  // Save selectedOutputTypes in localStorage
+  useEffect(() => {
+    localStorage.setItem('selectedOutputTypes', JSON.stringify(selectedOutputTypes));
+  }, [selectedOutputTypes]);
 
   // Update outputMap when selectedFiles change
   useEffect(() => {
@@ -129,7 +182,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
     console.log("outputMap: " + JSON.stringify(outputMap));
   }, [selectedFiles]);
 
-  // If a tool is inserted, update data type and outputs mapping
+  // Update data type and outputs mapping
   useEffect(() => {
     const updateDataTypeAndOutputsMapping = async () => {
       setIsLoading(true);
@@ -158,6 +211,12 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
 
         for (let i = (insertAtIndex !== null && insertAtIndex > 0) ? insertAtIndex : 0; i < workflow.length; i++) {
           const tool = workflow[i];
+
+          // Get tool configuration at the beginning of each loop iteration
+          // This ensures it's available throughout the entire iteration
+          const toolConfig = description.tools.find((t) => t.name === `gto_${tool.toolName}`);
+          const isMultiTypeOutput = toolConfig && toolConfig.is_multi_type_output;
+
           try {
             // Validate parameters
             const isValid = validateParameters(tool, data);
@@ -166,8 +225,103 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
               break;
             }
 
-            const output = await executeTool(tool, data);
-            data = output;
+            let output;
+
+            // Check if previous tool was multi-type and we have a selection
+            if (i > 0) {
+              const prevTool = workflow[i - 1];
+              const prevToolConfig = description.tools.find((t) => t.name === `gto_${prevTool.toolName}`);
+              const isPrevMultiTypeOutput = prevToolConfig && prevToolConfig.is_multi_type_output;
+
+              // If previous tool is multi-type and we have a selection, use only that selected output
+              if (isPrevMultiTypeOutput && selectedOutputTypes[prevTool.id] && typeof data === 'object' && data.hasOwnProperty(selectedOutputTypes[prevTool.id])) {
+                console.log(`Using selected output stream ${selectedOutputTypes[prevTool.id]} from ${prevTool.toolName} for tool ${tool.toolName}`);
+                data = data[selectedOutputTypes[prevTool.id]];
+              }
+            }
+
+            if (typeof data === 'object' && !Array.isArray(data)) {
+              // If data is a multi-output object, process each file
+              output = {};
+
+              // First clear the messages for the current tool
+              setToolMessageMap(prev => ({
+                ...prev,
+                [tool.id]: { info: [], error: [] },
+              }));
+
+              for (const [filename, content] of Object.entries(data)) {
+                const result = await executeTool(tool, content);
+
+                // Handle messages in stderr
+                const toolMessages = classifyStderrLines(result.stderr);
+
+                setToolMessageMap(prev => {
+                  const prevMsgs = prev[tool.id] || { info: [], error: [] };
+                  return {
+                    ...prev,
+                    [tool.id]: {
+                      info: [...prevMsgs.info, ...toolMessages.info],
+                      error: [...prevMsgs.error, ...toolMessages.error],
+                    },
+                  };
+                });
+
+                // If results is an object with the key "outputs" (multiple outputs)
+                if (typeof result === 'object' && result.outputs) {
+                  // If the tool also produces multiple outputs, merge them with unique names
+                  // AS THERE IS ONLY ONE MULTI-OUTPUT TOOL, FOR NOW THIS DOES NOT APPLY
+                  for (const [resultFilename, resultContent] of Object.entries(result.outputs)) {
+                    const uniqueFilename = `${filename}_${resultFilename}`;
+                    output[uniqueFilename] = resultContent;
+                  }
+                } else {
+                  // Detect the output type
+                  const detectedType = detectDataType("output.txt", result.stdout);
+
+                  // Update the extension of filename based on the detected type
+                  const baseFilename = filename.split('.')[0];
+                  const newFilename = `${baseFilename}${getExtensionForType(detectedType)}`;
+
+                  // If the tool produces single output, store it with the input filename
+                  output[newFilename] = result.stdout;
+                }
+              }
+            } else {
+              // Single input case
+              const result = await executeTool(tool, data);
+
+              // Handle messages in stderr
+              const toolMessages = classifyStderrLines(result.stderr);
+
+              setToolMessageMap((prev) => ({
+                ...prev,
+                [tool.id]: {
+                  info: toolMessages.info,
+                  error: toolMessages.error,
+                },
+              }));
+
+              // result can return an object with the key "outputs" (multiple outputs) or the key "stdout" (single output)
+              if (typeof result === 'object' && result.outputs) {
+                output = result.outputs;
+
+                // If it's a multi-type output tool and no output type is selected yet, select the first one by default
+                if (isMultiTypeOutput && !selectedOutputTypes[tool.id]) {
+                  const outputKeys = Object.keys(result.outputs);
+                  if (outputKeys.length > 0) {
+                    console.log(`Setting default output type for ${tool.toolName}: ${outputKeys[0]}`);
+                    setSelectedOutputTypes(prev => ({
+                      ...prev,
+                      [tool.id]: outputKeys[0]
+                    }));
+
+                  }
+                }
+              } else {
+                output = result.stdout;
+              }
+            }
 
             // Store the output in the map
             setOutputMap((prevMap) => ({
@@ -178,8 +332,36 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
               },
             }));
 
-            // Detect the data type of the output
-            const detectedType = detectDataType('output.txt', output);
+            // For the next tool in the loop, use the appropriate output
+            if (isMultiTypeOutput && selectedOutputTypes[tool.id] && typeof output === 'object') {
+              // For subsequent tools, data should be the selected output type
+              data = output[selectedOutputTypes[tool.id]];
+              console.log(`Using selected output type ${selectedOutputTypes[tool.id]} for next tool`);
+            } else {
+              data = output;
+            }
+
+            // Detect the data type of the output for the final output display
+            let detectedType = 'UNKNOWN';
+            if (typeof output === 'object') {
+              // For multiple outputs, use selected output type if available
+              if (isMultiTypeOutput && selectedOutputTypes[tool.id]) {
+                const selectedOutput = output[selectedOutputTypes[tool.id]];
+                if (selectedOutput) {
+                  detectedType = detectDataType('output.txt', selectedOutput);
+                  console.log(`Detected type for selected output ${selectedOutputTypes[tool.id]}: ${detectedType}`);
+                }
+              } else {
+                // Otherwise try to detect type from the first output file
+                const firstOutput = Object.values(output)[0];
+                if (firstOutput) {
+                  detectedType = detectDataType('output.txt', firstOutput);
+                  console.log(`Detected type from first output: ${detectedType}`);
+                }
+              }
+            } else {
+              detectedType = detectDataType('output.txt', output);
+            }
 
             if (tool.id === workflow[workflow.length - 1].id && dataType !== detectedType) {
               setDataType(detectedType);
@@ -200,16 +382,12 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
       setInsertAtIndex(null);
     };
 
-    // If deleteOperation triggered the useEffect, do not update the data type and outputs mapping
-    // The mapping update is done in the handle delete functions
     if (!deleteOperation) {
       updateDataTypeAndOutputsMapping();
+    } else {
+      setDeleteOperation(false);
     }
-    else {
-      setDeleteOperation(false);  // Reset the flag
-    }
-
-  }, [workflow, inputData, selectedInput, inputDataType]);
+  }, [workflow, inputData, selectedInput, inputDataType, selectedOutputTypes]);
 
   // Run validateParameters when the page is loaded
   useEffect(() => {
@@ -346,7 +524,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
 
     toolConfig.flags.forEach((flagObj) => {
       const isFlagRequired = flagObj.required;
-      const flagValue = !!tool.params[flagObj.flag]; // Check if the flag is active
+      const flagValue = !!tool.params[flagObj.flag];
       const paramValue = tool.params[flagObj.parameter];
       const paramConfig = toolConfig.parameters.find((param) => param.name === flagObj.parameter);
 
@@ -435,32 +613,53 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
   };
 
   const handleDelete = async (id) => {
-    setDeleteOperation(true); // Set the flag to avoid updating the data type and outputs mapping in the useEffect
+    setDeleteOperation(true);
 
     const newWorkflow = workflow.filter((item) => item.id !== id);
 
     if (newWorkflow.length === 0) {
-      setOutputMap({}); // Clear the output types map
-      setHelpMessages({}); // Clear the help messages
-      setDataType(inputDataType); // If there's no more items in workflow, reset to input data type
-      setValidationErrors({}); // Clear the validation errors
+      setToolMessageMap({});
+      setOutputMap({});
+      setHelpMessages({});
+      setDataType(inputDataType);
+      setValidationErrors({});
+
+      // Also clear selectedOutputTypes when workflow is empty
+      setSelectedOutputTypes({});
+
       setWorkflow(newWorkflow);
       showNotification('All operations removed. Data type reset to input type.', 'info');
     } else {
-
       const toolIndex = workflow.findIndex((t) => t.id === id);
       const isFirstToolWithoutInput = toolIndex === 0 && description.tools.find((tool) => `gto_${workflow[toolIndex].toolName}` === tool.name)?.input?.type === '';
 
       if (validateWorkflow(newWorkflow, inputDataType) && !isFirstToolWithoutInput) {
+        // Remove the messages for the deleted tool
+        setToolMessageMap((prev) => {
+          const newMessages = { ...prev };
+          delete newMessages[id];
+          return newMessages;
+        });
+
         // Remove outputs of the deleted tool for all inputs
         setOutputMap((prevMap) => {
           const newMap = { ...prevMap };
           Object.keys(newMap).forEach((inputName) => {
             if (newMap[inputName]?.[id]) {
-              delete newMap[inputName][id]; // Remove the specific tool's output
+              delete newMap[inputName][id];
             }
           });
           return newMap;
+        });
+
+        // Remove selectedOutputType for the deleted tool
+        setSelectedOutputTypes((prev) => {
+          const newSelectedTypes = { ...prev };
+          // Only attempt to delete if the id exists in the object
+          if (newSelectedTypes.hasOwnProperty(id)) {
+            delete newSelectedTypes[id];
+          }
+          return newSelectedTypes;
         });
 
         // Execute the tools subsequent to the deleted one to update the outputMap
@@ -472,7 +671,27 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
 
           for (let i = toolIndex; i < newWorkflow.length; i++) {
             const tool = newWorkflow[i];
-            const output = await executeTool(tool, data);
+            const result = await executeTool(tool, data);
+
+            // Handle messages in stderr
+            const toolMessages = classifyStderrLines(result.stderr);
+
+            setToolMessageMap((prev) => ({
+              ...prev,
+              [tool.id]: {
+                info: toolMessages.info,
+                error: toolMessages.error,
+              },
+            }));
+
+            let output;
+            // Handle multi-output vs. single output
+            if (typeof result === 'object' && result.outputs) {
+              output = result.outputs;
+            } else {
+              output = result.stdout;
+            }
+
             data = output;
 
             // Store the output in the map
@@ -498,15 +717,57 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
           const lastTool = newWorkflow[newWorkflow.length - 1];
           let lastOutputType = null;
 
+          // Check if the last tool is a multi-type output tool
+          const lastToolConfig = description.tools.find((t) => t.name === `gto_${lastTool.toolName}`);
+          const isLastToolMultiType = lastToolConfig && lastToolConfig.is_multi_type_output;
+
           // Try using the manual input first
           if (outputMap["ManualInput"]?.[lastTool.id]) {
-            lastOutputType = detectDataType('output.txt', outputMap["ManualInput"]?.[lastTool.id]);
+            const lastOutput = outputMap["ManualInput"]?.[lastTool.id];
+            if (typeof lastOutput === 'object') {
+              if (isLastToolMultiType && selectedOutputTypes[lastTool.id]) {
+                // If it's a multi-type output tool and we have a selection, use that specific output
+                const selectedOutput = lastOutput[selectedOutputTypes[lastTool.id]];
+                if (selectedOutput) {
+                  lastOutputType = detectDataType('output.txt', selectedOutput);
+                  console.log(`Using selected output type ${selectedOutputTypes[lastTool.id]} for data type detection`);
+                }
+              } else {
+                // For multiple outputs, try to detect type from the first output file
+                const firstOutput = Object.values(lastOutput)[0];
+                if (firstOutput) {
+                  lastOutputType = detectDataType('output.txt', firstOutput);
+                }
+              }
+            } else {
+              lastOutputType = detectDataType('output.txt', lastOutput);
+            }
           } else {
             // If the manual input doesn't have the output, try using the other inputs
             for (const inputName in outputMap) {
               if (outputMap[inputName]?.[lastTool.id]) {
-                lastOutputType = detectDataType('output.txt', outputMap[inputName]?.[lastTool.id]);
-                break;
+                const lastOutput = outputMap[inputName]?.[lastTool.id];
+                if (typeof lastOutput === 'object') {
+                  if (isLastToolMultiType && selectedOutputTypes[lastTool.id]) {
+                    // If it's a multi-type output tool and we have a selection, use that specific output
+                    const selectedOutput = lastOutput[selectedOutputTypes[lastTool.id]];
+                    if (selectedOutput) {
+                      lastOutputType = detectDataType('output.txt', selectedOutput);
+                      console.log(`Using selected output type ${selectedOutputTypes[lastTool.id]} for data type detection`);
+                      break;
+                    }
+                  } else {
+                    // For multiple outputs, try to detect type from the first output file
+                    const firstOutput = Object.values(lastOutput)[0];
+                    if (firstOutput) {
+                      lastOutputType = detectDataType('output.txt', firstOutput);
+                      break;
+                    }
+                  }
+                } else {
+                  lastOutputType = detectDataType('output.txt', lastOutput);
+                  break;
+                }
               }
             }
           }
@@ -525,15 +786,10 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
         });
 
         setWorkflow(newWorkflow);
-
       } else {
-        setDeleteOperation(false); // Reset the flag because there wasn't any change in the workflow
-
+        setDeleteOperation(false);
         showNotification('Invalid operation: resulting workflow has incompatible steps.', 'error');
-
         setInvalidItemIds((prev) => [...prev, id]);
-
-        // Remove the highlight after 3 seconds
         setTimeout(() => {
           setInvalidItemIds((prev) => prev.filter((itemId) => itemId !== id));
         }, 3000);
@@ -543,18 +799,23 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
 
   // Delete all operations from the selected tool onwards
   const handleDeleteFromHere = (id) => {
-    setDeleteOperation(true); // Set the flag to avoid updating the data type and outputs mapping in the useEffect
+    setDeleteOperation(true);
 
     const index = workflow.findIndex((item) => item.id === id);
 
     if (index !== -1) {
-      const newWorkflow = workflow.slice(0, index); // Keep only the operations before the selected one
+      const newWorkflow = workflow.slice(0, index);
 
       if (newWorkflow.length === 0) {
+        setToolMessageMap({});
         setOutputMap({});
         setHelpMessages({});
         setDataType(inputDataType);
         setValidationErrors({});
+
+        // Also clear selectedOutputTypes when workflow is empty
+        setSelectedOutputTypes({});
+
         setWorkflow(newWorkflow);
         showNotification('All operations removed. Data type reset to input type.', 'info');
       } else {
@@ -574,6 +835,13 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
         }
         setOutputMap(newOutputMap);
 
+        // Update toolMessageMap to keep only the messages of the tools that are still in the workflow after slicing
+        const newToolMessageMap = {};
+        newWorkflow.forEach((tool) => {
+          newToolMessageMap[tool.id] = toolMessageMap[tool.id];
+        });
+        setToolMessageMap(newToolMessageMap);
+
         // Update help messages to keep only the messages of the tools that are still in the workflow after slicing
         const newHelpMessages = {};
         newWorkflow.forEach((tool) => {
@@ -585,15 +853,57 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
         const lastTool = newWorkflow[newWorkflow.length - 1];
         let lastOutputType = null;
 
+        // Check if the last tool is a multi-type output tool
+        const lastToolConfig = description.tools.find((t) => t.name === `gto_${lastTool.toolName}`);
+        const isLastToolMultiType = lastToolConfig && lastToolConfig.is_multi_type_output;
+
         // Try using the manual input first
         if (outputMap["ManualInput"]?.[lastTool.id]) {
-          lastOutputType = detectDataType('output.txt', outputMap["ManualInput"]?.[lastTool.id]);
+          const lastOutput = outputMap["ManualInput"]?.[lastTool.id];
+          if (typeof lastOutput === 'object') {
+            if (isLastToolMultiType && selectedOutputTypes[lastTool.id]) {
+              // If it's a multi-type output tool and we have a selection, use that specific output
+              const selectedOutput = lastOutput[selectedOutputTypes[lastTool.id]];
+              if (selectedOutput) {
+                lastOutputType = detectDataType('output.txt', selectedOutput);
+                console.log(`Using selected output type ${selectedOutputTypes[lastTool.id]} for data type detection`);
+              }
+            } else {
+              // For multiple outputs, try to detect type from the first output file
+              const firstOutput = Object.values(lastOutput)[0];
+              if (firstOutput) {
+                lastOutputType = detectDataType('output.txt', firstOutput);
+              }
+            }
+          } else {
+            lastOutputType = detectDataType('output.txt', lastOutput);
+          }
         } else {
           // If the manual input doesn't have the output, try using the other inputs
           for (const inputName in outputMap) {
             if (outputMap[inputName]?.[lastTool.id]) {
-              lastOutputType = detectDataType('output.txt', outputMap[inputName]?.[lastTool.id]);
-              break;
+              const lastOutput = outputMap[inputName]?.[lastTool.id];
+              if (typeof lastOutput === 'object') {
+                if (isLastToolMultiType && selectedOutputTypes[lastTool.id]) {
+                  // If it's a multi-type output tool and we have a selection, use that specific output
+                  const selectedOutput = lastOutput[selectedOutputTypes[lastTool.id]];
+                  if (selectedOutput) {
+                    lastOutputType = detectDataType('output.txt', selectedOutput);
+                    console.log(`Using selected output type ${selectedOutputTypes[lastTool.id]} for data type detection`);
+                    break;
+                  }
+                } else {
+                  // For multiple outputs, try to detect type from the first output file
+                  const firstOutput = Object.values(lastOutput)[0];
+                  if (firstOutput) {
+                    lastOutputType = detectDataType('output.txt', firstOutput);
+                    break;
+                  }
+                }
+              } else {
+                lastOutputType = detectDataType('output.txt', lastOutput);
+                break;
+              }
             }
           }
         }
@@ -612,15 +922,47 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
           return newErrors;
         });
 
+        // Update selectedOutputTypes to remove tools that were deleted
+        setSelectedOutputTypes((prev) => {
+          const newSelectedTypes = {};
+          // Only keep selections for tools that are still in the workflow
+          newWorkflow.forEach((tool) => {
+            if (prev[tool.id]) {
+              newSelectedTypes[tool.id] = prev[tool.id];
+            }
+          });
+          return newSelectedTypes;
+        });
+
         setWorkflow(newWorkflow);
       }
     }
   };
 
-  const handleParameterChange = (id, name, value) => {
+  const handleParameterChange = async (id, name, value) => {
     // Store the index of the tool in the workflow
     const toolIndex = workflow.findIndex((t) => t.id === id);
     setInsertAtIndex(toolIndex);
+
+    // If it's a File, process it using processFile
+    let paramValue = value;
+    if (value instanceof File) {
+      const processedFile = await processFile(value, validateData, showNotification);
+      if (!processedFile) {
+        return; // Stop if file processing failed
+      }
+      paramValue = processedFile.name;
+
+      // Store the processed file in toolParameterFiles
+      const fileObj = { name: processedFile.name, data: processedFile.content };
+      setToolParameterFiles((prev) => ({
+        ...prev,
+        [id]: {
+          ...prev[id],
+          [name]: fileObj,
+        },
+      }));
+    }
 
     const newWorkflow = workflow.map((item) =>
       item.id === id
@@ -628,7 +970,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
           ...item,
           params: {
             ...item.params,
-            [name]: value, // Sets either flag toggle or parameter value
+            [name]: paramValue, // Sets either flag toggle or parameter value
           },
         }
         : item
@@ -684,6 +1026,20 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
         throw new Error(`Configuration for tool ${tool.toolName} not found.`);
       }
 
+      // Special handling for fasta_merge_streams
+      if (isFastaMergeStreams(tool)) {
+        return await handleFastaMergeStreams(
+          tool,
+          input,
+          workflow,
+          outputMap,
+          selectedOutputTypes,
+          tabIndex,
+          selectedInput,
+          runFunction
+        );
+      }
+
       // Prepare arguments based on tool configuration and user-set parameters
       let args = [];
       if (tool.params && Object.keys(tool.params).length > 0) {
@@ -703,39 +1059,41 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
         });
       }
 
-      // Ensure input is defined
-      if (input === undefined || input === null) {
-        input = '';
-      }
-
-      // Execute the tool
-      const outputData = await runFunction(input, args);
-
-      // Handle messages in stderr
-      if (outputData.stderr) {
-        const stderrLines = outputData.stderr.split('\n');
-        let infoMessages = []; // Accumulate all informational messages
-
-        stderrLines.forEach((line) => {
-          if (line.trim().startsWith('ERROR:')) {
-            throw new Error(line.trim()); // Treat as an error
-          } else if (line.trim()) {
-            infoMessages.push(line.trim()); // Accumulate info messages
+      // Handle multiple inputs
+      if (typeof input === 'object' && !Array.isArray(input)) {
+        // If input is an object (multiple files), process each one
+        const results = {};
+        for (const [filename, content] of Object.entries(input)) {
+          // Ensure content is defined
+          if (content === undefined || content === null) {
+            content = '';
           }
-        });
 
-        // Display all accumulated informational messages together
-        if (infoMessages.length > 0) {
-          showNotification(infoMessages.join('\n'), 'info');
+          // Execute the tool for this input
+          const outputData = await runFunction(content, args);
+
+          results[filename] = outputData;
         }
+        return results;
+      } else {
+        // Single input case
+        // Ensure input is defined
+        if (input === undefined || input === null) {
+          input = '';
+        }
+
+        let outputData;
+        if (input === '' && toolParameterFiles[tool.id] && Object.keys(toolParameterFiles[tool.id]).length > 0) {
+          // If input is empty and there are parameter files for the tool, use them
+          outputData = await runFunction(toolParameterFiles[tool.id], args);
+        } else {
+          // Execute the tool
+          outputData = await runFunction(input, args);
+        }
+
+        // Return the output data
+        return outputData;
       }
-
-      // if (outputData.stdout.trim() === '') {
-      //   // Notify the user if the output is empty
-      //   showNotification('Execution resulted in an empty output.', 'warning');
-      // }
-
-      return outputData.stdout;
     } catch (error) {
       console.error(`Failed to execute tool ${tool.toolName}:`, error);
       throw error;
@@ -774,8 +1132,44 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
       for (let i = 0; i <= endIndex && i < workflow.length; i++) {
         const tool = workflow[i];
         try {
+          // Handle multi-output data from previous steps
+          if (typeof data === 'object' && !Array.isArray(data)) {
+            // If data is a multi-output object, process each file
+            const output = {};
+            for (const [filename, content] of Object.entries(data)) {
+              const result = await executeTool(tool, content);
+              if (typeof result === 'object' && result.outputs) {
+                // If the tool also produces multiple outputs, merge them with unique names
+                for (const [resultFilename, resultContent] of Object.entries(result.outputs)) {
+                  const uniqueFilename = `${filename}_${resultFilename}`;
+                  output[uniqueFilename] = resultContent;
+                }
+              } else {
+                // Detect the output type
+                const detectedType = detectDataType("output.txt", result.stdout);
 
-          data = await executeTool(tool, data);
+                // Update the extension of filename based on the detected type
+                const baseFilename = filename.split('.')[0];
+                const newFilename = `${baseFilename}${getExtensionForType(detectedType)}`;
+
+                // If the tool produces single output, store it with the input filename
+                output[newFilename] = result.stdout;
+              }
+            }
+            data = output;
+          } else {
+            // Single input case
+            const result = await executeTool(tool, data);
+
+            let output;
+            // result can return an object with the key "outputs" (multiple outputs) or the key "stdout" (single output)
+            if (typeof result === 'object' && result.outputs) {
+              output = result.outputs;
+            } else {
+              output = result.stdout;
+            }
+            data = output;
+          }
 
           // If it's the last output, store to save it
           if (i === endIndex) {
@@ -789,23 +1183,47 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
     }
 
     if (Object.keys(exportOutputs).length === 1) {
+      // Single input
       const inputFileName = Object.keys(exportOutputs)[0];
       const outputContent = exportOutputs[inputFileName];
-      const blob = new Blob([outputContent], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      if (tabIndex === 0) {
-        link.download = `output.txt`;
+
+      if (typeof outputContent === 'object') {
+        // Multiple output files
+        const zip = new JSZip();
+        for (const [filename, content] of Object.entries(outputContent)) {
+          zip.file(filename, content);
+        }
+        zip.generateAsync({ type: 'blob' }).then((content) => {
+          saveAs(content, `outputs.zip`);
+        });
       } else {
-        link.download = `${inputFileName}_output.txt`;
+        // Single output file
+        const blob = new Blob([outputContent], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        const detectedType = detectDataType("output.txt", outputContent);
+        const extension = getExtensionForType(detectedType);
+        link.download = `output${extension}`;
+        link.href = url;
+        link.click();
+        URL.revokeObjectURL(url);
       }
-      link.href = url;
-      link.click();
-      URL.revokeObjectURL(url);
     } else {
+      // Multiple inputs
       const zip = new JSZip();
       for (const [inputFileName, outputContent] of Object.entries(exportOutputs)) {
-        zip.file(`${inputFileName}_output.txt`, outputContent);
+        if (typeof outputContent === 'object') {
+          // Multiple output files for this input
+          const inputFolder = zip.folder(inputFileName);
+          for (const [filename, content] of Object.entries(outputContent)) {
+            inputFolder.file(filename, content);
+          }
+        } else {
+          // Single output file for this input
+          const detectedType = detectDataType("output.txt", outputContent);
+          const extension = getExtensionForType(detectedType);
+          zip.file(`${inputFileName}_output${extension}`, outputContent);
+        }
       }
       zip.generateAsync({ type: 'blob' }).then((content) => {
         saveAs(content, 'outputs.zip');
@@ -830,6 +1248,145 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
     }));
   };
 
+  const toggleOutputFileExpand = (toolId, filename) => {
+    setExpandedOutputFiles((prev) => ({
+      ...prev,
+      [`${toolId}_${filename}`]: !prev[`${toolId}_${filename}`],
+    }));
+  };
+
+  const handleOutputTypeSelection = (toolId, outputType) => {
+    console.log(`Selecting output type ${outputType} for tool ${toolId}`);
+
+    setSelectedOutputTypes(prev => ({
+      ...prev,
+      [toolId]: outputType
+    }));
+
+    // Find the tool in the workflow to trigger reprocessing from this point
+    const toolIndex = workflow.findIndex(tool => tool.id === toolId);
+    if (toolIndex >= 0) {
+      // Set insertAtIndex to trigger reprocessing from this tool onwards
+      setInsertAtIndex(toolIndex);
+    }
+  };
+
+  // Render multi-type output selector for tools like fasta_split_streams
+  const renderOutputTypeSelector = (tool) => {
+    const toolConfig = description.tools.find((t) => t.name === `gto_${tool.toolName}`);
+    if (!toolConfig || !toolConfig.is_multi_type_output) {
+      return null;
+    }
+
+    // Get the output for this tool
+    const output = outputs?.[tool.id];
+    if (!output || typeof output !== 'object') {
+      console.log(`No output available for ${tool.toolName} or output is not an object`);
+      return (
+        <Box
+          sx={{
+            marginTop: 2,
+            backgroundColor: 'rgba(255, 235, 205, 0.5)', // Light warning background
+            padding: 2,
+            borderRadius: 1,
+            border: '1px solid rgba(255, 152, 0, 0.3)' // Warning border
+          }}
+        >
+          <Typography variant="body2" color="warning.main">
+            No output data available yet. Run the tool to see output options.
+          </Typography>
+        </Box>
+      );
+    }
+
+    // Get output types, ensuring we have valid output keys
+    let outputTypes = [];
+    try {
+      if (output.outputs && typeof output.outputs === 'object') {
+        // If the tool returned a properly structured output with an outputs property
+        outputTypes = Object.keys(output.outputs);
+      } else {
+        // Fallback to top-level keys
+        outputTypes = Object.keys(output);
+      }
+    } catch (err) {
+      console.error(`Error getting output types for ${tool.toolName}:`, err);
+      outputTypes = [];
+    }
+
+    if (outputTypes.length === 0) {
+      console.log(`No output types available for ${tool.toolName}`);
+      return (
+        <Box
+          sx={{
+            marginTop: 2,
+            backgroundColor: 'rgba(255, 235, 205, 0.5)', // Light warning background
+            padding: 2,
+            borderRadius: 1,
+            border: '1px solid rgba(255, 152, 0, 0.3)' // Warning border
+          }}
+        >
+          <Typography variant="body2" color="warning.main">
+            No output streams available. There might be an issue with the tool execution.
+          </Typography>
+        </Box>
+      );
+    }
+
+    // Get selected output type with fallback to first type if needed
+    const selectedType = selectedOutputTypes[tool.id] || outputTypes[0];
+    console.log(`Selected output type for ${tool.toolName}: ${selectedType}`);
+
+    return (
+      <Box
+        sx={{
+          marginTop: 2,
+          backgroundColor: 'rgba(173, 216, 230, 0.2)', // Light blue background
+          padding: 2,
+          borderRadius: 1,
+          border: '1px solid rgba(173, 216, 230, 0.5)' // Light blue border
+        }}
+      >
+        <Typography
+          variant="subtitle2"
+          gutterBottom
+          sx={{
+            color: 'primary.main',
+            display: 'flex',
+            alignItems: 'center'
+          }}
+        >
+          Select Output Stream for Next Steps
+          <Tooltip
+            title="This tool produces multiple types of outputs (streams). You need to select which one to use for the next steps in your workflow."
+            arrow
+            placement="right"
+          >
+            <IconButton size="small" sx={{ ml: 0.5, p: 0 }}>
+              <HelpOutline fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Typography>
+
+        <FormControl fullWidth size="small" sx={{ mt: 1 }}>
+          <InputLabel id={`output-type-select-${tool.id}`}>Output Stream</InputLabel>
+          <Select
+            labelId={`output-type-select-${tool.id}`}
+            value={selectedType}
+            onChange={(e) => handleOutputTypeSelection(tool.id, e.target.value)}
+            label="Output Stream"
+          >
+            {outputTypes.map((type) => (
+              <MenuItem key={type} value={type}>
+                {type}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
+    );
+  };
+
   const renderParameters = (tool) => {
     const toolConfig = description.tools.find((t) => t.name === `gto_${tool.toolName}`);
     if (!toolConfig) return null;
@@ -841,9 +1398,21 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
     // Filter flags based on required and optionals
     const requiredFlags = toolConfig.flags.filter((flagObj) => flagObj.required && flagObj.flag !== '-h');
     const optionalFlags = toolConfig.flags.filter((flagObj) => !flagObj.required && flagObj.flag !== '-h');
+    const toolParameters = toolConfig.parameters;
+
+    // Check if this is a multi-type output tool that has output
+    const isMultiTypeOutputTool = toolConfig.is_multi_type_output && outputs?.[tool.id];
 
     return (
       <Box sx={{ marginTop: 2 }}>
+        {/* Add the output type selector at the top for multi-type output tools */}
+        {isMultiTypeOutputTool && (
+          <>
+            {renderOutputTypeSelector(tool)}
+            <Divider sx={{ my: 2 }} />
+          </>
+        )}
+
         {/* Required Flags */}
         {requiredFlags.length > 0 && (
           <Box>
@@ -858,6 +1427,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
             </Typography>
             {requiredFlags.map((flagObj) => {
               const flagValue = !!tool.params[flagObj.flag];
+              const paramConfig = toolParameters.find((p) => p.name === flagObj.parameter);
               const parameterValue = tool.params[flagObj.parameter] || '';
               const error = toolErrors[flagObj.parameter] || '';
 
@@ -887,53 +1457,46 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
                         }}
                       >
                         <span>
-                          {flagObj.flag} <span style={{ color: 'red' }}>*</span>
+                          {flagObj.parameter} <span style={{ color: 'red' }}>*</span>
                         </span>
                       </Tooltip>
                     }
                     sx={{ alignItems: 'center', margin: 0 }}
                   />
-                  {flagObj.parameter && (
-                    <TextField
-                      key={flagObj.parameter}
-                      value={parameterValue}
-                      onChange={(e) =>
-                        handleParameterChange(tool.id, flagObj.parameter, e.target.value)
-                      }
-                      size="small"
-                      label={flagObj.parameter}
-                      error={!!error}
-                      helperText={error}
-                      sx={{
-                        flexGrow: 1,
-                        '& .MuiOutlinedInput-root': {
-                          borderColor: error ? 'red' : 'default',
-                        },
-                        '& .MuiOutlinedInput-notchedOutline': error
-                          ? {
-                            borderColor: 'red',
-                            borderWidth: '1px',
-                          }
-                          : {},
-                      }}
-                      type={
-                        toolConfig.parameters.find((p) => p.name === flagObj.parameter)?.type ===
-                          'integer'
-                          ? 'number'
-                          : toolConfig.parameters.find((p) => p.name === flagObj.parameter)
-                            ?.type === 'float'
-                            ? 'number'
-                            : 'text'
-                      }
-                      inputProps={
-                        toolConfig.parameters.find((p) => p.name === flagObj.parameter)?.type ===
-                          'integer' ||
-                          toolConfig.parameters.find((p) => p.name === flagObj.parameter)?.type ===
-                          'float'
-                          ? { step: 'any' }
-                          : {}
-                      }
-                    />
+                  {paramConfig && (
+                    paramConfig.type === 'file' ? (
+                      <>
+                        <Button variant="outlined" component="label" size="small">
+                          {parameterValue ? 'Change File' : 'Upload File'}
+                          <input
+                            type="file"
+                            hidden
+                            onChange={(e) =>
+                              handleParameterChange(tool.id, flagObj.parameter, e.target.files[0])
+                            }
+                          />
+                        </Button>
+                        {parameterValue && (
+                          <Typography variant="caption" sx={{ ml: 1 }}>
+                            {parameterValue.name || parameterValue}
+                          </Typography>
+                        )}
+                      </>
+                    ) : (
+                      <TextField
+                        value={parameterValue}
+                        onChange={(e) =>
+                          handleParameterChange(tool.id, flagObj.parameter, e.target.value)
+                        }
+                        size="small"
+                        label={paramConfig.type}
+                        error={!!toolErrors[flagObj.parameter]}
+                        helperText={toolErrors[flagObj.parameter]}
+                        type={paramConfig.type === 'integer' || paramConfig.type === 'float' ? 'number' : 'text'}
+                        inputProps={paramConfig.type === 'integer' || paramConfig.type === 'float' ? { step: 'any' } : {}}
+                        sx={{ flexGrow: 1 }}
+                      />
+                    )
                   )}
                 </Box>
               );
@@ -974,6 +1537,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
             {/* Collapse */}
             <Collapse in={expandedTools.includes(tool.id) || (validationErrors[tool.id] && Object.keys(validationErrors[tool.id]).length > 0)} timeout="auto" unmountOnExit>
               {optionalFlags.map((flagObj) => {
+                const paramConfig = toolParameters.find((p) => p.name === flagObj.parameter);
                 const flagValue = !!tool.params[flagObj.flag];
                 const parameterValue = tool.params[flagObj.parameter] || '';
                 const error = toolErrors[flagObj.parameter] || '';
@@ -1010,52 +1574,45 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
                             },
                           }}
                         >
-                          <span>{flagObj.flag}</span>
+                          <span>{flagObj.parameter}</span>
                         </Tooltip>
                       }
                       sx={{ alignItems: 'center', margin: 0 }}
                     />
-                    {flagObj.parameter && flagValue && (
-                      <TextField
-                        value={parameterValue}
-                        onChange={(e) =>
-                          handleParameterChange(tool.id, flagObj.parameter, e.target.value)
-                        }
-                        size="small"
-                        label={flagObj.parameter}
-                        error={!!error}
-                        helperText={error}
-                        sx={{
-                          flexGrow: 1,
-                          '& .MuiOutlinedInput-root': {
-                            borderColor: error ? 'red' : 'default',
-                          },
-                          '& .MuiOutlinedInput-notchedOutline': error
-                            ? {
-                              borderColor: 'red',
-                              borderWidth: '1px',
-                            }
-                            : {},
-                          alignSelf: 'center',
-                        }}
-                        type={
-                          toolConfig.parameters.find((p) => p.name === flagObj.parameter)?.type ===
-                            'integer'
-                            ? 'number'
-                            : toolConfig.parameters.find((p) => p.name === flagObj.parameter)
-                              ?.type === 'float'
-                              ? 'number'
-                              : 'text'
-                        }
-                        inputProps={
-                          toolConfig.parameters.find((p) => p.name === flagObj.parameter)?.type ===
-                            'integer' ||
-                            toolConfig.parameters.find((p) => p.name === flagObj.parameter)?.type ===
-                            'float'
-                            ? { step: 'any' }
-                            : {}
-                        }
-                      />
+                    {paramConfig && flagValue && (
+                      paramConfig.type === 'file' ? (
+                        <>
+                          <Button variant="outlined" component="label" size="small">
+                            {parameterValue ? 'Change File' : 'Upload File'}
+                            <input
+                              type="file"
+                              hidden
+                              onChange={(e) =>
+                                handleParameterChange(tool.id, flagObj.parameter, e.target.files[0])
+                              }
+                            />
+                          </Button>
+                          {parameterValue && (
+                            <Typography variant="caption" sx={{ ml: 1 }}>
+                              {parameterValue.name || parameterValue}
+                            </Typography>
+                          )}
+                        </>
+                      ) : (
+                        <TextField
+                          value={parameterValue}
+                          onChange={(e) =>
+                            handleParameterChange(tool.id, flagObj.parameter, e.target.value)
+                          }
+                          size="small"
+                          label={paramConfig.type}
+                          error={!!toolErrors[flagObj.parameter]}
+                          helperText={toolErrors[flagObj.parameter]}
+                          type={paramConfig.type === 'integer' || paramConfig.type === 'float' ? 'number' : 'text'}
+                          inputProps={paramConfig.type === 'integer' || paramConfig.type === 'float' ? { step: 'any' } : {}}
+                          sx={{ flexGrow: 1 }}
+                        />
+                      )
                     )}
                   </Box>
                 );
@@ -1081,7 +1638,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
             top: 0,
             left: 0,
             width: '100%',
-            height: '88%',
+            height: '90%',
             backgroundColor: 'rgba(255, 255, 255, 0.7)',
             zIndex: 10,
             pointerEvents: 'all',
@@ -1162,6 +1719,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
                     helpMessage={helpMessages[tool.toolName]?.general}
                     workflowLength={workflow.length}
                     onPartialSave={() => handleSaveOutput(index)}
+                    toolMessageMap={toolMessageMap[tool.id]}
                   >
                     {renderParameters(tool)}
                     <Box sx={{ display: 'flex', alignItems: 'center', marginTop: 1 }}>
@@ -1188,25 +1746,65 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
                     {outputs?.[tool.id] && visibleOutputs[tool.id] && !(workflow.slice(0, index).some((prevTool) => validationErrors[prevTool.id] && Object.keys(validationErrors[prevTool.id]).length > 0)) && (
                       <Box sx={{ marginTop: 1 }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Typography variant="subtitle2">Output:</Typography>
+                          <Typography variant="subtitle2">{typeof outputs?.[tool.id] === 'object' ? 'Outputs:' : 'Output:'}</Typography>
                           <Button
                             size="small"
                             onClick={() => toggleOutputExpand(tool.id)}
                           >
-                            {expandedOutputs[tool.id] ? 'Collapse' : 'Expand'}
+                            {expandedOutputs[tool.id] ? (typeof outputs?.[tool.id] === 'object' ? 'Collapse all' : 'Collapse') : (typeof outputs?.[tool.id] === 'object' ? 'Expand all' : 'Expand')}
                           </Button>
                         </Box>
                         <Collapse in={expandedOutputs[tool.id]} timeout="auto" unmountOnExit>
-                          <Paper sx={{ padding: 1, backgroundColor: '#f5f5f5', overflow: 'auto', maxHeight: '200px', wordWrap: 'break-word' }}>
-                            <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', fontSize: '0.800rem' }}>
-                              {outputs?.[tool.id]}
-                            </Typography>
-                          </Paper>
+                          {typeof outputs?.[tool.id] === 'object' ? (
+                            <Box sx={{ maxHeight: '200px', overflowY: 'auto' }}>
+                              {Object.entries(outputs?.[tool.id]).map(([filename, content]) => (
+                                <Box key={filename} sx={{ marginTop: 1 }}>
+                                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <Typography variant="subtitle2">{filename}:</Typography>
+                                    <Button
+                                      size="small"
+                                      onClick={() => toggleOutputFileExpand(tool.id, filename)}
+                                    >
+                                      {expandedOutputFiles[`${tool.id}_${filename}`] ? 'Collapse' : 'Expand'}
+                                    </Button>
+                                  </Box>
+                                  <Collapse in={expandedOutputFiles[`${tool.id}_${filename}`]} timeout="auto" unmountOnExit>
+                                    <Paper sx={{ padding: 1, backgroundColor: '#f5f5f5', overflow: 'auto', maxHeight: '100px', wordWrap: 'break-word' }}>
+                                      <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', fontSize: '0.800rem' }}>
+                                        {content?.replace(/\x00/g, '\\x00').replace(/\x01/g, '\\x01')}
+                                      </Typography>
+                                    </Paper>
+                                  </Collapse>
+                                  {!expandedOutputFiles[`${tool.id}_${filename}`] && (
+                                    <Paper sx={{ padding: 1, backgroundColor: '#f5f5f5', overflow: 'auto', maxHeight: '100px', wordWrap: 'break-word' }}>
+                                      <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', fontSize: '0.800rem' }}>
+                                        {content.length > 50 ? `${content.slice(0, 90).replace(/\x00/g, '\\x00').replace(/\x01/g, '\\x01')}...` : content?.replace(/\x00/g, '\\x00').replace(/\x01/g, '\\x01')}
+                                      </Typography>
+                                    </Paper>
+                                  )}
+                                </Box>
+                              ))}
+                            </Box>
+                          ) : (
+                            <Paper sx={{ padding: 1, backgroundColor: '#f5f5f5', overflow: 'auto', maxHeight: '100px', wordWrap: 'break-word' }}>
+                              <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', fontSize: '0.800rem' }}>
+                                {outputs?.[tool.id]?.replace(/\x00/g, '\\x00').replace(/\x01/g, '\\x01')}
+                              </Typography>
+                            </Paper>
+                          )}
                         </Collapse>
                         {!expandedOutputs[tool.id] && (
-                          <Paper sx={{ padding: 1, backgroundColor: '#f5f5f5', overflow: 'auto', maxHeight: '200px', wordWrap: 'break-word' }}>
+                          <Paper sx={{ padding: 1, backgroundColor: '#f5f5f5', overflow: 'auto', maxHeight: '100px', wordWrap: 'break-word' }}>
                             <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', fontSize: '0.800rem' }}>
-                              {outputs?.[tool.id].length > 50 ? `${outputs?.[tool.id].slice(0, 90)}...` : outputs?.[tool.id]}
+                              {outputs?.[tool.id] ? (
+                                typeof outputs?.[tool.id] === 'object'
+                                  ? `Multiple output files available: ${Object.keys(outputs?.[tool.id]).join(', ')}`
+                                  : outputs?.[tool.id].length > 50
+                                    ? `${outputs?.[tool.id].slice(0, 90).replace(/\x00/g, '\\x00').replace(/\x01/g, '\\x01')}...`
+                                    : outputs?.[tool.id].replace(/\x00/g, '\\x00').replace(/\x01/g, '\\x01')
+                              ) : (
+                                'No output available yet'
+                              )}
                             </Typography>
                           </Paper>
                         )}
@@ -1307,7 +1905,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
       {workflow.length > 0 && (
         <Box sx={{ marginTop: 1 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
-            <Typography variant="h6" sx={{ paddingBottom: 2 }}>Output</Typography>
+            <Typography variant="h6" sx={{ paddingBottom: 2 }}>{typeof outputs?.[workflow[workflow.length - 1]?.id] === 'object' ? 'Outputs' : 'Output'}</Typography>
             <Box
               sx={{
                 display: 'flex',
@@ -1328,21 +1926,71 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
                 size="small"
                 onClick={() => toggleOutputExpand("OutputBox")}
               >
-                {expandedOutputs["OutputBox"] ? 'Collapse' : 'Expand'}
+                {expandedOutputs["OutputBox"] ? (typeof outputs?.[workflow[workflow.length - 1]?.id] === 'object' ? 'Collapse all' : 'Collapse') : (typeof outputs?.[workflow[workflow.length - 1]?.id] === 'object' ? 'Expand all' : 'Expand')}
               </Button>
             </Box>
           </Box>
           <Collapse in={expandedOutputs["OutputBox"]} timeout="auto" unmountOnExit>
-            <Paper sx={{ padding: 1, backgroundColor: '#f5f5f5', overflow: 'auto', maxHeight: '200px', wordWrap: 'break-word' }}>
-              <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', fontSize: '0.800rem' }}>
-                {outputs?.[workflow[workflow.length - 1].id]}
-              </Typography>
-            </Paper>
+            <Box>
+              {outputs?.[workflow[workflow.length - 1]?.id] ? (
+                typeof outputs?.[workflow[workflow.length - 1]?.id] === 'object' ? (
+                  <Box sx={{ maxHeight: '200px', overflowY: 'auto' }}>
+                    {Object.entries(outputs?.[workflow[workflow.length - 1]?.id]).map(([filename, content]) => (
+                      <Box key={filename} sx={{ marginTop: 1 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Typography variant="subtitle2">{filename}:</Typography>
+                          <Button
+                            size="small"
+                            onClick={() => toggleOutputFileExpand("OutputBox", filename)}
+                          >
+                            {expandedOutputFiles[`OutputBox_${filename}`] ? 'Collapse' : 'Expand'}
+                          </Button>
+                        </Box>
+                        <Collapse in={expandedOutputFiles[`OutputBox_${filename}`]} timeout="auto" unmountOnExit>
+                          <Paper sx={{ padding: 1, backgroundColor: '#f5f5f5', overflow: 'auto', maxHeight: '100px', wordWrap: 'break-word' }}>
+                            <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', fontSize: '0.800rem' }}>
+                              {content}
+                            </Typography>
+                          </Paper>
+                        </Collapse>
+                        {!expandedOutputFiles[`OutputBox_${filename}`] && (
+                          <Paper sx={{ padding: 1, backgroundColor: '#f5f5f5', overflow: 'auto', maxHeight: '100px', wordWrap: 'break-word' }}>
+                            <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', fontSize: '0.800rem' }}>
+                              {content.length > 50 ? `${content.slice(0, 90)}...` : content}
+                            </Typography>
+                          </Paper>
+                        )}
+                      </Box>
+                    ))}
+                  </Box>
+                ) : (
+                  <Paper sx={{ padding: 1, backgroundColor: '#f5f5f5', overflow: 'auto', maxHeight: '100px', wordWrap: 'break-word' }}>
+                    <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', fontSize: '0.800rem' }}>
+                      {outputs?.[workflow[workflow.length - 1]?.id]}
+                    </Typography>
+                  </Paper>
+                )
+              ) : (
+                <Paper sx={{ padding: 1, backgroundColor: '#f5f5f5', overflow: 'auto', maxHeight: '100px', wordWrap: 'break-word' }}>
+                  <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', fontSize: '0.800rem' }}>
+                    No output available yet
+                  </Typography>
+                </Paper>
+              )}
+            </Box>
           </Collapse>
           {!expandedOutputs["OutputBox"] && (
-            <Paper sx={{ padding: 1, backgroundColor: '#f5f5f5', overflow: 'auto', maxHeight: '200px', wordWrap: 'break-word' }}>
+            <Paper sx={{ padding: 1, backgroundColor: '#f5f5f5', overflow: 'auto', maxHeight: '100px', wordWrap: 'break-word' }}>
               <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', fontSize: '0.800rem' }}>
-                {outputs?.[workflow[workflow.length - 1].id]?.length > 50 ? `${outputs?.[workflow[workflow.length - 1].id].slice(0, 90)}...` : outputs?.[workflow[workflow.length - 1].id]}
+                {outputs?.[workflow[workflow.length - 1]?.id] ? (
+                  typeof outputs?.[workflow[workflow.length - 1]?.id] === 'object'
+                    ? `Multiple output files available: ${Object.keys(outputs?.[workflow[workflow.length - 1]?.id]).join(', ')}`
+                    : outputs?.[workflow[workflow.length - 1]?.id].length > 50
+                      ? `${outputs?.[workflow[workflow.length - 1]?.id].slice(0, 90)}...`
+                      : outputs?.[workflow[workflow.length - 1]?.id]
+                ) : (
+                  'No output available yet'
+                )}
               </Typography>
             </Paper>
           )}

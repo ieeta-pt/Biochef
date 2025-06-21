@@ -5,101 +5,118 @@
 
 (function() {
   /**
-   * Runs the FastaSplitStreams tool with the provided input data.
-   * @param {string} inputData - The input data.
-   * @param {Array<string>} args - Additional arguments to pass to fasta_split_streams.
-   * @returns {Promise<Object>} An object containing stdout and stderr outputs.
+   * Runs the FastaSplitStreams tool.
+   * Uses a single stdin data string.   * @param {string} inputData - The input data.   * @param {Array<string>} args - CLI arguments (include flags and filenames for file inputs).
+   * @returns {Promise<Object>} An object containing stdout and stderr outputs and output files.
    */
   async function runFastaSplitStreams(inputData, args = []) {
-    console.log("Starting runFastaSplitStreams with input:", inputData);
+    console.log("Starting runFastaSplitStreams");
     console.log("Arguments:", args);
 
     try {
-      // Normalize line endings
-      inputData = inputData.replace(/\r\n/g, '\n');
-
       // Buffers for capturing stdout and stderr
       let stdoutBuffer = '';
       let stderrBuffer = '';
 
-      // Initialize options for the module
+      // Module instantiation options
       const options = {
-        locateFile: (path) => {
-          if (path.endsWith('.wasm')) {
-            return `/wasm/${path}`;
-          }
-          return path;
-        },
+        locateFile: (path) => path.endsWith('.wasm') ? `/wasm/${path}` : path,
         thisProgram: './fasta_split_streams',
-        noInitialRun: true, // We will call main manually
-        // Remove noExitRuntime to use default behavior (false)
-        // noExitRuntime: false,
-        print: function(text) {
-          stdoutBuffer += text + '\n';
-        },
-        printErr: function(text) {
-          stderrBuffer += text + '\n';
-        },
+        noInitialRun: true,
+        print: (text) => { stdoutBuffer += text + '\n'; },
+        printErr: (text) => { stderrBuffer += text + '\n'; },
       };
 
-      // Load the module
+      // Load the WASM module script
       await loadModuleScript('fasta_split_streams');
       const moduleFactory = window['fasta_split_streams'];
       if (typeof moduleFactory !== 'function') {
-        throw new Error("Module factory function for fasta_split_streams is not available.");
+        throw new Error(`Module factory for fasta_split_streams not available.`);
       }
-
       const module = await moduleFactory(options);
 
-      // Write input data to 'input.txt' in the virtual filesystem
+      // ------------------------------------------------------------------
+      // Write inputs into the virtual filesystem
+      // ------------------------------------------------------------------
+      // Normalize and write single stdin input
+      inputData = inputData.replace(/\r\n/g, '\n');
       module.FS.writeFile('input.txt', inputData);
+      let fullArgs = args.slice();
+      
+      // For multi-output tools, create a dedicated output directory
+      try {
+        module.FS.mkdir('/outputs');
+      } catch (e) {
+        console.log('Output directory already exists.');
+      }
 
-      // Execute the module's main function
-      const fullArgs = args;
+      
+
+
       console.log("Executing module.callMain with arguments:", fullArgs);
       module.callMain(fullArgs);
 
-      // Read the output directly after callMain
-      const outputData = stdoutBuffer.trim();
-
-      return {
-        stdout: outputData,
-        stderr: stderrBuffer.trim()
-      };
+      // ------------------------------------------------------------------
+      // Collect outputs
+      // ------------------------------------------------------------------
+      // Multi-output: read all files from /outputs
+      let outputFiles = {};
+      try {
+        // Special handling for fasta_split_streams - read the three specific output files
+        const headerFile = 'HEADERS.JV2';
+        const extraFile = 'EXTRA.JV2';
+        const dnaFile = 'DNA.JV2';
+        
+        try {
+          const headerData = module.FS.readFile(headerFile, { encoding: 'binary' });
+          outputFiles['headers'] = new TextDecoder('utf-8', { fatal: false }).decode(headerData);
+        } catch (err) {
+          console.warn(`Could not read headers file ${headerFile}:`, err);
+        }
+        
+        try {
+          const extraData = module.FS.readFile(extraFile, { encoding: 'binary' });
+          outputFiles['extra'] = new TextDecoder('utf-8', { fatal: false }).decode(extraData);
+        } catch (err) {
+          console.warn(`Could not read extra file ${extraFile}:`, err);
+        }
+        
+        try {
+          const dnaData = module.FS.readFile(dnaFile, { encoding: 'binary' });
+          outputFiles['dna'] = new TextDecoder('utf-8', { fatal: false }).decode(dnaData);
+        } catch (err) {
+          console.warn(`Could not read DNA file ${dnaFile}:`, err);
+        }
+        
+        // Clean up the files after reading
+        try { module.FS.unlink(headerFile); } catch (e) {}
+        try { module.FS.unlink(extraFile); } catch (e) {}
+        try { module.FS.unlink(dnaFile); } catch (e) {}
+      } catch (e) {
+        console.error('Error reading output files:', e);
+      }
+      return { stdout: stdoutBuffer.trim(), stderr: stderrBuffer.trim(), outputs: outputFiles };
 
     } catch (err) {
-      console.error('Error in runFastaSplitStreams:', err);
+      console.error(`Error in runFastaSplitStreams:`, err);
       throw err;
     }
   }
 
   /**
    * Dynamically loads the WASM module script if not already loaded.
-   * @param {string} moduleName - The name of the module.
    */
   function loadModuleScript(moduleName) {
     return new Promise((resolve, reject) => {
-      if (window[moduleName]) {
-        // Module script is already loaded
-        resolve();
-        return;
-      }
-
+      if (window[moduleName]) return resolve();
       const script = document.createElement('script');
       script.src = `/wasm/${moduleName}.js`;
-      script.onload = () => {
-        console.log(`Module script ${moduleName}.js loaded.`);
-        resolve();
-      };
-      script.onerror = () => {
-        reject(new Error(`Failed to load module script ${moduleName}.js.`));
-      };
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error(`Failed to load ${moduleName}.js`));
       document.head.appendChild(script);
     });
   }
 
-  /**
-   * Expose the runFastaSplitStreams function globally.
-   */
+  // Expose globally
   window.run_fasta_split_streams = runFastaSplitStreams;
 })();

@@ -5,101 +5,188 @@
 
 (function() {
   /**
-   * Runs the {{ tool_name_camel }} tool with the provided input data.
-   * @param {string} inputData - The input data.
-   * @param {Array<string>} args - Additional arguments to pass to {{ tool_name }}.
-   * @returns {Promise<Object>} An object containing stdout and stderr outputs.
+   * Runs the {{ tool_name_camel }} tool.
+   * {% if input_type == 'stdin' %}Uses a single stdin data string.{% else %}Accepts file inputs for parameters.{% endif %}
+   * @param {% if input_type == 'stdin' %}{string} inputData - The input data.{% else %}{Object.<string,{name:string,data:(string|Uint8Array)}> } files - Mapping of parameter names to file objects.{% endif %}
+   * @param {Array<string>} args - CLI arguments (include flags and filenames for file inputs).
+   * @returns {Promise<Object>} An object containing stdout and stderr outputs{% if output_type == 'file' %} and output files{% endif %}.
    */
-  async function run{{ tool_name_camel }}(inputData, args = []) {
-    console.log("Starting run{{ tool_name_camel }} with input:", inputData);
+  async function run{{ tool_name_camel }}({% if input_type == 'stdin' %}inputData, args = []{% else %}files, args = []{% endif %}) {
+    console.log("Starting run{{ tool_name_camel }}");
     console.log("Arguments:", args);
 
     try {
-      // Normalize line endings
-      inputData = inputData.replace(/\r\n/g, '\n');
-
       // Buffers for capturing stdout and stderr
       let stdoutBuffer = '';
       let stderrBuffer = '';
 
-      // Initialize options for the module
+      // Module instantiation options
       const options = {
-        locateFile: (path) => {
-          if (path.endsWith('.wasm')) {
-            return `/wasm/${path}`;
-          }
-          return path;
-        },
+        locateFile: (path) => path.endsWith('.wasm') ? `/wasm/${path}` : path,
         thisProgram: './{{ tool_name }}',
-        noInitialRun: true, // We will call main manually
-        // Remove noExitRuntime to use default behavior (false)
-        // noExitRuntime: false,
-        print: function(text) {
-          stdoutBuffer += text + '\n';
-        },
-        printErr: function(text) {
-          stderrBuffer += text + '\n';
-        },
+        noInitialRun: true,
+        print: (text) => { stdoutBuffer += text + '\n'; },
+        printErr: (text) => { stderrBuffer += text + '\n'; },
+        {% if is_file_based %}
+        stdin: null,  // Disable stdin for file-based tools
+        {% endif %}
       };
 
-      // Load the module
+      // Load the WASM module script
       await loadModuleScript('{{ tool_name }}');
       const moduleFactory = window['{{ tool_name }}'];
       if (typeof moduleFactory !== 'function') {
-        throw new Error("Module factory function for {{ tool_name }} is not available.");
+        throw new Error(`Module factory for {{ tool_name }} not available.`);
       }
-
       const module = await moduleFactory(options);
 
-      // Write input data to 'input.txt' in the virtual filesystem
+      // ------------------------------------------------------------------
+      // Write inputs into the virtual filesystem
+      // ------------------------------------------------------------------
+      {% if input_type == 'stdin' %}
+      // Normalize and write single stdin input
+      inputData = inputData.replace(/\r\n/g, '\n');
       module.FS.writeFile('input.txt', inputData);
+      let fullArgs = args.slice();
+      
+      {% if is_multi_output %}
+      // For multi-output tools, create a dedicated output directory
+      try {
+        module.FS.mkdir('/outputs');
+      } catch (e) {
+        console.log('Output directory already exists.');
+      }
 
-      // Execute the module's main function
-      const fullArgs = args;
+      {% if tool_name == 'fasta_split_reads' %}
+      // Add output directory to arguments if not provided
+      if (!fullArgs.includes('-l')) {
+        fullArgs.push('-l', '/outputs');
+      }
+      {% endif %}
+      
+      {% endif %}
+      {% else %}
+      // Write each file parameter into MEMFS
+      for (const [param, file] of Object.entries(files)) {
+        // file.name is the filename, file.data is string or Uint8Array
+        module.FS.writeFile(file.name, file.data);
+      }
+      // For file-based tools, just pass the args as is
+      let fullArgs = args;
+      {% endif %}
+
+      {% if tool_name == 'fastq_split' %}
+      // Special handling for fastq_split - add -f and -r flags with output filenames
+      // Only add flags if -h is not present
+      if (!fullArgs.includes('-h')) {
+        fullArgs = ['-f', 'forward.fastq', '-r', 'reverse.fastq', ...fullArgs];
+      }
+      {% endif %}
+
       console.log("Executing module.callMain with arguments:", fullArgs);
       module.callMain(fullArgs);
 
-      // Read the output directly after callMain
-      const outputData = stdoutBuffer.trim();
-
-      return {
-        stdout: outputData,
-        stderr: stderrBuffer.trim()
-      };
+      // ------------------------------------------------------------------
+      // Collect outputs
+      // ------------------------------------------------------------------
+      {% if is_multi_output %}
+      // Multi-output: read all files from /outputs
+      let outputFiles = {};
+      try {
+        {% if tool_name == 'fastq_split' %}
+        // Special handling for fastq_split - read files directly from root directory
+        if (module.FS.analyzePath('forward.fastq').exists) {
+          const forwardData = module.FS.readFile('forward.fastq', { encoding: 'binary' });
+          outputFiles['forward.fastq'] = new TextDecoder('utf-8', { fatal: false }).decode(forwardData);
+          module.FS.unlink('forward.fastq');
+        }
+        if (module.FS.analyzePath('reverse.fastq').exists) {
+          const reverseData = module.FS.readFile('reverse.fastq', { encoding: 'binary' });
+          outputFiles['reverse.fastq'] = new TextDecoder('utf-8', { fatal: false }).decode(reverseData);
+          module.FS.unlink('reverse.fastq');
+        }
+        {% elif tool_name == 'fasta_split_streams' %}
+        // Special handling for fasta_split_streams - read the three specific output files
+        const headerFile = 'HEADERS.JV2';
+        const extraFile = 'EXTRA.JV2';
+        const dnaFile = 'DNA.JV2';
+        
+        try {
+          const headerData = module.FS.readFile(headerFile, { encoding: 'binary' });
+          outputFiles['headers'] = new TextDecoder('utf-8', { fatal: false }).decode(headerData);
+        } catch (err) {
+          console.warn(`Could not read headers file ${headerFile}:`, err);
+        }
+        
+        try {
+          const extraData = module.FS.readFile(extraFile, { encoding: 'binary' });
+          outputFiles['extra'] = new TextDecoder('utf-8', { fatal: false }).decode(extraData);
+        } catch (err) {
+          console.warn(`Could not read extra file ${extraFile}:`, err);
+        }
+        
+        try {
+          const dnaData = module.FS.readFile(dnaFile, { encoding: 'binary' });
+          outputFiles['dna'] = new TextDecoder('utf-8', { fatal: false }).decode(dnaData);
+        } catch (err) {
+          console.warn(`Could not read DNA file ${dnaFile}:`, err);
+        }
+        
+        // Clean up the files after reading
+        try { module.FS.unlink(headerFile); } catch (e) {}
+        try { module.FS.unlink(extraFile); } catch (e) {}
+        try { module.FS.unlink(dnaFile); } catch (e) {}
+        {% else %}
+        const filesOut = module.FS.readdir('/outputs').filter(f => f !== '.' && f !== '..');
+        for (const fname of filesOut) {
+          const fileData = module.FS.readFile(`/outputs/${fname}`, { encoding: 'binary' });
+          outputFiles[fname] = new TextDecoder('utf-8', { fatal: false }).decode(fileData);
+        }
+        // cleanup outputs directory
+        for (const fname of filesOut) module.FS.unlink(`/outputs/${fname}`);
+        module.FS.rmdir('/outputs');
+        {% endif %}
+      } catch (e) {
+        console.error('Error reading output files:', e);
+      }
+      return { stdout: stdoutBuffer.trim(), stderr: stderrBuffer.trim(), outputs: outputFiles };
+      {% else %}
+      // Single-output: capture stdout
+      const outData = stdoutBuffer.trim();
+      {% if output_type == 'file' %}
+      // If output_type file, write it into MEMFS under provided filename in args
+      const outFlagIndex = args.findIndex((v, i) => ['-o','--output'].includes(v));
+      let outputFile = null;
+      if (outFlagIndex >= 0 && args[outFlagIndex+1]) {
+        outputFile = args[outFlagIndex+1];
+        module.FS.writeFile(outputFile, outData);
+      }
+      return { stdout: outData, stderr: stderrBuffer.trim(), file: outputFile };
+      {% else %}
+      return { stdout: outData, stderr: stderrBuffer.trim() };
+      {% endif %}
+      {% endif %}
 
     } catch (err) {
-      console.error('Error in run{{ tool_name_camel }}:', err);
+      console.error(`Error in run{{ tool_name_camel }}:`, err);
       throw err;
     }
   }
 
   /**
    * Dynamically loads the WASM module script if not already loaded.
-   * @param {string} moduleName - The name of the module.
    */
   function loadModuleScript(moduleName) {
     return new Promise((resolve, reject) => {
-      if (window[moduleName]) {
-        // Module script is already loaded
-        resolve();
-        return;
-      }
-
+      if (window[moduleName]) return resolve();
       const script = document.createElement('script');
       script.src = `/wasm/${moduleName}.js`;
-      script.onload = () => {
-        console.log(`Module script ${moduleName}.js loaded.`);
-        resolve();
-      };
-      script.onerror = () => {
-        reject(new Error(`Failed to load module script ${moduleName}.js.`));
-      };
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error(`Failed to load ${moduleName}.js`));
       document.head.appendChild(script);
     });
   }
 
-  /**
-   * Expose the run{{ tool_name_camel }} function globally.
-   */
-  window.run_{{ tool_name.lower() }} = run{{ tool_name_camel }};
+  // Expose globally
+  window.run_{{ tool_name }} = run{{ tool_name_camel }};
 })();

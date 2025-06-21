@@ -1,20 +1,24 @@
 # gto-wasm-app/generate_wrapper.py
-import sys
 import os
+import sys
+
 from jinja2 import Environment, FileSystemLoader, TemplateError
+
 
 def camel_case(snake_str):
     components = snake_str.split('_')
     return ''.join(x.title() for x in components)
 
 def main():
-    if len(sys.argv) != 4:
-        print("Usage: python generate_wrapper.py <tool_name> <input_type> <output_type>")
+    if len(sys.argv) != 5:
+        print("Usage: python generate_wrapper.py <tool_name> <input_type> <output_type> <is_multi_output>")
         sys.exit(1)
+
 
     tool_name = sys.argv[1]
     input_type = sys.argv[2].lower()
     output_type = sys.argv[3].lower()
+    is_multi_output = sys.argv[4].lower() == 'true'
 
     # Validate input_type and output_type
     valid_input_types = ['stdin', 'file']
@@ -44,7 +48,9 @@ def main():
             tool_name=tool_name,
             tool_name_camel=tool_name_camel,
             input_type=input_type,
-            output_type=output_type
+            output_type=output_type,
+            is_multi_output=is_multi_output,
+            is_file_based=(input_type == 'file')
         )
     except TemplateError as e:
         print(f"Error rendering template: {e}")

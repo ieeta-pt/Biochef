@@ -19,6 +19,9 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastqToFasta.c"
     },
     {
@@ -40,6 +43,9 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastqToMFasta.c"
     },
     {
@@ -71,6 +77,8 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastqExcludeN.c"
     },
     {
@@ -82,7 +90,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         {
@@ -92,6 +100,8 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastqExtractQS.c"
     },
     {
@@ -103,7 +113,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         {
@@ -113,6 +123,8 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastqInfo.c"
     },
     {
@@ -144,6 +156,8 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastqMaximumReadSize.c"
     },
     {
@@ -175,6 +189,8 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastqMinimumQualityScore.c"
     },
     {
@@ -206,6 +222,8 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastqMinimumReadSize.c"
     },
     {
@@ -227,6 +245,8 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastqRandExtraChars.c"
     },
     {
@@ -267,6 +287,8 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastqFromSeq.c"
     },
     {
@@ -308,7 +330,7 @@
         },
         {
           "flag": "-a",
-          "parameter": null,
+          "parameter": "ACGTN-alphabet",
           "required": false
         }
       ],
@@ -337,6 +359,8 @@
           "max": 1
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastqMutate.c"
     },
     {
@@ -347,36 +371,19 @@
         "format": "FASTQ"
       },
       "output": {
-        "type": "stdout",
-        "format": "text"
+        "type": "file",
+        "format": "FASTQ"
       },
       "flags": [
         {
           "flag": "-h",
           "parameter": null,
           "required": false
-        },
-        {
-          "flag": "-f",
-          "parameter": "forward",
-          "required": true
-        },
-        {
-          "flag": "-r",
-          "parameter": "reverse",
-          "required": true
         }
       ],
-      "parameters": [
-        {
-          "name": "forward",
-          "type": "string"
-        },
-        {
-          "name": "reverse",
-          "type": "string"
-        }
-      ],
+      "parameters": [],
+      "is_multi_output": true,
+      "is_multi_type_output": false,
       "source": "gto/src/FastqSplit.c"
     },
     {
@@ -388,7 +395,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "FASTQ"
+        "format": "PackagedFASTQ"
       },
       "flags": [
         {
@@ -398,11 +405,13 @@
         },
         {
           "flag": "-s",
-          "parameter": null,
+          "parameter": "scores",
           "required": false
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastqPack.c"
     },
     {
@@ -410,7 +419,7 @@
       "description": "Unpacks the FASTQ reads packaged using the gto_fastq_pack tool.",
       "input": {
         "type": "stdin",
-        "format": "FASTQ"
+        "format": "PackagedFASTQ"
       },
       "output": {
         "type": "stdout",
@@ -424,11 +433,13 @@
         },
         {
           "flag": "-s",
-          "parameter": null,
+          "parameter": "scores",
           "required": false
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastqUnpack.c"
     },
     {
@@ -440,7 +451,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         {
@@ -460,6 +471,8 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastqQualityScoreInfo.c"
     },
     {
@@ -471,7 +484,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         {
@@ -491,6 +504,8 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastqQualityScoreMin.c"
     },
     {
@@ -502,7 +517,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         {
@@ -522,6 +537,8 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastqQualityScoreMax.c"
     },
     {
@@ -562,6 +579,8 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastqCut.c"
     },
     {
@@ -611,6 +630,8 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastqMinimumQualityScoreForward.c"
     },
     {
@@ -660,6 +681,8 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastqMinimumQualityScoreReverse.c"
     },
     {
@@ -785,6 +808,8 @@
           "type": "string"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "external_tool"
     },
     {
@@ -808,6 +833,8 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "Not found in Makefile"
     },
     {
@@ -829,6 +856,8 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastqComplement.c"
     },
     {
@@ -850,6 +879,8 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastqReverse.c"
     },
     {
@@ -861,7 +892,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         "-h",
@@ -898,6 +929,8 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "external_tool (CHESTER)"
     },
     {
@@ -905,11 +938,11 @@
       "description": "Filters and segments the regions of singularity from the output of gto_fastq_variation_map.",
       "input": {
         "type": "stdin",
-        "format": "text"
+        "format": "TEXT"
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         "-h",
@@ -941,6 +974,8 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "external_tool (CHESTER)"
     },
     {
@@ -948,7 +983,7 @@
       "description": "Depicts the regions of singularity using the output from gto_fastq_variation_filter into an SVG image.",
       "input": {
         "type": "stdin",
-        "format": "text"
+        "format": "TEXT"
       },
       "output": {
         "type": "stdout",
@@ -974,6 +1009,8 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "external_tool (CHESTER)"
     },
     {
@@ -1039,6 +1076,8 @@
           "type": "string"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "external_tool"
     },
     {
@@ -1060,6 +1099,8 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastaToSeq.c"
     },
     {
@@ -1100,6 +1141,8 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastaFromSeq.c"
     },
     {
@@ -1140,6 +1183,8 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastaExtract.c"
     },
     {
@@ -1180,6 +1225,8 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastaExtractByRead.c"
     },
     {
@@ -1191,7 +1238,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         {
@@ -1201,6 +1248,8 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastaInfo.c"
     },
     {
@@ -1242,7 +1291,7 @@
         },
         {
           "flag": "-a",
-          "parameter": null,
+          "parameter": "ACGTN-alphabet",
           "required": false
         }
       ],
@@ -1271,6 +1320,8 @@
           "max": 1
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastaMutate.c"
     },
     {
@@ -1292,6 +1343,8 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastaRandExtraChars.c"
     },
     {
@@ -1323,6 +1376,8 @@
           "type": "string"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastaExtractReadByIdPattern.c"
     },
     {
@@ -1334,7 +1389,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         {
@@ -1344,6 +1399,8 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastaFindNPos.c"
     },
     {
@@ -1354,27 +1411,19 @@
         "format": "Multi-FASTA"
       },
       "output": {
-        "type": "stdout",
-        "format": "text"
+        "type": "file",
+        "format": "FASTA"
       },
       "flags": [
         {
           "flag": "-h",
           "parameter": null,
           "required": false
-        },
-        {
-          "flag": "-l",
-          "parameter": "location",
-          "required": false
         }
       ],
-      "parameters": [
-        {
-          "name": "location",
-          "type": "string"
-        }
-      ],
+      "parameters": [],
+      "is_multi_output": true,
+      "is_multi_type_output": false,
       "source": "gto/src/FastaSplitReads.c"
     },
     {
@@ -1396,6 +1445,8 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastaRenameHumanHeaders.c"
     },
     {
@@ -1407,7 +1458,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         {
@@ -1427,6 +1478,8 @@
           "type": "string"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastaExtractPatternCoords.c"
     },
     {
@@ -1448,6 +1501,8 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastaComplement.c"
     },
     {
@@ -1469,6 +1524,8 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/FastaReverse.c"
     },
     {
@@ -1480,7 +1537,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         "-h",
@@ -1517,6 +1574,8 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "external_tool (CHESTER)"
     },
     {
@@ -1524,11 +1583,11 @@
       "description": "This tool is an alias to gto_fastq_variation_filter tool. Please check the documentation of this tool in the in the section of FASTQ tools.",
       "input": {
         "type": "stdin",
-        "format": "text"
+        "format": "TEXT"
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         "-h",
@@ -1560,6 +1619,8 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "external_tool (CHESTER)"
     },
     {
@@ -1567,7 +1628,7 @@
       "description": "This tool is an alias to gto_fastq_variation_visual tool. Please check the documentation of this tool in the in the section of FASTQ tools.",
       "input": {
         "type": "stdin",
-        "format": "text"
+        "format": "TEXT"
       },
       "output": {
         "type": "stdout",
@@ -1593,6 +1654,8 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "external_tool (CHESTER)"
     },
     {
@@ -1600,95 +1663,58 @@
       "description": "Splits and writes a FASTA file into three channels of information: headers, extra and DNA.",
       "input": {
         "type": "stdin",
-        "format": "FASTA"
+        "format": "FASTA, Multi-FASTA"
       },
       "output": {
-        "type": "stdout",
-        "format": "text"
+        "type": "file",
+        "format": "TEXT, DNA, AminoAcids, RNA"
       },
       "flags": [
         {
           "flag": "-h",
           "parameter": null,
           "required": false
-        },
-        {
-          "flag": "-e",
-          "parameter": "extra",
-          "required": true
-        },
-        {
-          "flag": "-d",
-          "parameter": "dna",
-          "required": true
-        },
-        {
-          "flag": "-H",
-          "parameter": "headers",
-          "required": true
         }
       ],
-      "parameters": [
-        {
-          "name": "extra",
-          "type": "string"
-        },
-        {
-          "name": "dna",
-          "type": "string"
-        },
-        {
-          "name": "headers",
-          "type": "string"
-        }
-      ],
+      "parameters": [],
+      "is_multi_output": true,
+      "is_multi_type_output": true,
       "source": "gto/src/FastaSplitStreams.c"
     },
     {
       "name": "gto_fasta_merge_streams",
       "description": "It merges the three channels of information (headers, extra and DNA) and writes it into a FASTA file.",
       "input": {
-        "type": "stdin",
-        "format": "FASTA"
+        "type": "file",
+        "format": "TEXT, DNA, AminoAcids, RNA"
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "FASTA, Multi-FASTA"
       },
       "flags": [
         {
           "flag": "-h",
           "parameter": null,
           "required": false
-        },
-        {
-          "flag": "-e",
-          "parameter": "extra",
-          "required": true
-        },
-        {
-          "flag": "-d",
-          "parameter": "dna",
-          "required": true
-        },
-        {
-          "flag": "-H",
-          "parameter": "headers",
-          "required": true
         }
       ],
       "parameters": [
         {
-          "name": "extra",
-          "type": "string"
+          "name": "headers"
         },
         {
-          "name": "dna",
-          "type": "string"
+          "name": "extra"
         },
         {
-          "name": "headers",
-          "type": "string"
+          "name": "dna"
+        }
+      ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
+      "related_tools": [
+        {
+          "name": "gto_fasta_split_streams"
         }
       ],
       "source": "gto/src/FastaMergeStreams.c"
@@ -1702,7 +1728,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "GROUP"
+        "format": "Group"
       },
       "flags": [
         {
@@ -1712,6 +1738,8 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/AminoAcidToGroup.c"
     },
     {
@@ -1733,6 +1761,8 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/AminoAcidToPseudoDNA.c"
     },
     {
@@ -1796,6 +1826,8 @@
           "type": "string"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "external_tool"
     },
     {
@@ -1827,6 +1859,8 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/AminoAcidFromFasta.c"
     },
     {
@@ -1858,6 +1892,8 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/AminoAcidFromFastq.c"
     },
     {
@@ -1889,6 +1925,8 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/AminoAcidFromSeq.c"
     },
     {
@@ -1941,6 +1979,8 @@
           "type": "string"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/GenomicGenRandomDNA.c"
     },
     {
@@ -1962,6 +2002,8 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/GenomicRandSeqExtraChars.c"
     },
     {
@@ -2003,7 +2045,7 @@
         },
         {
           "flag": "-a",
-          "parameter": null,
+          "parameter": "ACGTN-alphabet",
           "required": false
         }
       ],
@@ -2032,6 +2074,8 @@
           "max": 1
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/GenomicDNAMutate.c"
     },
     {
@@ -2072,6 +2116,8 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/GenomicExtract.c"
     },
     {
@@ -2083,7 +2129,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "NUM"
       },
       "flags": [
         {
@@ -2093,6 +2139,8 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/GenomicPeriod.c"
     },
     {
@@ -2104,7 +2152,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         {
@@ -2114,6 +2162,8 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/GenomicCountBases.c"
     },
     {
@@ -2182,6 +2232,8 @@
           "type": "string"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "external_tool"
     },
     {
@@ -2203,6 +2255,8 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/GenomicComplement.c"
     },
     {
@@ -2224,6 +2278,8 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/Reverse.c"
     },
     {
@@ -2245,6 +2301,8 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/CharToLine.c"
     },
     {
@@ -2266,6 +2324,8 @@
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/NewLineForNewValue.c"
     },
     {
@@ -2297,6 +2357,8 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/UpperBound.c"
     },
     {
@@ -2328,6 +2390,8 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/LowerBound.c"
     },
     {
@@ -2339,7 +2403,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         {
@@ -2368,6 +2432,8 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/BruteForceString.c"
     },
     {
@@ -2399,6 +2465,8 @@
           "type": "float"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/RealToBinaryWithThreshold.c"
     },
     {
@@ -2420,16 +2488,18 @@
         },
         {
           "flag": "-r",
-          "parameter": null,
+          "parameter": "sumrows",
           "required": false
         },
         {
           "flag": "-a",
-          "parameter": null,
+          "parameter": "sumall",
           "required": false
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/Sum.c"
     },
     {
@@ -2466,17 +2536,17 @@
         },
         {
           "flag": "-c",
-          "parameter": null,
+          "parameter": "onecolumn",
           "required": false
         },
         {
           "flag": "-p",
-          "parameter": null,
+          "parameter": "printone",
           "required": false
         },
         {
           "flag": "-r",
-          "parameter": null,
+          "parameter": "reverse",
           "required": false
         }
       ],
@@ -2494,6 +2564,8 @@
           "type": "integer"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/Filter.c"
     },
     {
@@ -2501,11 +2573,11 @@
       "description": "Search for a word in a file. It is case sensitive.",
       "input": {
         "type": "stdin",
-        "format": "text"
+        "format": "TEXT, Multi-FASTA, FASTA, FASTQ, NUM, DNA, RNA, AminoAcids"
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         {
@@ -2525,6 +2597,8 @@
           "type": "string"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/WordSearch.c"
     },
     {
@@ -2532,11 +2606,11 @@
       "description": "Permutates by block sequence, FASTA and Multi-FASTA files.",
       "input": {
         "type": "stdin",
-        "format": "FASTA"
+        "format": "FASTA, Multi-FASTA"
       },
       "output": {
         "type": "stdout",
-        "format": "FASTA"
+        "format": "FASTA, Multi-FASTA"
       },
       "flags": [
         {
@@ -2566,6 +2640,8 @@
           "maxLength": 9
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/PermuteByBlocks.c"
     },
     {
@@ -2577,7 +2653,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "TEXT"
       },
       "flags": [
         {
@@ -2587,11 +2663,13 @@
         },
         {
           "flag": "-a",
-          "parameter": null,
+          "parameter": "ascii",
           "required": false
         }
       ],
       "parameters": [],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/Info.c"
     },
     {
@@ -2603,7 +2681,7 @@
       },
       "output": {
         "type": "stdout",
-        "format": "text"
+        "format": "text, NUM"
       },
       "flags": [
         {
@@ -2623,6 +2701,8 @@
           "type": "float"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/Segment.c"
     },
     {
@@ -2644,12 +2724,12 @@
         },
         {
           "flag": "-V",
-          "parameter": null,
+          "parameter": "versionNumber",
           "required": false
         },
         {
           "flag": "-v",
-          "parameter": null,
+          "parameter": "verboseMode",
           "required": false
         },
         {
@@ -2684,12 +2764,12 @@
         },
         {
           "flag": "-i",
-          "parameter": null,
+          "parameter": "notShowInversion",
           "required": false
         },
         {
           "flag": "-r",
-          "parameter": null,
+          "parameter": "notShowRegular",
           "required": false
         },
         {
@@ -2728,14 +2808,16 @@
           "type": "string"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/ComparativeMap.c"
     },
     {
       "name": "gto_max",
       "description": "Computes the maximum value in each row between two files.",
       "input": {
-        "type": "stdin",
-        "format": "NUM"
+        "type": "file",
+        "format": ""
       },
       "output": {
         "type": "stdout",
@@ -2761,21 +2843,23 @@
       "parameters": [
         {
           "name": "first_file",
-          "type": "string"
+          "type": "file"
         },
         {
           "name": "second_file",
-          "type": "string"
+          "type": "file"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/Max.c"
     },
     {
       "name": "gto_min",
       "description": "Computes the minium value in each row between two files.",
       "input": {
-        "type": "stdin",
-        "format": "NUM"
+        "type": "file",
+        "format": ""
       },
       "output": {
         "type": "stdout",
@@ -2801,13 +2885,16 @@
       "parameters": [
         {
           "name": "first_file",
-          "type": "string"
+          "type": "file"
         },
         {
           "name": "second_file",
-          "type": "string"
+          "type": "file"
         }
       ],
+      "is_multi_output": false,
+      "is_multi_type_output": false,
+      "is_multi_type_output": false,
       "source": "gto/src/Min.c"
     }
   ]

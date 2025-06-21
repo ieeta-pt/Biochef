@@ -53,6 +53,22 @@ export const DataTypeProvider = ({ children }) => {
         }
         return false;
 
+      case 'PackagedFASTQ':
+        // Validation for PackagedFASTQ: lines contain ESCAPE characters and end with tab+number
+        const packagedLines = trimmedData.split(/\r?\n/);
+        const isPackagedFASTQValid = packagedLines.length > 0 &&
+          packagedLines.every(line => {
+            // Count escape characters (ASCII 127 or char code 127)
+            const escapeCount = (line.match(/\x7F/g) || []).length;
+            // Each packaged FASTQ line should have at least 3 escape characters 
+            // and end with a tab followed by a number (index)
+            return escapeCount >= 3 && /\t\d+$/.test(line);
+          });
+        if (!isPackagedFASTQValid) {
+          console.error('PackagedFASTQ validation failed.');
+        }
+        return isPackagedFASTQValid;
+
       case 'FASTQ':
         // Validation for FASTQ: starts with '@' and follows FASTQ format structure
         const lines = trimmedData.split(/\r?\n/);
@@ -88,6 +104,14 @@ export const DataTypeProvider = ({ children }) => {
         }
         return isSVGValid;
 
+      case 'BIN':
+        // Validation for BIN: binary data, no specific validation
+        const isBINValid = /^[01\s\r\n]+$/.test(trimmedData);
+        if (!isBINValid) {
+          console.error('BIN validation failed.');
+        }
+        return isBINValid;
+
       case 'NUM':
         // Validation for NUM: all content is numeric, possibly separated by whitespace
         const isNUMValid = /^\d+(\.\d+)?(\s+\d+(\.\d+)?)*/.test(trimmedData);
@@ -112,6 +136,14 @@ export const DataTypeProvider = ({ children }) => {
         }
         return isRNAValid;
 
+      case 'Group':
+        // Validation for Group: only standard single-letter codes and whitespace
+        const isGroupValid = /^[PNUSHpnush\*X]+$/.test(trimmedData);
+        if (!isGroupValid) {
+          console.error('Group validation failed.');
+        }
+        return isGroupValid;
+
       case 'AminoAcids':
         // Validation for AminoAcids: only standard single-letter codes and whitespace
         const isAminoAcidsValid = /^[ACDEFGHIKLMNPQRSTVWYacdefghiklmnpqrstvwy\s]+$/.test(trimmedData);
@@ -120,17 +152,17 @@ export const DataTypeProvider = ({ children }) => {
         }
         return isAminoAcidsValid;
 
-      case 'text':
-        // For text, any non-empty string is considered valid
-        const isTextValid = trimmedData.length > 0;
+      case 'TEXT':
+        // For TEXT type, validate that it contains only printable ASCII characters
+        const isTextValid = /^[\x20-\x7E\s\r\n]+$/.test(trimmedData);
         if (!isTextValid) {
-          console.error('Text validation failed: Input is empty.');
+          console.error('TEXT validation failed: Contains non-printable or non-ASCII characters.');
         }
         return isTextValid;
 
       default:
-        // For UNKNOWN or unhandled types, consider them invalid
-        console.error('Validation failed: Unknown data type.');
+        // For unhandled types, consider them invalid
+        console.error('Validation failed: Unrecognized data type.');
         return false;
     }
   };

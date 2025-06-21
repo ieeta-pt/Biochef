@@ -5,101 +5,79 @@
 
 (function() {
   /**
-   * Runs the Max tool with the provided input data.
-   * @param {string} inputData - The input data.
-   * @param {Array<string>} args - Additional arguments to pass to max.
+   * Runs the Max tool.
+   * Accepts file inputs for parameters.   * @param {Object.<string,{name:string,data:(string|Uint8Array)}> } files - Mapping of parameter names to file objects.   * @param {Array<string>} args - CLI arguments (include flags and filenames for file inputs).
    * @returns {Promise<Object>} An object containing stdout and stderr outputs.
    */
-  async function runMax(inputData, args = []) {
-    console.log("Starting runMax with input:", inputData);
+  async function runMax(files, args = []) {
+    console.log("Starting runMax");
     console.log("Arguments:", args);
 
     try {
-      // Normalize line endings
-      inputData = inputData.replace(/\r\n/g, '\n');
-
       // Buffers for capturing stdout and stderr
       let stdoutBuffer = '';
       let stderrBuffer = '';
 
-      // Initialize options for the module
+      // Module instantiation options
       const options = {
-        locateFile: (path) => {
-          if (path.endsWith('.wasm')) {
-            return `/wasm/${path}`;
-          }
-          return path;
-        },
+        locateFile: (path) => path.endsWith('.wasm') ? `/wasm/${path}` : path,
         thisProgram: './max',
-        noInitialRun: true, // We will call main manually
-        // Remove noExitRuntime to use default behavior (false)
-        // noExitRuntime: false,
-        print: function(text) {
-          stdoutBuffer += text + '\n';
-        },
-        printErr: function(text) {
-          stderrBuffer += text + '\n';
-        },
+        noInitialRun: true,
+        print: (text) => { stdoutBuffer += text + '\n'; },
+        printErr: (text) => { stderrBuffer += text + '\n'; },
+        stdin: null,  // Disable stdin for file-based tools
       };
 
-      // Load the module
+      // Load the WASM module script
       await loadModuleScript('max');
       const moduleFactory = window['max'];
       if (typeof moduleFactory !== 'function') {
-        throw new Error("Module factory function for max is not available.");
+        throw new Error(`Module factory for max not available.`);
       }
-
       const module = await moduleFactory(options);
 
-      // Write input data to 'input.txt' in the virtual filesystem
-      module.FS.writeFile('input.txt', inputData);
+      // ------------------------------------------------------------------
+      // Write inputs into the virtual filesystem
+      // ------------------------------------------------------------------
+      // Write each file parameter into MEMFS
+      for (const [param, file] of Object.entries(files)) {
+        // file.name is the filename, file.data is string or Uint8Array
+        module.FS.writeFile(file.name, file.data);
+      }
+      // For file-based tools, just pass the args as is
+      let fullArgs = args;
 
-      // Execute the module's main function
-      const fullArgs = args;
+
       console.log("Executing module.callMain with arguments:", fullArgs);
       module.callMain(fullArgs);
 
-      // Read the output directly after callMain
-      const outputData = stdoutBuffer.trim();
-
-      return {
-        stdout: outputData,
-        stderr: stderrBuffer.trim()
-      };
+      // ------------------------------------------------------------------
+      // Collect outputs
+      // ------------------------------------------------------------------
+      // Single-output: capture stdout
+      const outData = stdoutBuffer.trim();
+      return { stdout: outData, stderr: stderrBuffer.trim() };
 
     } catch (err) {
-      console.error('Error in runMax:', err);
+      console.error(`Error in runMax:`, err);
       throw err;
     }
   }
 
   /**
    * Dynamically loads the WASM module script if not already loaded.
-   * @param {string} moduleName - The name of the module.
    */
   function loadModuleScript(moduleName) {
     return new Promise((resolve, reject) => {
-      if (window[moduleName]) {
-        // Module script is already loaded
-        resolve();
-        return;
-      }
-
+      if (window[moduleName]) return resolve();
       const script = document.createElement('script');
       script.src = `/wasm/${moduleName}.js`;
-      script.onload = () => {
-        console.log(`Module script ${moduleName}.js loaded.`);
-        resolve();
-      };
-      script.onerror = () => {
-        reject(new Error(`Failed to load module script ${moduleName}.js.`));
-      };
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error(`Failed to load ${moduleName}.js`));
       document.head.appendChild(script);
     });
   }
 
-  /**
-   * Expose the runMax function globally.
-   */
+  // Expose globally
   window.run_max = runMax;
 })();

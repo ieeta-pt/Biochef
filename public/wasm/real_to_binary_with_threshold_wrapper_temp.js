@@ -5,101 +5,76 @@
 
 (function() {
   /**
-   * Runs the RealToBinaryWithThreshold tool with the provided input data.
-   * @param {string} inputData - The input data.
-   * @param {Array<string>} args - Additional arguments to pass to real_to_binary_with_threshold.
+   * Runs the RealToBinaryWithThreshold tool.
+   * Uses a single stdin data string.   * @param {string} inputData - The input data.   * @param {Array<string>} args - CLI arguments (include flags and filenames for file inputs).
    * @returns {Promise<Object>} An object containing stdout and stderr outputs.
    */
   async function runRealToBinaryWithThreshold(inputData, args = []) {
-    console.log("Starting runRealToBinaryWithThreshold with input:", inputData);
+    console.log("Starting runRealToBinaryWithThreshold");
     console.log("Arguments:", args);
 
     try {
-      // Normalize line endings
-      inputData = inputData.replace(/\r\n/g, '\n');
-
       // Buffers for capturing stdout and stderr
       let stdoutBuffer = '';
       let stderrBuffer = '';
 
-      // Initialize options for the module
+      // Module instantiation options
       const options = {
-        locateFile: (path) => {
-          if (path.endsWith('.wasm')) {
-            return `/wasm/${path}`;
-          }
-          return path;
-        },
+        locateFile: (path) => path.endsWith('.wasm') ? `/wasm/${path}` : path,
         thisProgram: './real_to_binary_with_threshold',
-        noInitialRun: true, // We will call main manually
-        // Remove noExitRuntime to use default behavior (false)
-        // noExitRuntime: false,
-        print: function(text) {
-          stdoutBuffer += text + '\n';
-        },
-        printErr: function(text) {
-          stderrBuffer += text + '\n';
-        },
+        noInitialRun: true,
+        print: (text) => { stdoutBuffer += text + '\n'; },
+        printErr: (text) => { stderrBuffer += text + '\n'; },
       };
 
-      // Load the module
+      // Load the WASM module script
       await loadModuleScript('real_to_binary_with_threshold');
       const moduleFactory = window['real_to_binary_with_threshold'];
       if (typeof moduleFactory !== 'function') {
-        throw new Error("Module factory function for real_to_binary_with_threshold is not available.");
+        throw new Error(`Module factory for real_to_binary_with_threshold not available.`);
       }
-
       const module = await moduleFactory(options);
 
-      // Write input data to 'input.txt' in the virtual filesystem
+      // ------------------------------------------------------------------
+      // Write inputs into the virtual filesystem
+      // ------------------------------------------------------------------
+      // Normalize and write single stdin input
+      inputData = inputData.replace(/\r\n/g, '\n');
       module.FS.writeFile('input.txt', inputData);
+      let fullArgs = args.slice();
+      
 
-      // Execute the module's main function
-      const fullArgs = args;
+
       console.log("Executing module.callMain with arguments:", fullArgs);
       module.callMain(fullArgs);
 
-      // Read the output directly after callMain
-      const outputData = stdoutBuffer.trim();
-
-      return {
-        stdout: outputData,
-        stderr: stderrBuffer.trim()
-      };
+      // ------------------------------------------------------------------
+      // Collect outputs
+      // ------------------------------------------------------------------
+      // Single-output: capture stdout
+      const outData = stdoutBuffer.trim();
+      return { stdout: outData, stderr: stderrBuffer.trim() };
 
     } catch (err) {
-      console.error('Error in runRealToBinaryWithThreshold:', err);
+      console.error(`Error in runRealToBinaryWithThreshold:`, err);
       throw err;
     }
   }
 
   /**
    * Dynamically loads the WASM module script if not already loaded.
-   * @param {string} moduleName - The name of the module.
    */
   function loadModuleScript(moduleName) {
     return new Promise((resolve, reject) => {
-      if (window[moduleName]) {
-        // Module script is already loaded
-        resolve();
-        return;
-      }
-
+      if (window[moduleName]) return resolve();
       const script = document.createElement('script');
       script.src = `/wasm/${moduleName}.js`;
-      script.onload = () => {
-        console.log(`Module script ${moduleName}.js loaded.`);
-        resolve();
-      };
-      script.onerror = () => {
-        reject(new Error(`Failed to load module script ${moduleName}.js.`));
-      };
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error(`Failed to load ${moduleName}.js`));
       document.head.appendChild(script);
     });
   }
 
-  /**
-   * Expose the runRealToBinaryWithThreshold function globally.
-   */
+  // Expose globally
   window.run_real_to_binary_with_threshold = runRealToBinaryWithThreshold;
 })();
