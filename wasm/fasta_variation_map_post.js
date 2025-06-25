@@ -1,0 +1,1 @@
+window.fasta_variation_map=fasta_variation_map;

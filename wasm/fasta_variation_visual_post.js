@@ -1,0 +1,1 @@
+window.fasta_variation_visual=fasta_variation_visual;

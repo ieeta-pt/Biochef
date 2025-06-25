@@ -1,0 +1,1 @@
+window.fastq_variation_filter=fastq_variation_filter;

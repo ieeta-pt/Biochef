@@ -1,0 +1,1 @@
+window.fastq_variation_visual=fastq_variation_visual;
