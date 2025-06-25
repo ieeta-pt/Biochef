@@ -1,1 +1,0 @@
-window.sum=sum;

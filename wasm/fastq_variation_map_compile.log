@@ -1,5 +1,0 @@
-/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_fastq_variation_map.c:9:10: fatal error: 'msg.h' file not found
-    9 | #include "msg.h"
-      |          ^~~~~~~
-1 error generated.
-emcc: error: '/home/jake/Desktop/Uni/Bolsa/emsdk/upstream/bin/clang -target wasm32-unknown-emscripten -fignore-exceptions -mllvm -combiner-global-alias-analysis=false -mllvm -enable-emscripten-sjlj -mllvm -disable-lsr --sysroot=/home/jake/Desktop/Uni/Bolsa/emsdk/upstream/emscripten/cache/sysroot -DEMSCRIPTEN -Werror=implicit-function-declaration -Xclang -iwithsysroot/include/fakesdl -Xclang -iwithsysroot/include/compat -O3 -Wall -ffast-math -DPROGRESS -DLINUX -I/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src /home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_fastq_variation_map.c -c -o /tmp/emscripten_temp_hz34uh94/temp_fastq_variation_map_0.o' failed (returned 1)
