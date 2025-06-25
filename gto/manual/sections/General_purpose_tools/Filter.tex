@@ -1,0 +1,58 @@
+\section{Program gto\char`_filter}
+The \texttt{gto\char`_filter} filters numerical sequences using a low-pass filter.\\
+For help type:
+\begin{lstlisting}
+./gto_filter -h
+\end{lstlisting}
+In the following subsections, we explain the input and output paramters.
+
+\subsection*{Input parameters}
+
+The \texttt{gto\char`_filter} program needs two streams for the computation, namely the input and output standard. The input stream is a numeric file.\\
+The attribution is given according to:
+\begin{lstlisting}
+Usage: ./gto_filter [options] [[--] args]
+   or: ./gto_filter [options]
+
+It filters numerical sequences using a low-pass filter.
+
+    -h, --help                show this help message and exit
+
+Basic options
+    < input.num               Input numeric file (stdin)
+    > output.num              Output numeric file (stdout)
+
+Optional
+    -w, --windowsize=<int>    Window size (defaut 0)
+    -d, --drop=<int>          Discard elements (default 0.0)
+    -t, --windowtype=<int>    Window type (0=Hamm, 1=Hann, 2=Black, 3=rec) (default 0 (Hamm))
+    -c, --onecolumn           Read from one column
+    -p, --printone            Print one column
+    -r, --reverse             Reverse mode
+
+Example: ./gto_filter -w <windowsize> -d <drop> -t <windowtype> -c -p -r < input.num > output.num
+\end{lstlisting}
+An example of such an input file is:
+\begin{lstlisting}
+1   1.77
+5   2.18
+10  2.32
+15  3.15
+20  2.52
+25  4.43
+30  1.23
+\end{lstlisting}
+
+\subsection*{Output}
+The output of the \texttt{gto\char`_filter} program is a numeric file, identical of the input.\\
+Using the input above with the window size of 3, an output example for this is the following:
+\begin{lstlisting}
+Got 7 entries from file
+1   2.085
+5   2.256
+10  2.507
+15  2.757
+20  2.905
+25  2.860
+30  2.674
+\end{lstlisting}

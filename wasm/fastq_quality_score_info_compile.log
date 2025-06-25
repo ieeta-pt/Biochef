@@ -230,3 +230,7 @@ cache:INFO:  - ok
    21 |   uint64_t nScores = 0, *QS = (uint64_t *) Calloc(65536, sizeof(uint64_t)),
       |            ^
 1 warning generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_fastq_quality_score_info.c:21:12: warning: variable 'nScores' set but not used [-Wunused-but-set-variable]
+   21 |   uint64_t nScores = 0, *QS = (uint64_t *) Calloc(65536, sizeof(uint64_t)),
+      |            ^
+1 warning generated.

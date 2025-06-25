@@ -275,3 +275,8 @@ cache:INFO:  - ok
       |                                       ~~~     ^~~~~~~~~~
       |                                       %llu
 1 warning generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_lower_bound.c:38:47: warning: format specifies type 'long' but the argument has type 'uint64_t' (aka 'unsigned long long') [-Wformat]
+   38 |   fprintf(stderr, "Using lower bound: %ld\n", lowerbound);
+      |                                       ~~~     ^~~~~~~~~~
+      |                                       %llu
+1 warning generated.

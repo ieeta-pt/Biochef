@@ -1,0 +1,93 @@
+\chapter{FASTQ tools}
+\label{fastq}
+The toolkit has a set of tools dedicated to manipulating FASTQ files. Some of these tools allow the data conversion to/from different formats, i. e., there are tools designed to convert a FASTQ file into a sequence or a FASTA/Multi-FASTA format, or converting DNA in some of those formats to FASTQ.
+
+There are also tools for data manipulation in this format, which are designed to exclude 'N', remove low quality scored reads, following different metrics and randomize DNA sequences. Succeeding the manipulation, it is also possible to perform analyses over these files, simulations and mutations. The current available tools for FASTQ format analysis and manipulation include:
+\begin{enumerate}
+
+\item \texttt{gto\char`_fastq\char`_to\char`_fasta}: it converts a FASTQ file format to a pseudo FASTA file.
+
+\item \texttt{gto\char`_fastq\char`_to\char`_mfasta}: it converts a FASTQ file format to a pseudo Multi-FASTA file.
+
+\item \texttt{gto\char`_fastq\char`_exclude\char`_n}: it discards the FASTQ reads with the minimum number of "N" symbols.
+
+\item \texttt{gto\char`_fastq\char`_extract\char`_quality\char`_scores}: it extracts all the quality-scores from FASTQ reads.
+
+\item \texttt{gto\char`_fastq\char`_info}: it analyses the basic information of FASTQ file format.
+
+\item \texttt{gto\char`_fastq\char`_maximum\char`_read\char`_size}: it filters the FASTQ reads with the length higher than the value defined.
+
+\item \texttt{gto\char`_fastq\char`_minimum\char`_quality\char`_score}: it discards reads with average quality-score below of the defined.
+
+\item \texttt{gto\char`_fastq\char`_minimum\char`_read\char`_size}: it filters the FASTQ reads with the length smaller than the value defined.
+
+\item \texttt{gto\char`_fastq\char`_rand\char`_extra\char`_chars}: it substitues in the FASTQ files, the DNA sequence the outside ACGT chars by random ACGT symbols.
+
+\item \texttt{gto\char`_fastq\char`_from\char`_seq}: it converts a genomic sequence to pseudo FASTQ file format.
+
+\item \texttt{gto\char`_fastq\char`_mutate}: it creates a synthetic mutation of a FASTQ file given specific rates of mutations, deletions and additions.
+
+\item \texttt{gto\char`_fastq\char`_split}: it splits Paired End files according to the direction of the strand ('/1' or '/2').
+
+\item \texttt{gto\char`_fastq\char`_pack}: it packages each FASTQ read in a single line.
+
+\item \texttt{gto\char`_fastq\char`_unpack}: it unpacks the FASTQ reads packaged using the \texttt{gto\char`_fastq\char`_pack} tool.
+
+\item \texttt{gto\char`_fastq\char`_quality\char`_score\char`_info}: it analyses the quality-scores of a FASTQ file.
+
+\item \texttt{gto\char`_fastq\char`_quality\char`_score\char`_min}: it analyses the minimal quality-scores of a FASTQ file.
+
+\item \texttt{gto\char`_fastq\char`_quality\char`_score\char`_max}: it analyses the maximal quality-scores of a FASTQ file.
+
+\item \texttt{gto\char`_fastq\char`_cut}: it cuts read sequences in a FASTQ file. 
+
+\item \texttt{gto\char`_fastq\char`_minimum\char`_local\char`_quality\char`_score\char`_forward}: it filters the reads considering the quality score average of a defined window size of bases.
+
+\item \texttt{gto\char`_fastq\char`_minimum\char`_local\char`_quality\char`_score\char`_reverse}: it filters the reverse reads, considering the average window size score defined by the bases.
+
+\item \texttt{gto\char`_fastq\char`_xs}: it is a skilled FASTQ read simulation tool, flexible, portable and tunable in terms of sequence complexity.
+
+\item \texttt{gto\char`_fastq\char`_clust\char`_reads}: it agroups reads and creates an index file.
+
+\item \texttt{gto\char`_fastq\char`_complement}: it replaces the ACGT bases with their complements in a FASTQ file format.
+
+\item \texttt{gto\char`_fastq\char`_reverse}: it reverses the ACGT bases order for each read in a FASTQ file format.
+
+\item \texttt{gto\char`_fastq\char`_variation\char`_map}: it identifies the variation that occours in the sequences relative to the reads or a set of reads.
+
+\item \texttt{gto\char`_fastq\char`_variation\char`_filter}: it filters and segments the regions of singularity from the output of \texttt{gto\char`_fastq\char`_variation\char`_map}.
+
+\item \texttt{gto\char`_fastq\char`_variation\char`_visual}: it depites the regions of singularity using the output from \texttt{gto\char`_fastq\char`_variation\char`_filter} into an SVG image.
+
+\item \texttt{gto\char`_fastq\char`_metagenomics}: it measures similarity between any FASTQ file, independently from the size, against any multi-FASTA database (also under the alias gto\char`_fastq\char`_falcon).
+
+\end{enumerate}
+
+\input{\FASTQToolsPath/FastqToFasta.tex}
+\input{\FASTQToolsPath/FastqToMFasta.tex}
+\input{\FASTQToolsPath/FastqExcludeN.tex}
+\input{\FASTQToolsPath/FastqExtractQualityScores.tex}
+\input{\FASTQToolsPath/FastqInfo.tex}
+\input{\FASTQToolsPath/FastqMaximumReadSize.tex}
+\input{\FASTQToolsPath/FastqMinimumQualityScore.tex}
+\input{\FASTQToolsPath/FastqMinimumReadSize.tex}
+\input{\FASTQToolsPath/FastqRandExtraChars.tex}
+\input{\FASTQToolsPath/FastqFromSeq.tex}
+\input{\FASTQToolsPath/FastqMutate.tex}
+\input{\FASTQToolsPath/FastqSplit.tex}
+\input{\FASTQToolsPath/FastqPack.tex}
+\input{\FASTQToolsPath/FastqUnpack.tex}
+\input{\FASTQToolsPath/FastqQualityScoreInfo.tex}
+\input{\FASTQToolsPath/FastqQualityScoreMax.tex}
+\input{\FASTQToolsPath/FastqQualityScoreMin.tex}
+\input{\FASTQToolsPath/FastqCut.tex}
+\input{\FASTQToolsPath/FastqMinimumQualityScoreForward.tex}
+\input{\FASTQToolsPath/FastqMinimumQualityScoreReverse.tex}
+\input{\FASTQToolsPath/FastqXS.tex}
+\input{\FASTQToolsPath/FastqClustReads.tex}
+\input{\FASTQToolsPath/FastqComplement.tex}
+\input{\FASTQToolsPath/FastqReverse.tex}
+\input{\FASTQToolsPath/FastqVariationMap.tex}
+\input{\FASTQToolsPath/FastqVariationFilter.tex}
+\input{\FASTQToolsPath/FastqVariationVisual.tex}
+\input{\FASTQToolsPath/FastqMetagenomics.tex}
