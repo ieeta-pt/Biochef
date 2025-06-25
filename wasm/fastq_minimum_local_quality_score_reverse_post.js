@@ -1,0 +1,1 @@
+window.fastq_minimum_local_quality_score_reverse=fastq_minimum_local_quality_score_reverse;

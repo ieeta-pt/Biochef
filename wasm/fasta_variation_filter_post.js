@@ -1,0 +1,1 @@
+window.fasta_variation_filter=fasta_variation_filter;
