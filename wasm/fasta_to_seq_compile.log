@@ -1,0 +1,12 @@
+emcc: error: /home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/main_wrapper.c: No such file or directory ("/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/main_wrapper.c" was expected to be an input file, based on the commandline arguments provided)
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/main_wrapper.c:6:5: error: second parameter of 'main' (argument array) must be of type 'char **'
+    6 | int main(int argc, char argv) {
+      |     ^
+1 error generated.
+emcc: error: '/home/jake/Desktop/Uni/Bolsa/emsdk/upstream/bin/clang -target wasm32-unknown-emscripten -fignore-exceptions -mllvm -combiner-global-alias-analysis=false -mllvm -enable-emscripten-sjlj -mllvm -disable-lsr --sysroot=/home/jake/Desktop/Uni/Bolsa/emsdk/upstream/emscripten/cache/sysroot -DEMSCRIPTEN -Werror=implicit-function-declaration -Xclang -iwithsysroot/include/fakesdl -Xclang -iwithsysroot/include/compat -O3 -Wall -ffast-math -DPROGRESS -DLINUX -I/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src /home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/main_wrapper.c -c -o /tmp/emscripten_temp_mt5g3p3p/main_wrapper_1.o' failed (returned 1)
+cache:INFO: generating system asset: symbol_lists/acafe76ab0264df08e2daa1f7ec0c3106f857b1d.json... (this will be cached in "/home/jake/Desktop/Uni/Bolsa/emsdk/upstream/emscripten/cache/symbol_lists/acafe76ab0264df08e2daa1f7ec0c3106f857b1d.json" for subsequent builds)
+cache:INFO:  - ok
+cache:INFO: generating system asset: symbol_lists/409b21dca3522bc3dca3a7df901eb6a8d63f5231.json... (this will be cached in "/home/jake/Desktop/Uni/Bolsa/emsdk/upstream/emscripten/cache/symbol_lists/409b21dca3522bc3dca3a7df901eb6a8d63f5231.json" for subsequent builds)
+cache:INFO:  - ok
+cache:INFO: generating system asset: symbol_lists/7de6a4cff35f8908a01e23da7002620809ae72ce.json... (this will be cached in "/home/jake/Desktop/Uni/Bolsa/emsdk/upstream/emscripten/cache/symbol_lists/7de6a4cff35f8908a01e23da7002620809ae72ce.json" for subsequent builds)
+cache:INFO:  - ok

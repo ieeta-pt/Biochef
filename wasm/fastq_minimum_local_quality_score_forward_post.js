@@ -1,0 +1,1 @@
+window.fastq_minimum_local_quality_score_forward=fastq_minimum_local_quality_score_forward;

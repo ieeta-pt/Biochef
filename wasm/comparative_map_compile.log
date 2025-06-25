@@ -1,0 +1,762 @@
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+emcc: error: /home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/main_wrapper.c: No such file or directory ("/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/main_wrapper.c" was expected to be an input file, based on the commandline arguments provided)
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/main_wrapper.c:6:5: error: second parameter of 'main' (argument array) must be of type 'char **'
+    6 | int main(int argc, char argv) {
+      |     ^
+1 error generated.
+emcc: error: '/home/jake/Desktop/Uni/Bolsa/emsdk/upstream/bin/clang -target wasm32-unknown-emscripten -fignore-exceptions -mllvm -combiner-global-alias-analysis=false -mllvm -enable-emscripten-sjlj -mllvm -disable-lsr --sysroot=/home/jake/Desktop/Uni/Bolsa/emsdk/upstream/emscripten/cache/sysroot -DEMSCRIPTEN -Werror=implicit-function-declaration -Xclang -iwithsysroot/include/fakesdl -Xclang -iwithsysroot/include/compat -O3 -Wall -ffast-math -DPROGRESS -DLINUX -I/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src /home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/main_wrapper.c -c -o /tmp/emscripten_temp_17mkem25/main_wrapper_1.o' failed (returned 1)
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+cache:INFO: generating system asset: symbol_lists/33be49283e9968ea9895e59e6dddd17ba147e5fb.json... (this will be cached in "/home/jake/Desktop/Uni/Bolsa/emsdk/upstream/emscripten/cache/symbol_lists/33be49283e9968ea9895e59e6dddd17ba147e5fb.json" for subsequent builds)
+cache:INFO:  - ok
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+cache:INFO: generating system asset: symbol_lists/025dfc19530d2bf6cf304c02f83f32b36736c777.json... (this will be cached in "/home/jake/Desktop/Uni/Bolsa/emsdk/upstream/emscripten/cache/symbol_lists/025dfc19530d2bf6cf304c02f83f32b36736c777.json" for subsequent builds)
+cache:INFO:  - ok
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+cache:INFO: generating system asset: symbol_lists/d0a708af9e4a75417cc2fe9a2f9462541305e103.json... (this will be cached in "/home/jake/Desktop/Uni/Bolsa/emsdk/upstream/emscripten/cache/symbol_lists/d0a708af9e4a75417cc2fe9a2f9462541305e103.json" for subsequent builds)
+cache:INFO:  - ok
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
