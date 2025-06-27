@@ -1,17 +1,18 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const webpack = require('webpack');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
   entry: './src/index.js',
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: '[name].[contenthash].js',
-    publicPath: '/',
+    publicPath: process.env.NODE_ENV === 'production' ? '/gto-wasm-app/' : '/',
     webassemblyModuleFilename: 'wasm/[hash].wasm',
   },
   module: {
-    noParse: /public\/wasm\/gto_.*\.js$/, // Exclude Emscripten JS files from parsing
+    noParse: /public\/wasm\/.*\.js$/, // Exclude Emscripten JS files from parsing
     rules: [
       {
         test: /\.js$/,
@@ -30,15 +31,6 @@ module.exports = {
       {
         test: /\.wasm$/,
         type: 'webassembly/async',
-      },
-      // Remove the 'file-loader' rule for Emscripten JS files
-      {
-        test: /gto_.*\.js$/,
-        include: path.resolve(__dirname, 'public/wasm'),
-        type: 'asset/resource', // Treat these files as resources to be emitted to the output directory
-        generator: {
-          filename: 'wasm/[name][ext]',
-        },
       },
       {
         test: /\.svg$/,
@@ -59,6 +51,22 @@ module.exports = {
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
       process: 'process/browser',
+    }),
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: 'public/wasm',
+          to: 'public/wasm',
+        },
+        {
+          from: 'public/img',
+          to: 'public/img',
+        },
+        {
+          from: 'gto',
+          to: 'gto',
+        },
+      ],
     }),
   ],
   resolve: {

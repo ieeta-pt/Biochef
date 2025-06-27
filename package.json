@@ -1,4 +1,5 @@
 {
+  "homepage": "https://JakeRosa.github.io/gto-wasm-app/",
   "name": "gto-wasm-app",
   "version": "1.0.0",
   "description": "GTO BioChef",
@@ -8,7 +9,9 @@
     "build": "NODE_ENV=production webpack --mode production",
     "copy-wasm": "mkdir -p public/wasm && cp src/wasm/*.wasm public/wasm/",
     "prebuild": "bash compile-all-gto.sh",
-    "build-wasm": "bash compile-all-gto.sh"
+    "build-wasm": "bash compile-all-gto.sh",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
   },
   "keywords": [],
   "author": "",
@@ -39,9 +42,11 @@
     "babel-loader": "^9.2.1",
     "buffer": "^6.0.3",
     "compression-webpack-plugin": "^10.0.0",
+    "copy-webpack-plugin": "^13.0.0",
     "crypto-browserify": "^3.12.0",
     "css-loader": "^6.11.0",
     "file-loader": "^6.2.0",
+    "gh-pages": "^6.3.0",
     "html-webpack-plugin": "^5.6.0",
     "path-browserify": "^1.0.1",
     "process": "^0.11.10",

@@ -5,8 +5,11 @@ import ToolsPage from './pages/ToolsPage';
 import WorkflowPage from './pages/WorkflowPage';
 
 const App = () => {
+  const basename = process.env.NODE_ENV === 'production' ? '/gto-wasm-app' : '';
+
+
   return (
-    <Router>
+    <Router basename={basename}>
       <Navbar />
 
       <Routes>

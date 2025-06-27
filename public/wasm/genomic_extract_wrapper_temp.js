@@ -20,7 +20,15 @@
 
       // Module instantiation options
       const options = {
-        locateFile: (path) => path.endsWith('.wasm') ? `/wasm/${path}` : path,
+        locateFile: (path) => {
+          if (path.endsWith('.wasm')) {
+            const basePath = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+              ? '/wasm/' 
+              : '/gto-wasm-app/public/wasm/';
+            return basePath + path;
+          }
+          return path;
+        },
         thisProgram: './genomic_extract',
         noInitialRun: true,
         print: (text) => { stdoutBuffer += text + '\n'; },
@@ -68,7 +76,10 @@
     return new Promise((resolve, reject) => {
       if (window[moduleName]) return resolve();
       const script = document.createElement('script');
-      script.src = `/wasm/${moduleName}.js`;
+      const basePath = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+        ? '/wasm/' 
+        : '/gto-wasm-app/public/wasm/';
+      script.src = basePath + `${moduleName}.js`;
       script.onload = () => resolve();
       script.onerror = () => reject(new Error(`Failed to load ${moduleName}.js`));
       document.head.appendChild(script);
