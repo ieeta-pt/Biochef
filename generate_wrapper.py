@@ -21,7 +21,7 @@ def main():
     is_multi_output = sys.argv[4].lower() == 'true'
 
     # Validate input_type and output_type
-    valid_input_types = ['stdin', 'file']
+    valid_input_types = ['stdin', 'file']  # Allow empty input_type
     valid_output_types = ['stdout', 'file']
     if input_type not in valid_input_types:
         print(f"Error: Invalid input_type '{input_type}'. Must be one of {valid_input_types}.")

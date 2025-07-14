@@ -47,6 +47,13 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
       template: './public/index.html',
+      templateParameters: {
+        process: {
+          env: {
+            NODE_ENV: process.env.NODE_ENV
+          }
+        }
+      }
     }),
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
@@ -56,11 +63,15 @@ module.exports = {
       patterns: [
         {
           from: 'public/wasm',
-          to: 'public/wasm',
+          to: 'wasm',
         },
         {
           from: 'public/img',
-          to: 'public/img',
+          to: 'img',
+        },
+        {
+          from: 'public/favicon_io',
+          to: 'favicon_io',
         },
         {
           from: 'gto',

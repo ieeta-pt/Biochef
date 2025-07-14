@@ -29,8 +29,7 @@ const InputPanel = ({ tabIndex, setTabIndex, selectedFiles, setSelectedFiles, in
             const fileTypes = new Set(
                 Array.from(selectedFiles).map(file => file.fileType)
             );
-            console.log(selectedFiles);
-            // If there's exactly one type, update inputDataType.
+                // If there's exactly one type, update inputDataType.
             if (fileTypes.size === 1) {
                 setInputDataType([...fileTypes][0]);
             } else {

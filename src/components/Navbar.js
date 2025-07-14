@@ -79,7 +79,7 @@ const Navbar = () => {
                             style={{ display: 'inline-block', marginRight: 26 }}
                         >
                             <img
-                                src='/img/logo-ieeta.webp'
+                                src={process.env.NODE_ENV === 'production' ? '/gto-wasm-app/img/logo-ieeta.webp' : '/img/logo-ieeta.webp'}
                                 alt="IEETA"
                                 style={{ height: 38 }}
                             />
@@ -95,7 +95,7 @@ const Navbar = () => {
                             style={{ display: 'inline-block' }}
                         >
                             <img
-                                src='/img/logo-ua.webp'
+                                src={process.env.NODE_ENV === 'production' ? '/gto-wasm-app/img/logo-ua.webp' : '/img/logo-ua.webp'}
                                 alt="Universidade de Aveiro"
                                 style={{ height: 38 }}
                             />
