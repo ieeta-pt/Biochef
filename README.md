@@ -1,11 +1,11 @@
 
 ![BioChef](img/BioChef.svg)
 
-[![Downloads](https://img.shields.io/github/downloads/jorgeMFS/gto-wasm-app/total)](https://github.com/jorgeMFS/gto-wasm-app/releases)
-[![License](https://img.shields.io/github/license/jorgeMFS/gto-wasm-app)](LICENSE)
-[![Version](https://img.shields.io/github/v/tag/jorgeMFS/gto-wasm-app)](https://github.com/jorgeMFS/gto-wasm-app/releases)
+[![Downloads](https://img.shields.io/github/downloads/ieeta-pt/Biochef/total)](https://github.com/ieeta-pt/Biochef/releases)
+[![License](https://img.shields.io/github/license/ieeta-pt/Biochef)](LICENSE)
+[![Version](https://img.shields.io/github/v/tag/ieeta-pt/Biochef)](https://github.com/ieeta-pt/Biochef/releases)
 
-GTO BioChef is a powerful web-based application for genomic sequence analysis and manipulation. It provides a user-friendly interface to execute various genomic tools from the GTO (Genomic Toolkit Operations) suite directly in your browser using WebAssembly technology.
+BioChef is a powerful web-based application for genomic sequence analysis and manipulation. It provides a user-friendly interface to execute various genomic tools from the GTO (Genomic Toolkit Operations) suite directly in your browser using WebAssembly technology.
 
 ## Table of Contents
 
@@ -16,6 +16,8 @@ GTO BioChef is a powerful web-based application for genomic sequence analysis an
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
 - [Usage](#usage)
+  - [Tools Page (Individual Tool Testing)](#tools-page-individual-tool-testing)
+  - [Workflow Page (Multi-step Analysis)](#workflow-page-multi-step-analysis)
 - [Development](#development)
   - [Key Files](#key-files)
 - [Contributing](#contributing)
@@ -24,17 +26,20 @@ GTO BioChef is a powerful web-based application for genomic sequence analysis an
 
 ## Features
 
+- **Dual Interface**: Individual tool testing page and advanced workflow builder for different use cases.
+- **Real-time Workflow Execution**: Tools execute automatically as you build workflows, with live output streaming.
+- **Smart Tool Filtering**: Available tools update dynamically based on current data type and workflow compatibility.
 - **Interactive Workflow Builder**: Drag-and-drop interface to create custom genomic analysis workflows.
 - **Wide Range of Tools**: Access to numerous GTO tools for sequence manipulation, format conversion, and analysis.
-- **Real-time Execution**: Run your workflows directly in the browser without the need for server-side processing.
-- **Input/Output Management**: Easy-to-use panels for managing input data and viewing results.
-- **Data Type Detection**: Automatic detection and validation of input data types (FASTA, FASTQ, etc.).
-- **Compatibility Checks**: Visual indicators for tool compatibility based on current input data.
-- **Recipe Saving**: Save and load your custom workflows for future use.
+- **Live Data Type Detection**: Automatic detection and validation with real-time updates throughout workflows.
+- **Multi-Input Support**: Work with single sequences or multiple files simultaneously.
+- **Input/Output Management**: Easy-to-use panels for managing input data and viewing live results.
+- **Recipe Persistence**: Save and load your custom workflows with automatic state management.
+- **WebAssembly Performance**: Run complex genomic tools directly in the browser without server dependencies.
 
 ## Tools Available
 
-GTO BioChef includes a wide array of genomic tools, categorized for easy access:
+BioChef includes a wide array of genomic tools, categorized for easy access:
 
 1. Sequence Manipulation (e.g., FASTA extraction, reverse, complement)
 2. Format Conversion (e.g., FASTA to SEQ, FASTQ to FASTA)
@@ -50,8 +55,11 @@ GTO BioChef includes a wide array of genomic tools, categorized for easy access:
 
 ### Prerequisites
 
-- Node.js (v14 or later)
-- Emscripten (for compiling C code to WebAssembly)
+- Node.js (v16 or later)
+- Emscripten SDK (preferably v3.1.65) - only needed for rebuilding WASM modules
+- C compiler toolchain - only needed for rebuilding WASM modules
+- Python 3.x - only needed for regenerating JavaScript wrappers for WASM modules
+- Modern web browser with WebAssembly support (Chrome, Firefox, Safari, Edge) to run the application
 
 ### Installation
 
@@ -92,11 +100,27 @@ For more detailed installation instructions, including troubleshooting tips, ple
 
 ## Usage
 
-1. **Input Data**: Paste your genomic sequence or upload a file in the Input Panel.
-2. **Build Workflow**: Drag tools from the Operations Panel to the Recipe Panel to create your workflow.
-3. **Set Parameters**: Adjust tool parameters as needed in the Recipe Panel.
-4. **Execute**: Run individual tools or the entire workflow using the execution controls.
-5. **View Results**: See the output in the Output Panel and save results as needed.
+BioChef offers two main interfaces for working with genomic tools:
+
+### Tools Page (Individual Tool Testing)
+Access via the main route (`/`) for testing individual tools:
+
+1. **Select Tool**: Browse and click any tool from the categorized Operations Panel
+2. **View Documentation**: The tool's help documentation will automatically load
+3. **Input Data**: Enter your genomic sequence data in the Input Panel
+4. **Configure Parameters**: Adjust tool-specific parameters in the Testing Panel
+5. **Execute**: Run the tool and view results in the Output Panel
+6. **Download Results**: Save output data as needed
+
+### Workflow Page (Multi-step Analysis)
+Access via `/workflow` for building complex analysis pipelines:
+
+1. **Input Data**: Paste your genomic sequence or upload files in the Input Panel
+2. **Build Workflow**: Add tools from the Operations Panel - available tools update dynamically based on your current data type
+3. **Real-time Execution**: Tools execute automatically as you add them, with outputs flowing to the next step
+4. **Smart Tool Filtering**: Only compatible tools are shown based on your workflow's current state
+5. **Configure Parameters**: Adjust tool settings in the Recipe Panel - changes trigger automatic re-execution
+6. **View Live Results**: Outputs update in real-time and can be viewed/saved at any step
 
 
 ## Development
@@ -117,7 +141,7 @@ For more detailed installation instructions, including troubleshooting tips, ple
 
 ## Contributing
 
-We welcome contributions to GTO BioChef! Whether it's bug reports, feature requests, or code contributions, please refer to our [Contributing Guidelines](CONTRIBUTING.md) for more information on how to get started.
+We welcome contributions to BioChef! Whether it's bug reports, feature requests, or code contributions, please refer to our [Contributing Guidelines](CONTRIBUTING.md) for more information on how to get started.
 
 ## License
 
@@ -127,4 +151,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - The GTO (Genomic Toolkit) suite developers
 - The Emscripten team for enabling C-to-WebAssembly compilation
-- All contributors and users of GTO BioChef
+- All contributors and users of BioChef
