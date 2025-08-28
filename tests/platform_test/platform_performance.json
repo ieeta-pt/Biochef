@@ -1,0 +1,63 @@
+{
+  "metadata": {
+    "timestamp": "2025-08-28T15:03:29.704125",
+    "platform": "web_browser_selenium",
+    "description": "Web platform workflow performance test using Selenium, fair memory measurement",
+    "workflow_steps": [
+      "click_import_button",
+      "click_config_modal_button",
+      "click_upload_modal_button",
+      "upload_file",
+      "click_final_import_button",
+      "wait_for_output_change"
+    ],
+    "measurement_method": "selenium_webdriver_memory_growth",
+    "memory_note": "Measures workflow memory growth only, comparable to local execution"
+  },
+  "results": {
+    "AllMis_2400.json": {
+      "mean_runtime": 4.746,
+      "std_runtime": 0.221,
+      "min_runtime": 4.609,
+      "max_runtime": 5.001,
+      "mean_workflow_memory": 234.43,
+      "std_workflow_memory": 4.81,
+      "min_workflow_memory": 229.18,
+      "max_workflow_memory": 238.64,
+      "success_rate": 1.0
+    },
+    "BraLanc_464.json": {
+      "mean_runtime": 4.581,
+      "std_runtime": 0.066,
+      "min_runtime": 4.504,
+      "max_runtime": 4.62,
+      "mean_workflow_memory": 234.95,
+      "std_workflow_memory": 6.84,
+      "min_workflow_memory": 227.51,
+      "max_workflow_memory": 240.96,
+      "success_rate": 1.0
+    },
+    "HomoSapiens_3300.json": {
+      "mean_runtime": 4.945,
+      "std_runtime": 0.338,
+      "min_runtime": 4.564,
+      "max_runtime": 5.208,
+      "mean_workflow_memory": 257.85,
+      "std_workflow_memory": 37.56,
+      "min_workflow_memory": 234.78,
+      "max_workflow_memory": 301.18,
+      "success_rate": 1.0
+    },
+    "HydCol_1000.json": {
+      "mean_runtime": 5.173,
+      "std_runtime": 0.045,
+      "min_runtime": 5.122,
+      "max_runtime": 5.205,
+      "mean_workflow_memory": 250.92,
+      "std_workflow_memory": 17.12,
+      "min_workflow_memory": 237.96,
+      "max_workflow_memory": 270.33,
+      "success_rate": 1.0
+    }
+  }
+}
