@@ -1,0 +1,67 @@
+{
+    "name": "gto_fastq_metagenomics",
+    "description": "An ultra-fast method to infer metagenomic composition of sequenced reads relative to a database. gto_fastq_metagenomics measures similarity between any FASTQ file (or FASTA), independently from the size, against any multi-FASTA database, such as the entire set of complete genomes from the NCBI. gto_fastq_metagenomics supports single reads, paired-end reads, and compositions of both. It has been tested in many platforms, such as Illumina MySeq, HiSeq, Novaseq, IonTorrent. gto_fastq_metagenomics is efficient to detect the presence and authenticate a given species in the FASTQ reads. The core of the method is based on relative data compression. gto_fastq_metagenomics uses variable multi-threading, without multiplying the memory for each thread, being able to run efficiently in a common laptop.",
+    "input": {
+        "type": "stdin",
+        "format": "FASTQ"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "CSV"
+    },
+    "flags": [
+        "-h",
+        "-F",
+        "-V",
+        "-v",
+        "-Z",
+        "-s",
+        "-l",
+        "-p",
+        "-t",
+        "-n",
+        "-x",
+        "-y"
+    ],
+    "parameters": [
+        {
+            "name": "FILE1",
+            "type": "string"
+        },
+        {
+            "name": "FILE2",
+            "type": "string"
+        },
+        {
+            "name": "FILE",
+            "type": "string"
+        },
+        {
+            "name": "level",
+            "type": "integer"
+        },
+        {
+            "name": "sample",
+            "type": "integer"
+        },
+        {
+            "name": "top",
+            "type": "integer"
+        },
+        {
+            "name": "nThreads",
+            "type": "integer"
+        },
+        {
+            "name": "similarity top filename",
+            "type": "string"
+        },
+        {
+            "name": "profile filename",
+            "type": "string"
+        }
+    ],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "external_tool"
+}

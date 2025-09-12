@@ -1,0 +1,43 @@
+{
+    "name": "gto_brute_force_string",
+    "description": "Generates all combinations, line by line, for an inputted alphabet and specific size.",
+    "input": {
+        "type": "",
+        "format": ""
+    },
+    "output": {
+        "type": "stdout",
+        "format": "TEXT"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        },
+        {
+            "flag": "-a",
+            "parameter": "alphabet",
+            "required": true
+        },
+        {
+            "flag": "-s",
+            "parameter": "size",
+            "required": true
+        }
+    ],
+    "parameters": [
+        {
+            "name": "alphabet",
+            "type": "string"
+        },
+        {
+            "name": "size",
+            "type": "integer"
+        }
+    ],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/BruteForceString.c",
+    "category": "Text Processing"
+}

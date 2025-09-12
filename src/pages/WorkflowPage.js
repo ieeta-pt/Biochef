@@ -6,7 +6,7 @@ import {
     useTheme
 } from '@mui/material';
 import React, { useContext, useEffect, useState } from 'react';
-import description from '../../description.json';
+import { getTool } from '../utils/toolUtils';
 import InputPanel from '../components/InputPanel';
 import ErrorBoundary from '/src/components/ErrorBoundary'; // Ensure this component exists
 import OperationsPanel from '/src/components/OperationsPanel';
@@ -62,7 +62,7 @@ const WorkflowPage = () => {
         if (isVariableLoaded) {
             // Create a copy of the workflow and remove file input parameters
             const workflowToSave = workflow.map(tool => {
-                const toolConfig = description.tools.find(t => t.name === `gto_${tool.toolName}`);
+                const toolConfig = getTool(tool.toolName)
                 if (toolConfig && toolConfig.input.type === "file") {
                     // For tools with file input, create a copy without parameters
                     return {

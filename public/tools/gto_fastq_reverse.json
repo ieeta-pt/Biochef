@@ -1,0 +1,24 @@
+{
+    "name": "gto_fastq_reverse",
+    "description": "Reverses the ACGT bases order for each read in a FASTQ file format.",
+    "input": {
+        "type": "stdin",
+        "format": "FASTQ"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "FASTQ"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        }
+    ],
+    "parameters": [],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/FastqReverse.c",
+    "category": "Sequence Manipulation"
+}

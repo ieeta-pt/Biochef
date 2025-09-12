@@ -1,0 +1,25 @@
+{
+    "name": "gto_fastq_clust_reads",
+    "description": "Agroups reads and creates an index file. It cluster reads in therms of Seq k-mer Lexicographical order.",
+    "input": {
+        "type": "stdin",
+        "format": "FASTQ"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "FASTQ"
+    },
+    "flags": [
+        "-h",
+        "-c"
+    ],
+    "parameters": [
+        {
+            "name": "ctx",
+            "type": "integer"
+        }
+    ],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "Not found in Makefile"
+}

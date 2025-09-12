@@ -1,0 +1,50 @@
+{
+    "name": "gto_fastq_variation_map",
+    "description": "Identifies the variation that occurs in the sequences relative to the reads or a set of reads. The (probabilistic) Bloom filter is automatically set.",
+    "input": {
+        "type": "stdin",
+        "format": "FASTQ"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "TEXT"
+    },
+    "flags": [
+        "-h",
+        "-v",
+        "-a",
+        "-s",
+        "-i",
+        "-p",
+        "-k"
+    ],
+    "parameters": [
+        {
+            "name": "rFile1",
+            "type": "string"
+        },
+        {
+            "name": "rFile2",
+            "type": "string"
+        },
+        {
+            "name": "tFile1",
+            "type": "string"
+        },
+        {
+            "name": "tFile2",
+            "type": "string"
+        },
+        {
+            "name": "bloom size",
+            "type": "integer"
+        },
+        {
+            "name": "k-mer size",
+            "type": "integer"
+        }
+    ],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "external_tool (CHESTER)"
+}

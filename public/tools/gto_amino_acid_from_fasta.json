@@ -1,0 +1,34 @@
+{
+    "name": "gto_amino_acid_from_fasta",
+    "description": "Converts DNA sequences in FASTA or Multi-FASTA file format to an amino acid sequence.",
+    "input": {
+        "type": "stdin",
+        "format": "FASTA, Multi-FASTA"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "AminoAcids"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        },
+        {
+            "flag": "-f",
+            "parameter": "frame",
+            "required": false
+        }
+    ],
+    "parameters": [
+        {
+            "name": "frame",
+            "type": "integer"
+        }
+    ],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/AminoAcidFromFasta.c",
+    "category": "Format Conversion"
+}

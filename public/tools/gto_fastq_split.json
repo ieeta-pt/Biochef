@@ -1,0 +1,24 @@
+{
+    "name": "gto_fastq_split",
+    "description": "Splits Paired End files according to the direction of the strand ('/1' or '/2'). It writes by default singleton reads as forward stands.",
+    "input": {
+        "type": "stdin",
+        "format": "FASTQ"
+    },
+    "output": {
+        "type": "file",
+        "format": "FASTQ"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        }
+    ],
+    "parameters": [],
+    "is_multi_output": true,
+    "is_multi_type_output": false,
+    "source": "gto/src/FastqSplit.c",
+    "category": "Sequence Manipulation"
+}

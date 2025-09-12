@@ -1,0 +1,34 @@
+{
+    "name": "gto_fastq_maximum_read_size",
+    "description": "Filters the FASTQ reads with the length higher than the value defined. If present, it will erase the second header (after +).",
+    "input": {
+        "type": "stdin",
+        "format": "FASTQ"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "FASTQ"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        },
+        {
+            "flag": "-s",
+            "parameter": "size",
+            "required": true
+        }
+    ],
+    "parameters": [
+        {
+            "name": "size",
+            "type": "integer"
+        }
+    ],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/FastqMaximumReadSize.c",
+    "category": "Sequence Manipulation"
+}

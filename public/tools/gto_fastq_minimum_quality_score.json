@@ -1,0 +1,34 @@
+{
+    "name": "gto_fastq_minimum_quality_score",
+    "description": "Discards reads with average quality-score below of the defined.",
+    "input": {
+        "type": "stdin",
+        "format": "FASTQ"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "FASTQ"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        },
+        {
+            "flag": "-m",
+            "parameter": "min",
+            "required": true
+        }
+    ],
+    "parameters": [
+        {
+            "name": "min",
+            "type": "integer"
+        }
+    ],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/FastqMinimumQualityScore.c",
+    "category": "Sequence Manipulation"
+}

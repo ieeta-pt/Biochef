@@ -1,0 +1,45 @@
+{
+    "name": "gto_fastq_variation_filter",
+    "description": "Filters and segments the regions of singularity from the output of gto_fastq_variation_map.",
+    "input": {
+        "type": "stdin",
+        "format": "TEXT"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "TEXT"
+    },
+    "flags": [
+        "-h",
+        "-v",
+        "-a",
+        "-t",
+        "-w",
+        "-u"
+    ],
+    "parameters": [
+        {
+            "name": "tFile1",
+            "type": "string"
+        },
+        {
+            "name": "tFile2",
+            "type": "string"
+        },
+        {
+            "name": "threshold",
+            "type": "float"
+        },
+        {
+            "name": "window size",
+            "type": "integer"
+        },
+        {
+            "name": "sub-sampling",
+            "type": "integer"
+        }
+    ],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "external_tool (CHESTER)"
+}

@@ -1,0 +1,43 @@
+{
+    "name": "gto_fastq_from_seq",
+    "description": "Converts a genomic sequence to pseudo FASTQ file format.",
+    "input": {
+        "type": "stdin",
+        "format": "DNA, RNA, AminoAcids"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "FASTQ"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        },
+        {
+            "flag": "-n",
+            "parameter": "name",
+            "required": false
+        },
+        {
+            "flag": "-l",
+            "parameter": "lineSize",
+            "required": false
+        }
+    ],
+    "parameters": [
+        {
+            "name": "name",
+            "type": "string"
+        },
+        {
+            "name": "lineSize",
+            "type": "integer"
+        }
+    ],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/FastqFromSeq.c",
+    "category": "Format Conversion"
+}

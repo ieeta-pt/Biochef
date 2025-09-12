@@ -1,0 +1,35 @@
+{
+    "name": "gto_fastq_variation_visual",
+    "description": "Depicts the regions of singularity using the output from gto_fastq_variation_filter into an SVG image.",
+    "input": {
+        "type": "stdin",
+        "format": "TEXT"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "SVG"
+    },
+    "flags": [
+        "-h",
+        "-v",
+        "-a",
+        "-e"
+    ],
+    "parameters": [
+        {
+            "name": "tFile1",
+            "type": "string"
+        },
+        {
+            "name": "tFile2",
+            "type": "string"
+        },
+        {
+            "name": "enlarge painted regions",
+            "type": "integer"
+        }
+    ],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "external_tool (CHESTER)"
+}

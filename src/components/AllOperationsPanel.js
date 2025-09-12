@@ -13,10 +13,10 @@ import {
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import debounce from 'lodash.debounce';
-import React, { useContext, useMemo, useState } from 'react';
+import React, { useContext, useMemo, useState, useEffect } from 'react';
 import { DataTypeContext } from '../contexts/DataTypeContext';
 import { NotificationContext } from '../contexts/NotificationContext';
-import operationCategories from '../utils/operationCategories';
+import { getToolsByCategory, loadTools } from '../utils/toolUtils';
 
 
 const AllOperationsPanel = ({ onToolClick }) => {
@@ -24,6 +24,7 @@ const AllOperationsPanel = ({ onToolClick }) => {
     const [expandedCategories, setExpandedCategories] = useState({});
     const { dataType } = useContext(DataTypeContext);
     const showNotification = useContext(NotificationContext);
+    const [loadingTools, setLoadingTools] = useState(true);
 
     // Debounced search handler
     const handleSearch = useMemo(
@@ -51,6 +52,15 @@ const AllOperationsPanel = ({ onToolClick }) => {
         );
     };
 
+    useEffect(() => {
+        const fetchTools = async () => {
+            await loadTools();
+            setLoadingTools(false); 
+        };
+        
+        fetchTools();
+    }, []);
+
     return (
         <Paper elevation={3} sx={{ padding: 2, height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
             <Typography variant="h6" align="center" gutterBottom>
@@ -65,8 +75,8 @@ const AllOperationsPanel = ({ onToolClick }) => {
                 sx={{ marginBottom: 2 }}
             />
             <List sx={{ overflowY: 'auto', flexGrow: 1 }}>
-                {Object.entries(operationCategories).map(([category, operations]) => {
-                    const filteredOps = filterOperations(operations);
+                {Object.entries(getToolsByCategory()).map(([category, tools]) => {
+                    const filteredOps = filterOperations(tools);
                     if (filteredOps.length === 0 && searchTerm !== '') return null;
 
                     return (

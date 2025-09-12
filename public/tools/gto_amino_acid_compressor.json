@@ -1,0 +1,65 @@
+{
+    "name": "gto_amino_acid_compressor",
+    "description": "A new lossless compressor to compress efficiently amino acid sequences (proteins). It uses a cooperation between multiple context and substitutional tolerant context models. The cooperation between models is balanced with weights that benefit the models with better performance according to a forgetting function specific for each model.",
+    "input": {
+        "type": "stdin",
+        "format": "AminoAcids"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "AminoAcids"
+    },
+    "flags": [
+        "-h",
+        "-s",
+        "-v",
+        "-V",
+        "-f",
+        "-l",
+        "-t",
+        "-e",
+        "-rm",
+        "-tm"
+    ],
+    "parameters": [
+        {
+            "name": "level",
+            "type": "integer"
+        },
+        {
+            "name": "threshold",
+            "type": "float"
+        },
+        {
+            "name": "c",
+            "type": "integer"
+        },
+        {
+            "name": "d",
+            "type": "integer"
+        },
+        {
+            "name": "g",
+            "type": "float"
+        },
+        {
+            "name": "m",
+            "type": "integer"
+        },
+        {
+            "name": "e",
+            "type": "integer"
+        },
+        {
+            "name": "a",
+            "type": "float"
+        },
+        {
+            "name": "FILE",
+            "type": "string"
+        }
+    ],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "external_tool"
+}

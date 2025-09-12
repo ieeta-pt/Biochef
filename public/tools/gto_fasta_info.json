@@ -1,0 +1,24 @@
+{
+    "name": "gto_fasta_info",
+    "description": "Shows the readed information of a FASTA or Multi-FASTA file format.",
+    "input": {
+        "type": "stdin",
+        "format": "FASTA"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "TEXT"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        }
+    ],
+    "parameters": [],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/FastaInfo.c",
+    "category": "Information and Analysis"
+}

@@ -1,0 +1,34 @@
+{
+    "name": "gto_lower_bound",
+    "description": "Sets an lower bound in a file with a value per line.",
+    "input": {
+        "type": "stdin",
+        "format": "NUM"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "NUM"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        },
+        {
+            "flag": "-l",
+            "parameter": "lowerbound",
+            "required": true
+        }
+    ],
+    "parameters": [
+        {
+            "name": "lowerbound",
+            "type": "integer"
+        }
+    ],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/LowerBound.c",
+    "category": "Mathematical Operations"
+}

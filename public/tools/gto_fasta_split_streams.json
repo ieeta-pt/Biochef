@@ -1,0 +1,24 @@
+{
+    "name": "gto_fasta_split_streams",
+    "description": "Splits and writes a FASTA file into three channels of information: headers, extra and DNA.",
+    "input": {
+        "type": "stdin",
+        "format": "FASTA, Multi-FASTA"
+    },
+    "output": {
+        "type": "file",
+        "format": "TEXT, DNA, AminoAcids, RNA"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        }
+    ],
+    "parameters": [],
+    "is_multi_output": true,
+    "is_multi_type_output": true,
+    "source": "gto/src/FastaSplitStreams.c",
+    "category": "Sequence Manipulation"
+}

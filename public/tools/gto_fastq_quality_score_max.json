@@ -1,0 +1,34 @@
+{
+    "name": "gto_fastq_quality_score_max",
+    "description": "Analyses the maximal quality-scores of a FASTQ file.",
+    "input": {
+        "type": "stdin",
+        "format": "FASTQ"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "TEXT"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        },
+        {
+            "flag": "-m",
+            "parameter": "max",
+            "required": false
+        }
+    ],
+    "parameters": [
+        {
+            "name": "max",
+            "type": "integer"
+        }
+    ],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/FastqQualityScoreMax.c",
+    "category": "Sequence Manipulation"
+}

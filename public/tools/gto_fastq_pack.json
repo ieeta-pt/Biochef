@@ -1,0 +1,29 @@
+{
+    "name": "gto_fastq_pack",
+    "description": "Packages each FASTQ read in a single line. It can show the read score first or the dna sequence, depending on the execution mode.",
+    "input": {
+        "type": "stdin",
+        "format": "FASTQ"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "PackagedFASTQ"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        },
+        {
+            "flag": "-s",
+            "parameter": "scores",
+            "required": false
+        }
+    ],
+    "parameters": [],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/FastqPack.c",
+    "category": "Sequence Manipulation"
+}

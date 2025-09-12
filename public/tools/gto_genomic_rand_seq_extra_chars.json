@@ -1,0 +1,24 @@
+{
+    "name": "gto_genomic_rand_seq_extra_chars",
+    "description": "Substitutes in the DNA sequence the outside ACGT chars by random ACGT symbols. It works in sequence file formats.",
+    "input": {
+        "type": "stdin",
+        "format": "DNA"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "DNA"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        }
+    ],
+    "parameters": [],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/GenomicRandSeqExtraChars.c",
+    "category": "Genomic Operations"
+}

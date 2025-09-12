@@ -23,7 +23,7 @@ import { DataTypeContext } from '../contexts/DataTypeContext';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { ValidationErrorsContext } from '../contexts/ValidationErrorsContext';
 import { getCompatibleTools } from '../utils/compatibility';
-import operationCategories from '../utils/operationCategories';
+import { getToolsByCategory } from '../utils/toolUtils';
 
 
 const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoading, insertAtIndex, setInsertAtIndex, addingATool, setAddingATool, filteredTools, setFilteredTools, selectedFiles, tabIndex, workflow }) => {
@@ -67,20 +67,20 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
     if (isWorkflowEmpty) {
       // Execute getCompatibleTools even if dataType is 'UNKNOWN' when the workflow is empty
       const compatible = getCompatibleTools(dataType, isWorkflowEmpty, workflow);
-      return new Set(compatible.map((tool) => tool.name.replace(/^gto_/, '')));
+      return new Set(compatible.map((tool) => tool.name));
     }
 
     if (!dataType || dataType === 'UNKNOWN') return new Set();
     const compatible = getCompatibleTools(dataType, isWorkflowEmpty, workflow);
-    // Assuming tool names in operationCategories do not have the 'gto_' prefix
-    return new Set(compatible.map((tool) => tool.name.replace(/^gto_/, '')));
+
+    return new Set(compatible.map((tool) => tool.name));
   }, [dataType, isWorkflowEmpty, workflow]);
 
   // Expand categories with available tools
   useEffect(() => {
     if (insertAtIndex === null) {
       const newExpandedCategories = {};
-      Object.entries(operationCategories).forEach(([category, operations]) => {
+      Object.entries(getToolsByCategory()).forEach(([category, operations]) => {
         const filteredOps = filterOperations(operations).filter((op) => compatibleTools.has(op.name));
         if (filteredOps.length > 0) {
           newExpandedCategories[category] = true;
@@ -93,9 +93,9 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
   useEffect(() => {
     if (insertAtIndex !== null && filteredTools.length > 0) {
       const newExpandedCategories = {};
-      Object.entries(operationCategories).forEach(([category, operations]) => {
+      Object.entries(getToolsByCategory()).forEach(([category, operations]) => {
         const filteredOps = operations.filter((op) =>
-          filteredTools.some((tool) => tool.name === `gto_${op.name}`)
+          filteredTools.some((tool) => tool.name === op.name)
         );
         if (filteredOps.length > 0) {
           newExpandedCategories[category] = true;
@@ -218,10 +218,10 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
         sx={{ marginBottom: 2 }}
       />
       <List sx={{ overflowY: 'auto', flexGrow: 1 }}>
-        {Object.entries(operationCategories).map(([category, operations]) => {
+        {Object.entries(getToolsByCategory()).map(([category, operations]) => {
           const filteredOps = insertAtIndex !== null
             ? operations.filter((op) =>
-              filteredTools.some((tool) => tool.name === `gto_${op.name}`)
+              filteredTools.some((tool) => tool.name === op.name)
             )
             : filterOperations(operations).filter((op) => compatibleTools.has(op.name));
           if (filteredOps.length === 0 && searchTerm !== '') return null;

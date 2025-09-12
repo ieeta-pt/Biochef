@@ -1,0 +1,24 @@
+{
+    "name": "gto_fasta_reverse",
+    "description": "Reverses the order of a FASTA or Multi-FASTA file format.",
+    "input": {
+        "type": "stdin",
+        "format": "FASTA, Multi-FASTA"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "FASTA, Multi-FASTA"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        }
+    ],
+    "parameters": [],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/FastaReverse.c",
+    "category": "Sequence Manipulation"
+}

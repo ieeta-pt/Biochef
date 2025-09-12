@@ -1,0 +1,29 @@
+{
+    "name": "gto_info",
+    "description": "Gives the basic properties of the file, namely size, cardinality, distribution percentage of the symbols, among others.",
+    "input": {
+        "type": "stdin",
+        "format": "text, Multi-FASTA, FASTA, FASTQ, NUM, DNA, RNA, AminoAcids"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "TEXT"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        },
+        {
+            "flag": "-a",
+            "parameter": "ascii",
+            "required": false
+        }
+    ],
+    "parameters": [],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/Info.c",
+    "category": "Information and Analysis"
+}

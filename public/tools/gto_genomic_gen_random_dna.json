@@ -1,0 +1,55 @@
+{
+    "name": "gto_genomic_gen_random_dna",
+    "description": "Generates a synthetic DNA.",
+    "input": {
+        "type": "",
+        "format": ""
+    },
+    "output": {
+        "type": "stdout",
+        "format": "DNA"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        },
+        {
+            "flag": "-s",
+            "parameter": "seed",
+            "required": false
+        },
+        {
+            "flag": "-n",
+            "parameter": "nSymbols",
+            "required": false
+        },
+        {
+            "flag": "-f",
+            "parameter": "frequency",
+            "required": false
+        }
+    ],
+    "parameters": [
+        {
+            "name": "seed",
+            "type": "integer",
+            "maxLength": 9
+        },
+        {
+            "name": "nSymbols",
+            "type": "integer",
+            "min": 0,
+            "max": 100000
+        },
+        {
+            "name": "frequency",
+            "type": "string"
+        }
+    ],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/GenomicGenRandomDNA.c",
+    "category": "Genomic Operations"
+}

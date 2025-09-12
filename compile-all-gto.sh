@@ -15,15 +15,6 @@ fi
 # Ensure Emscripten is in the PATH
 source "$EMSDK_PATH/emsdk_env.sh"
 
-# Path to description.json
-DESCRIPTION_FILE="$SCRIPT_DIR/description.json"
-
-# Ensure description.json exists
-if [[ ! -f "$DESCRIPTION_FILE" ]]; then
-    echo "Error: description.json not found at $DESCRIPTION_FILE"
-    exit 1
-fi
-
 # Ensure public/wasm directory exists
 WASM_DIR="$SCRIPT_DIR/public/wasm"
 mkdir -p "$WASM_DIR"
@@ -93,11 +84,12 @@ compiled_programs=0
 failed_programs=0
 declare -a failed_list
 
-tool_count=$(jq '.tools | length' "$DESCRIPTION_FILE")
+tool_filenames=$(jq -r '.[]' "public/tool_index.json")
 total_programs=0
 
-for ((i=0; i<tool_count; i++)); do
-    tool=$(jq ".tools[$i]" "$DESCRIPTION_FILE")
+for tool_filename in $tool_filenames; do
+    tool_file="public/tools/$tool_filename"
+    tool=$(jq "." "$tool_file")
     prog=$(echo "$tool" | jq -r '.name')
     source_file=$(echo "$tool" | jq -r '.source // empty')  # Use // empty to avoid null
     input_type=$(echo "$tool" | jq -r '.input.type // "unknown"')
@@ -108,8 +100,7 @@ for ((i=0; i<tool_count; i++)); do
         echo "Skipping $prog: no source file specified." | tee -a "$MAIN_LOG_FILE"
         continue
     fi
-    # Remove 'gto_' prefix for module name
-    module_name="${prog#gto_}"
+    module_name="${prog}"
 
     full_source_path="$SCRIPT_DIR/$source_file"
 

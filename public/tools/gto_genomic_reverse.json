@@ -1,0 +1,24 @@
+{
+    "name": "gto_genomic_reverse",
+    "description": "Reverses the ACGT bases order for each read in a sequence file.",
+    "input": {
+        "type": "stdin",
+        "format": "DNA"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "DNA"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        }
+    ],
+    "parameters": [],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/Reverse.c",
+    "category": "Genomic Operations"
+}

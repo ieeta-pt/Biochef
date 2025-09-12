@@ -1,0 +1,44 @@
+{
+    "name": "gto_permute_by_blocks",
+    "description": "Permutates by block sequence, FASTA and Multi-FASTA files.",
+    "input": {
+        "type": "stdin",
+        "format": "FASTA, Multi-FASTA"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "FASTA, Multi-FASTA"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        },
+        {
+            "flag": "-b",
+            "parameter": "numbases",
+            "required": true
+        },
+        {
+            "flag": "-s",
+            "parameter": "seed",
+            "required": true
+        }
+    ],
+    "parameters": [
+        {
+            "name": "numbases",
+            "type": "integer"
+        },
+        {
+            "name": "seed",
+            "type": "integer",
+            "maxLength": 9
+        }
+    ],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/PermuteByBlocks.c",
+    "category": "Mathematical Operations"
+}

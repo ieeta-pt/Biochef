@@ -1,0 +1,34 @@
+{
+    "name": "gto_sum",
+    "description": "Adds decimal values in file, line by line, splitted by spaces or tabs.",
+    "input": {
+        "type": "stdin",
+        "format": "NUM"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "NUM"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        },
+        {
+            "flag": "-r",
+            "parameter": "sumrows",
+            "required": false
+        },
+        {
+            "flag": "-a",
+            "parameter": "sumall",
+            "required": false
+        }
+    ],
+    "parameters": [],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/Sum.c",
+    "category": "Mathematical Operations"
+}

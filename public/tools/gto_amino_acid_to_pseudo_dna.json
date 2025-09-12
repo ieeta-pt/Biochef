@@ -1,0 +1,24 @@
+{
+    "name": "gto_amino_acid_to_pseudo_dna",
+    "description": "Converts an amino acid (protein) sequence to a pseudo DNA sequence.",
+    "input": {
+        "type": "stdin",
+        "format": "AminoAcids"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "DNA"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        }
+    ],
+    "parameters": [],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/AminoAcidToPseudoDNA.c",
+    "category": "Amino Acid Operations"
+}

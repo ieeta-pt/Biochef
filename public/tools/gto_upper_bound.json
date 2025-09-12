@@ -1,0 +1,34 @@
+{
+    "name": "gto_upper_bound",
+    "description": "Sets an upper bound in a file with a value per line.",
+    "input": {
+        "type": "stdin",
+        "format": "NUM"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "NUM"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        },
+        {
+            "flag": "-u",
+            "parameter": "upperbound",
+            "required": true
+        }
+    ],
+    "parameters": [
+        {
+            "name": "upperbound",
+            "type": "integer"
+        }
+    ],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/UpperBound.c",
+    "category": "Mathematical Operations"
+}

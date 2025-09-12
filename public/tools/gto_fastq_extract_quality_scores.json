@@ -1,0 +1,24 @@
+{
+    "name": "gto_fastq_extract_quality_scores",
+    "description": "Extracts all the quality-scores from FASTQ reads.",
+    "input": {
+        "type": "stdin",
+        "format": "FASTQ"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "TEXT"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        }
+    ],
+    "parameters": [],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/FastqExtractQS.c",
+    "category": "Sequence Manipulation"
+}

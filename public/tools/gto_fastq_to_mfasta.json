@@ -1,0 +1,24 @@
+{
+    "name": "gto_fastq_to_mfasta",
+    "description": "Converts a FASTQ file format to a pseudo Multi-FASTA file. It does NOT align the sequence. It extracts the sequence and adds each header in a Multi-FASTA format.",
+    "input": {
+        "type": "stdin",
+        "format": "FASTQ"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "Multi-FASTA"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        }
+    ],
+    "parameters": [],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/FastqToMFasta.c",
+    "category": "Format Conversion"
+}

@@ -1,0 +1,108 @@
+{
+    "name": "gto_comparative_map",
+    "description": "Creates a visualization for comparative maps.",
+    "input": {
+        "type": "stdin",
+        "format": "POS"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "SVG"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        },
+        {
+            "flag": "-V",
+            "parameter": "versionNumber",
+            "required": false
+        },
+        {
+            "flag": "-v",
+            "parameter": "verboseMode",
+            "required": false
+        },
+        {
+            "flag": "-l",
+            "parameter": "link",
+            "required": false
+        },
+        {
+            "flag": "-w",
+            "parameter": "width",
+            "required": false
+        },
+        {
+            "flag": "-s",
+            "parameter": "space",
+            "required": false
+        },
+        {
+            "flag": "-m",
+            "parameter": "mult",
+            "required": false
+        },
+        {
+            "flag": "-b",
+            "parameter": "begin",
+            "required": false
+        },
+        {
+            "flag": "-c",
+            "parameter": "minimum",
+            "required": false
+        },
+        {
+            "flag": "-i",
+            "parameter": "notShowInversion",
+            "required": false
+        },
+        {
+            "flag": "-r",
+            "parameter": "notShowRegular",
+            "required": false
+        },
+        {
+            "flag": "-o",
+            "parameter": "FILE",
+            "required": false
+        }
+    ],
+    "parameters": [
+        {
+            "name": "link",
+            "type": "integer"
+        },
+        {
+            "name": "width",
+            "type": "integer"
+        },
+        {
+            "name": "space",
+            "type": "integer"
+        },
+        {
+            "name": "mult",
+            "type": "integer"
+        },
+        {
+            "name": "begin",
+            "type": "integer"
+        },
+        {
+            "name": "minimum",
+            "type": "integer"
+        },
+        {
+            "name": "FILE",
+            "type": "string"
+        }
+    ],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/ComparativeMap.c",
+    "category": "Information and Analysis"
+}

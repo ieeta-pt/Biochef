@@ -1,0 +1,23 @@
+{
+    "name": "gto_fasta_rename_human_headers",
+    "description": "Changes the headers of FASTA or Multi-FASTA file to simple chrX by order, where X is the number.",
+    "input": {
+        "type": "stdin",
+        "format": "FASTA"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "FASTA"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        }
+    ],
+    "parameters": [],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/FastaRenameHumanHeaders.c"
+}

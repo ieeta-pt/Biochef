@@ -1,0 +1,45 @@
+{
+    "name": "gto_fasta_variation_filter",
+    "description": "This tool is an alias to gto_fastq_variation_filter tool. Please check the documentation of this tool in the in the section of FASTQ tools.",
+    "input": {
+        "type": "stdin",
+        "format": "TEXT"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "TEXT"
+    },
+    "flags": [
+        "-h",
+        "-v",
+        "-a",
+        "-t",
+        "-w",
+        "-u"
+    ],
+    "parameters": [
+        {
+            "name": "tFile1",
+            "type": "string"
+        },
+        {
+            "name": "tFile2",
+            "type": "string"
+        },
+        {
+            "name": "threshold",
+            "type": "float"
+        },
+        {
+            "name": "window size",
+            "type": "integer"
+        },
+        {
+            "name": "sub-sampling",
+            "type": "integer"
+        }
+    ],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "external_tool (CHESTER)"
+}

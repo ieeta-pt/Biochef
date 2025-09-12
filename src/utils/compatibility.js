@@ -1,4 +1,4 @@
-import description from '../../description.json';
+import {getAllTools} from '../utils/toolUtils';
 
 /**
  * Checks if fasta_merge_streams should be available based on workflow state
@@ -21,7 +21,7 @@ export const isFastaMergeStreamsAvailable = (workflow) => {
  * @returns {Array} - An array of tool objects that are compatible.
  */
 export const getCompatibleTools = (currentFormat, isWorkflowEmpty, workflow = []) => {
-  return description.tools.filter(tool => {
+  return getAllTools().filter(tool => {
     // Special case for fasta_merge_streams
     if (tool.name === 'gto_fasta_merge_streams') {
       return isFastaMergeStreamsAvailable(workflow);

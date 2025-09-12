@@ -1,0 +1,67 @@
+{
+    "name": "gto_filter",
+    "description": "Filters numerical sequences using a low-pass filter.",
+    "input": {
+        "type": "stdin",
+        "format": "NUM"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "NUM"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        },
+        {
+            "flag": "-w",
+            "parameter": "windowsize",
+            "required": false
+        },
+        {
+            "flag": "-d",
+            "parameter": "drop",
+            "required": false
+        },
+        {
+            "flag": "-t",
+            "parameter": "windowtype",
+            "required": false
+        },
+        {
+            "flag": "-c",
+            "parameter": "onecolumn",
+            "required": false
+        },
+        {
+            "flag": "-p",
+            "parameter": "printone",
+            "required": false
+        },
+        {
+            "flag": "-r",
+            "parameter": "reverse",
+            "required": false
+        }
+    ],
+    "parameters": [
+        {
+            "name": "windowsize",
+            "type": "integer"
+        },
+        {
+            "name": "drop",
+            "type": "float"
+        },
+        {
+            "name": "windowtype",
+            "type": "integer"
+        }
+    ],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/Filter.c",
+    "category": "Text Processing"
+}

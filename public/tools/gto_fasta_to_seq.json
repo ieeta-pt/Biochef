@@ -1,0 +1,24 @@
+{
+    "name": "gto_fasta_to_seq",
+    "description": "Converts a FASTA or Multi-FASTA file format to a seq.",
+    "input": {
+        "type": "stdin",
+        "format": "FASTA, Multi-FASTA"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "DNA, RNA, AminoAcids"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        }
+    ],
+    "parameters": [],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/FastaToSeq.c",
+    "category": "Format Conversion"
+}

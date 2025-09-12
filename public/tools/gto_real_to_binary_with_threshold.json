@@ -1,0 +1,34 @@
+{
+    "name": "gto_real_to_binary_with_threshold",
+    "description": "Converts a sequence of real numbers into a binary sequence, given a threshold. The numbers below to the threshold will be 0.",
+    "input": {
+        "type": "stdin",
+        "format": "NUM"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "BIN"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        },
+        {
+            "flag": "-t",
+            "parameter": "threshold",
+            "required": true
+        }
+    ],
+    "parameters": [
+        {
+            "name": "threshold",
+            "type": "float"
+        }
+    ],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/RealToBinaryWithThreshold.c",
+    "category": "Mathematical Operations"
+}

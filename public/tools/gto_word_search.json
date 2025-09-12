@@ -1,0 +1,34 @@
+{
+    "name": "gto_word_search",
+    "description": "Search for a word in a file. It is case sensitive.",
+    "input": {
+        "type": "stdin",
+        "format": "TEXT, Multi-FASTA, FASTA, FASTQ, NUM, DNA, RNA, AminoAcids"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "TEXT"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        },
+        {
+            "flag": "-w",
+            "parameter": "word",
+            "required": true
+        }
+    ],
+    "parameters": [
+        {
+            "name": "word",
+            "type": "string"
+        }
+    ],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/WordSearch.c",
+    "category": "Text Processing"
+}

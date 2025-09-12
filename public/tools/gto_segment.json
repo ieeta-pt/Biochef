@@ -1,0 +1,34 @@
+{
+    "name": "gto_segment",
+    "description": "Segments a filtered sequence based on a threshold.",
+    "input": {
+        "type": "stdin",
+        "format": "NUM"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "text, NUM"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        },
+        {
+            "flag": "-t",
+            "parameter": "threshold",
+            "required": true
+        }
+    ],
+    "parameters": [
+        {
+            "name": "threshold",
+            "type": "float"
+        }
+    ],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/Segment.c",
+    "category": "Text Processing"
+}

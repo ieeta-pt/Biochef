@@ -1,0 +1,73 @@
+{
+    "name": "gto_fasta_mutate",
+    "description": "Creates a synthetic mutation of a FASTA file given specific rates of editions, deletions and additions.",
+    "input": {
+        "type": "stdin",
+        "format": "FASTA, Multi-FASTA"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "FASTA, Multi-FASTA"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        },
+        {
+            "flag": "-s",
+            "parameter": "seed",
+            "required": false
+        },
+        {
+            "flag": "-e",
+            "parameter": "edit-rate",
+            "required": false
+        },
+        {
+            "flag": "-d",
+            "parameter": "deletion-rate",
+            "required": false
+        },
+        {
+            "flag": "-i",
+            "parameter": "insertion-rate",
+            "required": false
+        },
+        {
+            "flag": "-a",
+            "parameter": "ACGTN-alphabet",
+            "required": false
+        }
+    ],
+    "parameters": [
+        {
+            "name": "seed",
+            "type": "integer",
+            "maxLength": 9
+        },
+        {
+            "name": "edit-rate",
+            "type": "float",
+            "min": 0,
+            "max": 1
+        },
+        {
+            "name": "deletion-rate",
+            "type": "float",
+            "min": 0,
+            "max": 1
+        },
+        {
+            "name": "insertion-rate",
+            "type": "float",
+            "min": 0,
+            "max": 1
+        }
+    ],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/FastaMutate.c",
+    "category": "Sequence Manipulation"
+}

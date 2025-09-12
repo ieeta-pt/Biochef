@@ -1,0 +1,24 @@
+{
+    "name": "gto_amino_acid_to_group",
+    "description": "Converts an amino acid sequence to a group sequence.",
+    "input": {
+        "type": "stdin",
+        "format": "AminoAcids"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "Group"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        }
+    ],
+    "parameters": [],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/AminoAcidToGroup.c",
+    "category": "Amino Acid Operations"
+}

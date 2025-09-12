@@ -18,7 +18,7 @@ import {
     Typography
 } from '@mui/material';
 import React, { useContext, useEffect, useState } from 'react';
-import description from '../../description.json';
+import { getTool } from '../utils/toolUtils';
 import { DataTypeContext } from '../contexts/DataTypeContext';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { loadWasmModule } from '../gtoWasm';
@@ -33,7 +33,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
     const { validateData } = useContext(DataTypeContext);
 
     // Find tool configuration and supported input formats
-    const toolConfig = description.tools.find((t) => t.name === `gto_${tool.name}`);
+    const toolConfig = getTool(tool.name)
     const inputFormats = toolConfig?.input.format.split(',').map((f) => f.trim()) || [];
     const outputFormats = toolConfig?.output.format.split(',').map((f) => f.trim()) || [];
 
@@ -96,7 +96,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
 
     // Validate parameters based on expected type
     const validateParameters = (tool) => {
-        const toolConfig = description.tools.find((t) => t.name === `gto_${tool.name}`);
+        const toolConfig = getTool(tool.name)
         const errors = {};
 
         toolConfig.flags.forEach((flagObj) => {
@@ -191,10 +191,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
             // Load the wrapper function dynamically
             const runFunction = await loadWasmModule(tool.name);
 
-            // Find tool configuration from description.json
-            const toolConfig = description.tools.find(
-                (t) => t.name === `gto_${tool.name}`
-            );
+            const toolConfig = getTool(tool.name)
             if (!toolConfig) {
                 showNotification(`Configuration for tool ${tool.name} not found.`, 'error');
                 throw new Error(`Configuration for tool ${tool.name} not found.`);
@@ -283,7 +280,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
     };
 
     const renderParameters = (tool) => {
-        const toolConfig = description.tools.find((t) => t.name === `gto_${tool.name}`);
+        const toolConfig = getTool(tool.name)
         if (!toolConfig) return null;
 
         const toolHelp = helpMessages || { general: 'Loading help...', flags: {} };
@@ -389,18 +386,18 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
                                                 }}
                                                 type={
                                                     toolConfig.parameters.find((p) => p.name === flagObj.parameter)?.type ===
-                                                        'integer'
+                                                    'integer'
                                                         ? 'number'
                                                         : toolConfig.parameters.find((p) => p.name === flagObj.parameter)
                                                             ?.type === 'float'
-                                                            ? 'number'
-                                                            : 'text'
+                                                        ? 'number'
+                                                        : 'text'
                                                 }
                                                 inputProps={
                                                     toolConfig.parameters.find((p) => p.name === flagObj.parameter)?.type ===
-                                                        'integer' ||
-                                                        toolConfig.parameters.find((p) => p.name === flagObj.parameter)?.type ===
-                                                        'float'
+                                                    'integer' ||
+                                                    toolConfig.parameters.find((p) => p.name === flagObj.parameter)?.type ===
+                                                    'float'
                                                         ? { step: 'any' }
                                                         : {}
                                                 }

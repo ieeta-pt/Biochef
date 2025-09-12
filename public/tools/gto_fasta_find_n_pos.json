@@ -1,0 +1,24 @@
+{
+    "name": "gto_fasta_find_n_pos",
+    "description": "Reports the 'N' regions in a sequence or FASTA (seq) file.",
+    "input": {
+        "type": "stdin",
+        "format": "FASTA"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "TEXT"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        }
+    ],
+    "parameters": [],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/FastaFindNPos.c",
+    "category": "Information and Analysis"
+}

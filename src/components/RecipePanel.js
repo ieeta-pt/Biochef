@@ -40,7 +40,7 @@ import {
 import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
 import React, { useContext, useEffect, useState } from 'react';
-import description from '../../description.json';
+import { getTool, getAllTools } from '../utils/toolUtils';
 import { DataTypeContext } from '../contexts/DataTypeContext';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { ValidationErrorsContext } from '../contexts/ValidationErrorsContext';
@@ -134,7 +134,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
 
     // Find the index of the first tool with file input
     const fileInputToolIndex = workflow.findIndex(tool => {
-      const toolConfig = description.tools.find(t => t.name === `gto_${tool.toolName}`);
+      const toolConfig = getTool(tool.toolName);
       return toolConfig && toolConfig.input.type === "file";
     });
 
@@ -214,7 +214,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
 
           // Get tool configuration at the beginning of each loop iteration
           // This ensures it's available throughout the entire iteration
-          const toolConfig = description.tools.find((t) => t.name === `gto_${tool.toolName}`);
+          const toolConfig = getTool(tool.toolName);
           const isMultiTypeOutput = toolConfig && toolConfig.is_multi_type_output;
 
           try {
@@ -230,7 +230,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
             // Check if previous tool was multi-type and we have a selection
             if (i > 0) {
               const prevTool = workflow[i - 1];
-              const prevToolConfig = description.tools.find((t) => t.name === `gto_${prevTool.toolName}`);
+              const prevToolConfig = getTool(prevTool.toolName);
               const isPrevMultiTypeOutput = prevToolConfig && prevToolConfig.is_multi_type_output;
 
               // If previous tool is multi-type and we have a selection, use only that selected output
@@ -489,7 +489,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
 
   // Validate the workflow to ensure compatibility between tools
   const validateWorkflow = (workflow, inputDataType) => {
-    const firstTool = description.tools.find((t) => `gto_${workflow[0].toolName}` === t.name);
+    const firstTool = getTool(workflow[0].toolName);
     const firstToolInputFormats = firstTool.input.format.split(',').map(f => f.trim());
 
     if (firstToolInputFormats[0] !== "" && inputDataType !== "UNKNOWN" && !firstToolInputFormats.includes(inputDataType)) {
@@ -497,8 +497,8 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
     }
 
     for (let i = 0; i < workflow.length - 1; i++) {
-      const currentTool = description.tools.find((t) => `gto_${workflow[i].toolName}` === t.name);
-      const nextTool = description.tools.find((t) => `gto_${workflow[i + 1].toolName}` === t.name);
+      const currentTool = getTool(workflow[i].toolName);
+      const nextTool = getTool(workflow[i+1].toolName);
 
       if (!currentTool || !nextTool) {
         return false;
@@ -519,9 +519,9 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
 
   // Validate parameters based on expected type
   const validateParameters = (tool) => {
-    const toolConfig = description.tools.find((t) => t.name === `gto_${tool.toolName}`);
+    const toolConfig = getTool(tool.toolName);
     const errors = {};
-
+    console.log(tool, toolConfig)
     toolConfig.flags.forEach((flagObj) => {
       const isFlagRequired = flagObj.required;
       const flagValue = !!tool.params[flagObj.flag];
@@ -631,7 +631,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
       showNotification('All operations removed. Data type reset to input type.', 'info');
     } else {
       const toolIndex = workflow.findIndex((t) => t.id === id);
-      const isFirstToolWithoutInput = toolIndex === 0 && description.tools.find((tool) => `gto_${workflow[toolIndex].toolName}` === tool.name)?.input?.type === '';
+      const isFirstToolWithoutInput = toolIndex === 0 && getTool(workflow[toolIndex].toolName)?.input?.type === '';
 
       if (validateWorkflow(newWorkflow, inputDataType) && !isFirstToolWithoutInput) {
         // Remove the messages for the deleted tool
@@ -718,7 +718,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
           let lastOutputType = null;
 
           // Check if the last tool is a multi-type output tool
-          const lastToolConfig = description.tools.find((t) => t.name === `gto_${lastTool.toolName}`);
+          const lastToolConfig = getTool(lastTool.toolName);
           const isLastToolMultiType = lastToolConfig && lastToolConfig.is_multi_type_output;
 
           // Try using the manual input first
@@ -854,7 +854,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
         let lastOutputType = null;
 
         // Check if the last tool is a multi-type output tool
-        const lastToolConfig = description.tools.find((t) => t.name === `gto_${lastTool.toolName}`);
+        const lastToolConfig = getTool(lastTool.toolName);
         const isLastToolMultiType = lastToolConfig && lastToolConfig.is_multi_type_output;
 
         // Try using the manual input first
@@ -992,12 +992,12 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
     }
 
     const next = workflow[index + 1]
-    const nextTool = description.tools.find((t) => t.name === `gto_${next.toolName}`)
+    const nextTool = getTool(next.toolName)
     const nextInputTypes = nextTool.input.format.split(',').map(f => f.trim())
 
-    const filteredOperations = description.tools.filter((tool) => {
-      const toolInputTypes = tool.input.format.split(',').map(f => f.trim());
-      const toolOutputTypes = tool.output.format.split(',').map(f => f.trim());
+    const filteredOperations = getAllTools().filter((tool) => {
+        const toolInputTypes = tool.input.format.split(',').map(f => f.trim());
+        const toolOutputTypes = tool.output.format.split(',').map(f => f.trim());
 
       return toolInputTypes.includes(previousOutputType) && toolOutputTypes.some((type) => nextInputTypes.includes(type));
     });
@@ -1017,10 +1017,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
       // Load the wrapper function dynamically
       const runFunction = await loadWasmModule(tool.toolName);
 
-      // Find tool configuration from description.json
-      const toolConfig = description.tools.find(
-        (t) => t.name === `gto_${tool.toolName}`
-      );
+      const toolConfig = getTool(tool.toolName)
       if (!toolConfig) {
         showNotification(`Configuration for tool ${tool.toolName} not found.`, 'error');
         throw new Error(`Configuration for tool ${tool.toolName} not found.`);
@@ -1273,7 +1270,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
 
   // Render multi-type output selector for tools like fasta_split_streams
   const renderOutputTypeSelector = (tool) => {
-    const toolConfig = description.tools.find((t) => t.name === `gto_${tool.toolName}`);
+    const toolConfig = getTool(tool.toolName);
     if (!toolConfig || !toolConfig.is_multi_type_output) {
       return null;
     }
@@ -1388,7 +1385,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
   };
 
   const renderParameters = (tool) => {
-    const toolConfig = description.tools.find((t) => t.name === `gto_${tool.toolName}`);
+    const toolConfig = getTool(tool.toolName);
     if (!toolConfig) return null;
 
     const toolErrors = validationErrors[tool.id] || {};
@@ -2215,7 +2212,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
                 onChange={(e) => setImportInput(e.target.value)}
                 helperText={importError || 'Enter a valid workflow command.'}
                 error={!!importError}
-                placeholder="e.g., ./gto_fasta_complement < input.fa || ./gto_fasta_extract -i 0 -e 4 > output.txt"
+                placeholder="e.g., ./fasta_complement < input.fa || ./fasta_extract -i 0 -e 4 > output.txt"
                 InputProps={{
                   sx: { fontSize: '0.875rem' },
                 }}

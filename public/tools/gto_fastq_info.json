@@ -1,0 +1,24 @@
+{
+    "name": "gto_fastq_info",
+    "description": "Analyses the basic information of FASTQ file format.",
+    "input": {
+        "type": "stdin",
+        "format": "FASTQ"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "TEXT"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        }
+    ],
+    "parameters": [],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/FastqInfo.c",
+    "category": "Information and Analysis"
+}

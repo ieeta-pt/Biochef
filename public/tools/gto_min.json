@@ -1,0 +1,43 @@
+{
+    "name": "gto_min",
+    "description": "Computes the minium value in each row between two files.",
+    "input": {
+        "type": "file",
+        "format": ""
+    },
+    "output": {
+        "type": "stdout",
+        "format": "NUM"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        },
+        {
+            "flag": "-f",
+            "parameter": "first_file",
+            "required": true
+        },
+        {
+            "flag": "-s",
+            "parameter": "second_file",
+            "required": true
+        }
+    ],
+    "parameters": [
+        {
+            "name": "first_file",
+            "type": "file"
+        },
+        {
+            "name": "second_file",
+            "type": "file"
+        }
+    ],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/Min.c",
+    "category": "Mathematical Operations"
+}

@@ -1,0 +1,24 @@
+{
+    "name": "gto_new_line_on_new_x",
+    "description": "Splits different rows with a new empty row.",
+    "input": {
+        "type": "stdin",
+        "format": "NUM"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "NUM"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        }
+    ],
+    "parameters": [],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/NewLineForNewValue.c",
+    "category": "Text Processing"
+}

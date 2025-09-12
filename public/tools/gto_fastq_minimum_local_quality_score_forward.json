@@ -1,0 +1,52 @@
+{
+    "name": "gto_fastq_minimum_local_quality_score_forward",
+    "description": "Filters the reads considering the quality score average of a defined window size of bases.",
+    "input": {
+        "type": "stdin",
+        "format": "FASTQ"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "FASTQ"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        },
+        {
+            "flag": "-k",
+            "parameter": "windowsize",
+            "required": false
+        },
+        {
+            "flag": "-w",
+            "parameter": "minavg",
+            "required": false
+        },
+        {
+            "flag": "-m",
+            "parameter": "minqs",
+            "required": false
+        }
+    ],
+    "parameters": [
+        {
+            "name": "windowsize",
+            "type": "integer"
+        },
+        {
+            "name": "minavg",
+            "type": "integer"
+        },
+        {
+            "name": "minqs",
+            "type": "integer"
+        }
+    ],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/FastqMinimumQualityScoreForward.c",
+    "category": "Sequence Manipulation"
+}

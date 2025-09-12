@@ -1,0 +1,24 @@
+{
+    "name": "gto_genomic_count_bases",
+    "description": "Counts the number of bases in sequence, FASTA or FASTQ files.",
+    "input": {
+        "type": "stdin",
+        "format": "DNA, FASTA, FASTQ"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "TEXT"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        }
+    ],
+    "parameters": [],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/GenomicCountBases.c",
+    "category": "Genomic Operations"
+}

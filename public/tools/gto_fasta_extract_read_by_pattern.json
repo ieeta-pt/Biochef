@@ -1,0 +1,34 @@
+{
+    "name": "gto_fasta_extract_read_by_pattern",
+    "description": "Extracts reads from a Multi-FASTA file format given a pattern in the header. Also, this pattern is case insensitive.",
+    "input": {
+        "type": "stdin",
+        "format": "Multi-FASTA"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "Multi-FASTA"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        },
+        {
+            "flag": "-p",
+            "parameter": "pattern",
+            "required": true
+        }
+    ],
+    "parameters": [
+        {
+            "name": "pattern",
+            "type": "string"
+        }
+    ],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/FastaExtractReadByIdPattern.c",
+    "category": "Sequence Manipulation"
+}

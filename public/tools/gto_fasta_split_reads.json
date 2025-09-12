@@ -1,0 +1,24 @@
+{
+    "name": "gto_fasta_split_reads",
+    "description": "Splits a Multi-FASTA file to multiple FASTA files.",
+    "input": {
+        "type": "stdin",
+        "format": "Multi-FASTA"
+    },
+    "output": {
+        "type": "file",
+        "format": "FASTA"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        }
+    ],
+    "parameters": [],
+    "is_multi_output": true,
+    "is_multi_type_output": false,
+    "source": "gto/src/FastaSplitReads.c",
+    "category": "Sequence Manipulation"
+}

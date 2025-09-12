@@ -1,0 +1,24 @@
+{
+    "name": "gto_char_to_line",
+    "description": "Splits a sequence into lines, creating an output sequence which has a char for each line.",
+    "input": {
+        "type": "stdin",
+        "format": "DNA, RNA, AminoAcids"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "DNA, RNA, AminoAcids"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        }
+    ],
+    "parameters": [],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/CharToLine.c",
+    "category": "Text Processing"
+}

@@ -1,0 +1,70 @@
+{
+    "name": "gto_genomic_compressor",
+    "description": "Able to provide additional compression gains over several top specific tools, while as an analysis tool, it is able to determine absolute measures, namely for many distance computations, and local measures, such as the information content contained in each element, providing a way to quantify and locate specific genomic events.",
+    "input": {
+        "type": "stdin",
+        "format": "SEQ"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "SEQ"
+    },
+    "flags": [
+        "-h",
+        "-V",
+        "-F",
+        "-v",
+        "-x",
+        "-s",
+        "-e",
+        "-l",
+        "-tm",
+        "-rm",
+        "-r"
+    ],
+    "parameters": [
+        {
+            "name": "level",
+            "type": "integer"
+        },
+        {
+            "name": "NB_C",
+            "type": "integer"
+        },
+        {
+            "name": "NB_D",
+            "type": "integer"
+        },
+        {
+            "name": "NB_I",
+            "type": "integer"
+        },
+        {
+            "name": "NB_H",
+            "type": "integer"
+        },
+        {
+            "name": "NB_G",
+            "type": "float"
+        },
+        {
+            "name": "NB_S",
+            "type": "integer"
+        },
+        {
+            "name": "NB_E",
+            "type": "integer"
+        },
+        {
+            "name": "NB_A",
+            "type": "float"
+        },
+        {
+            "name": "FILE",
+            "type": "string"
+        }
+    ],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "external_tool"
+}

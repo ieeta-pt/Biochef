@@ -1,0 +1,24 @@
+{
+    "name": "gto_fastq_to_fasta",
+    "description": "Converts a FASTQ file format to a pseudo FASTA file. It does NOT align the sequence. It extracts the sequence and adds a pseudo header.",
+    "input": {
+        "type": "stdin",
+        "format": "FASTQ"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "FASTA"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        }
+    ],
+    "parameters": [],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/FastqToFasta.c",
+    "category": "Format Conversion"
+}

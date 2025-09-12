@@ -1,0 +1,24 @@
+{
+    "name": "gto_genomic_complement",
+    "description": "Replaces the ACGT bases with their complements in a DNA sequence. It works in sequence file formats.",
+    "input": {
+        "type": "stdin",
+        "format": "DNA"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "DNA"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        }
+    ],
+    "parameters": [],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/GenomicComplement.c",
+    "category": "Genomic Operations"
+}

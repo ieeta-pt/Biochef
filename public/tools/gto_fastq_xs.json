@@ -1,0 +1,127 @@
+{
+    "name": "gto_fastq_xs",
+    "description": "A skilled FASTQ read simulation tool, flexible, portable (does not need a reference sequence) and tunable in terms of sequence complexity. XS handles Ion Torrent, Roche-454, Illumina and ABI-SOLiD simulation sequencing types. It has several running modes, depending on the time and memory available, and is aimed at testing computing infrastructures, namely cloud computing of large-scale projects, and testing FASTQ compression algorithms. Moreover, XS offers the possibility of simulating the three main FASTQ components individually (headers, DNA sequences and quality-scores). Quality-scores can be simulated using uniform and Gaussian distributions.",
+    "input": {
+        "type": "stdin",
+        "format": "FASTQ"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "FASTQ"
+    },
+    "flags": [
+        "-h",
+        "-v",
+        "-t",
+        "-hf",
+        "-i",
+        "-o",
+        "-ls",
+        "-ld",
+        "-n",
+        "-f",
+        "-rn",
+        "-ri",
+        "-ra",
+        "-rm",
+        "-rr",
+        "-qt",
+        "-qf",
+        "-qc",
+        "-eh",
+        "-eo",
+        "-ed",
+        "-edb",
+        "-es",
+        "-s"
+    ],
+    "parameters": [
+        {
+            "name": "sequencingType",
+            "type": "integer"
+        },
+        {
+            "name": "headerFormat",
+            "type": "integer"
+        },
+        {
+            "name": "instrumentName",
+            "type": "string"
+        },
+        {
+            "name": "lineSize",
+            "type": "integer"
+        },
+        {
+            "name": "minSize",
+            "type": "integer"
+        },
+        {
+            "name": "maxSize",
+            "type": "integer"
+        },
+        {
+            "name": "numberOfReads",
+            "type": "integer"
+        },
+        {
+            "name": "A",
+            "type": "float"
+        },
+        {
+            "name": "C",
+            "type": "float"
+        },
+        {
+            "name": "G",
+            "type": "float"
+        },
+        {
+            "name": "T",
+            "type": "float"
+        },
+        {
+            "name": "N",
+            "type": "float"
+        },
+        {
+            "name": "numberOfRepeats",
+            "type": "integer"
+        },
+        {
+            "name": "repeatsMinSize",
+            "type": "integer"
+        },
+        {
+            "name": "repeatsMaxSize",
+            "type": "integer"
+        },
+        {
+            "name": "mutationRate",
+            "type": "float"
+        },
+        {
+            "name": "assignmentType",
+            "type": "integer"
+        },
+        {
+            "name": "statsFile",
+            "type": "string"
+        },
+        {
+            "name": "template",
+            "type": "string"
+        },
+        {
+            "name": "seed",
+            "type": "integer"
+        },
+        {
+            "name": "genFile",
+            "type": "string"
+        }
+    ],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "external_tool"
+}

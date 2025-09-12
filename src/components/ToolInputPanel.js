@@ -1,7 +1,7 @@
 import UploadIcon from '@mui/icons-material/Upload';
 import { Box, IconButton, MenuItem, Paper, Select, TextField, Tooltip, Typography } from '@mui/material';
 import React, { useContext, useEffect, useState } from 'react';
-import description from '../../description.json';
+import { getTool } from '../utils/toolUtils';
 import { DataTypeContext } from '../contexts/DataTypeContext';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { detectDataType } from '../utils/detectDataType';
@@ -22,7 +22,7 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
     useEffect(() => {
         if (tool) {
             // Update the input format based on the selected tool
-            const toolConfig = description.tools.find((t) => t.name === `gto_${tool.name}`);
+            const toolConfig = getTool(tool.name);
             const inputFormats = toolConfig?.input.format.split(',').map((f) => f.trim()) || [];
             setToolInputFormat(inputFormats);
 

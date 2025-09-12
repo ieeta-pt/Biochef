@@ -1,0 +1,43 @@
+{
+    "name": "gto_fasta_extract_by_read",
+    "description": "Extracts sequences from each read in a Multi-FASTA file (splited by \\n), which the range is defined by the user in the parameters.",
+    "input": {
+        "type": "stdin",
+        "format": "FASTA, Multi-FASTA"
+    },
+    "output": {
+        "type": "stdout",
+        "format": "FASTA, Multi-FASTA"
+    },
+    "flags": [
+        {
+            "flag": "-h",
+            "parameter": null,
+            "required": false
+        },
+        {
+            "flag": "-i",
+            "parameter": "init",
+            "required": false
+        },
+        {
+            "flag": "-e",
+            "parameter": "end",
+            "required": false
+        }
+    ],
+    "parameters": [
+        {
+            "name": "init",
+            "type": "integer"
+        },
+        {
+            "name": "end",
+            "type": "integer"
+        }
+    ],
+    "is_multi_output": false,
+    "is_multi_type_output": false,
+    "source": "gto/src/FastaExtractByRead.c",
+    "category": "Sequence Manipulation"
+}
