@@ -230,7 +230,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
             let outputData;
             if (inputData === '' && toolParameterFiles && Object.keys(toolParameterFiles).length > 0) {
                 // If input is empty and there are parameter files for the tool, use them
-                outputData = await runTool(tool.name, toolParameterFiles, args);
+                outputData = await runTool(tool.name, inputData, args, toolParameterFiles);
             } else {
                 // Execute the tool
                 outputData = await runTool(tool.name, inputData, args);

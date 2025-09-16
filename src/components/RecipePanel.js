@@ -1073,7 +1073,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
         let outputData;
         if (input === '' && toolParameterFiles[tool.id] && Object.keys(toolParameterFiles[tool.id]).length > 0) {
           // If input is empty and there are parameter files for the tool, use them
-          outputData = await runTool(tool.toolName, toolParameterFiles[tool.id], args);
+          outputData = await runTool(tool.toolName, input, args,  toolParameterFiles[tool.id]);
         } else {
           // Execute the tool
           outputData = await runTool(tool.toolName, input, args);

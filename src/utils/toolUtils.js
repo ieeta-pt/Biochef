@@ -82,7 +82,7 @@ export async function loadTools() {
   await Promise.all(
     filenames.map(async (filename) => {
       const res = await fetch(`/tools/${filename}`);
-      
+
       if (!res.ok) {
         console.error(`Failed to fetch tool: ${filename}, status: ${res.status}`);
         return;
@@ -94,47 +94,50 @@ export async function loadTools() {
   );
 }
 
-export function runTool(toolName, inputString, args) {
+export function runTool(toolName, input, args, files = {}) {
   return new Promise((resolve, reject) => {
     let output = {
       stdout: '',
       stderr: '',
-    } 
+      outputs: {}
+    }
     console.log(`Running tool ${toolName} with arguments:`, args);
-    
+
     const script = document.createElement('script');
     script.src = `/wasm/${toolName}.js`;
-    script.onerror = function(event) {
+    script.onerror = function (event) {
       reject(`Failed to load script ${toolName}.js: ${event}`);
     };
 
-    script.onload = async function() {
+    script.onload = async function () {
       try {
         let inputIndex = 0;
         const Module = {
           thisProgram: `./${toolName}`,
           noInitialRun: true,
-          preRun: [
-            () => {
-              Module.FS.init(
-                // stdin
-                () => {
-                  if (inputIndex >= inputString.length) return null;
-                  return inputString.charCodeAt(inputIndex++);
-                },
-                // stdout
-                (charCode) => {
-                  if (charCode === null) return;
-                  output.stdout += String.fromCharCode(charCode);
-                },
-                // stderr
-                (charCode) => {
-                  if (charCode === null) return;
-                  output.stderr += String.fromCharCode(charCode);
-                }
-              );
-            }
-          ],
+          preRun: () => {
+            Object.values(files).forEach(file => {
+              Module.FS.writeFile(file.name, file.data);
+            });
+
+            Module.FS.init(
+              // stdin
+              () => {
+                if (inputIndex >= input.length) return null;
+                return input.charCodeAt(inputIndex++);
+              },
+              // stdout
+              (charCode) => {
+                if (charCode === null) return;
+                output.stdout += String.fromCharCode(charCode);
+              },
+              // stderr
+              (charCode) => {
+                if (charCode === null) return;
+                output.stderr += String.fromCharCode(charCode);
+              }
+            );
+          }
         };
 
         const ModuleFactory = window[toolName];
