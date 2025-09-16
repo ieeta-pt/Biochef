@@ -1,33 +1,44 @@
-import { Box, Container, Grid, Typography } from '@mui/material';
-import React, { useState } from 'react';
-import { loadWasmModule } from '../gtoWasm';
+import { Box, Container, Grid, Typography, CircularProgress } from '@mui/material';
+import React, { useState, useEffect } from 'react';
 import AllOperationsPanel from '/src/components/AllOperationsPanel';
 import ToolInputPanel from '/src/components/ToolInputPanel';
 import ToolOutputPanel from '/src/components/ToolOutputPanel';
 import ToolTestingPanel from '/src/components/ToolTestingPanel';
+import { loadTools } from '../utils/toolUtils';
 
 const ToolsPage = () => {
     const [selectedTool, setSelectedTool] = useState(null);
-    const [helpMessage, setHelpMessage] = useState('');
     const [inputData, setInputData] = useState('');
     const [outputData, setOutputData] = useState('');
+    const [toolsLoaded, setToolsLoaded] = useState(false);
+
+    useEffect(() => {
+        const fetchTools = async () => {
+            await loadTools();
+            setToolsLoaded(true); 
+        };
+        
+        fetchTools();
+    }, []);
 
     const handleToolClick = async (tool) => {
         setSelectedTool(tool); // Update the selected tool
-
-        try {
-            const runFunction = await loadWasmModule(tool.name);
-            const outputData = await runFunction('', ['-h']);
-
-            if (outputData.stderr) {
-                console.error('Error loading tool:', outputData.stderr);
-            } else {
-                setHelpMessage(outputData.stdout);
-            }
-        } catch (error) {
-            console.error('Error loading tool:', error);
-        }
     };
+
+    if (!toolsLoaded) {
+        return (
+            <Box
+                sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: 'calc(100vh - 64px)',
+                }}
+            >
+                <CircularProgress />
+            </Box>
+        );
+    }
 
     return (
         <Box

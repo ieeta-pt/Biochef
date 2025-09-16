@@ -3,7 +3,8 @@ import {
     Container,
     Grid,
     useMediaQuery,
-    useTheme
+    useTheme,
+    CircularProgress
 } from '@mui/material';
 import React, { useContext, useEffect, useState } from 'react';
 import { getTool } from '../utils/toolUtils';
@@ -12,7 +13,7 @@ import ErrorBoundary from '/src/components/ErrorBoundary'; // Ensure this compon
 import OperationsPanel from '/src/components/OperationsPanel';
 import RecipePanel from '/src/components/RecipePanel';
 import { DataTypeContext } from '/src/contexts/DataTypeContext';
-
+import { loadTools } from '../utils/toolUtils';
 
 const WorkflowPage = () => {
     const [workflow, setWorkflow] = useState([]);
@@ -24,6 +25,16 @@ const WorkflowPage = () => {
     const [isVariableLoaded, setIsVariableLoaded] = useState(false); // Control if the workflow was loaded
     const [selectedFiles, setSelectedFiles] = useState(new Set()); // Track selected files
     const [tabIndex, setTabIndex] = useState(0);    // Track the selected tab index for input mode
+    const [toolsLoaded, setToolsLoaded] = useState(false);
+
+    useEffect(() => {
+        const fetchTools = async () => {
+            await loadTools();
+            setToolsLoaded(true); 
+        };
+        
+        fetchTools();
+    }, []);
 
     const initialTree = {
         id: 'root',
@@ -111,6 +122,21 @@ const WorkflowPage = () => {
     };
 
     const isWorkflowEmpty = workflow.length === 0;
+
+    if (!toolsLoaded) {
+        return (
+            <Box
+                sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: 'calc(100vh - 64px)',
+                }}
+            >
+                <CircularProgress />
+            </Box>
+        );
+    }
 
     return (
         <ErrorBoundary>

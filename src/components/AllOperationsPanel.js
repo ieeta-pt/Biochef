@@ -24,7 +24,6 @@ const AllOperationsPanel = ({ onToolClick }) => {
     const [expandedCategories, setExpandedCategories] = useState({});
     const { dataType } = useContext(DataTypeContext);
     const showNotification = useContext(NotificationContext);
-    const [loadingTools, setLoadingTools] = useState(true);
 
     // Debounced search handler
     const handleSearch = useMemo(
@@ -51,15 +50,6 @@ const AllOperationsPanel = ({ onToolClick }) => {
                 op.description.toLowerCase().includes(searchTerm.toLowerCase())
         );
     };
-
-    useEffect(() => {
-        const fetchTools = async () => {
-            await loadTools();
-            setLoadingTools(false); 
-        };
-        
-        fetchTools();
-    }, []);
 
     return (
         <Paper elevation={3} sx={{ padding: 2, height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
