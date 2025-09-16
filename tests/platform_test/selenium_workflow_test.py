@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 
+import argparse
 import csv
 import json
 import os
 import statistics
+import sys
 import threading
 import time
 from datetime import datetime
@@ -274,20 +276,27 @@ class WorkflowSeleniumTest:
 
 
 
-def run_performance_tests():
-    """Run performance tests for all JSON files"""
-    # Define test files
-    test_files = [
-        "AllMis_2400.json",
-        "BraLanc_464.json", 
-        "HomoSapiens_3300.json",
-        "HydCol_1000.json",
-    ]
+def run_performance_tests(test_mode="vs_local"):
+    """Run performance tests for specified JSON files based on test mode"""
+    # Define test files based on mode
+    if test_mode == "vs_local":
+        test_files = [
+            "AllMis_2400.json",
+            "BraLanc_464.json",
+            "HomoSapiens_3300.json",
+            "HydCol_1000.json"
+        ]
+    elif test_mode == "vs_galaxy":
+        test_files = [
+            "BraLanc_464_Galaxy.json"
+        ]
+    else:
+        raise ValueError(f"Invalid test mode: {test_mode}. Use 'vs_local' or 'vs_galaxy'")
     
     platform_test_dir = "/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/tests/platform_test"
     results = []
     
-    print("Starting Selenium Workflow Performance Tests")
+    print(f"Starting Selenium Workflow Performance Tests - {test_mode.upper()} Mode")
     print("=" * 60)
     
     for test_file in test_files:
@@ -332,7 +341,7 @@ def run_performance_tests():
     
     return results
 
-def save_results_gto_format(results):
+def save_results_gto_format(results, test_mode="vs_local"):
     """Save results with fair memory comparison"""
     timestamp = datetime.now().isoformat()
     
@@ -394,15 +403,15 @@ def save_results_gto_format(results):
                 'success_rate': 0.0
             }
     
-    # Save to CSV in GTO format
-    csv_filename = "platform_performance.csv"
+    # Save to CSV in GTO format with mode-specific filename
+    csv_filename = f"platform_performance_{test_mode}.csv"
     csv_path = os.path.join("/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/tests/platform_test", csv_filename)
     
     with open(csv_path, 'w', newline='') as csvfile:
         csvfile.write("# Platform Performance Results\n")
-        csvfile.write("# Platform: web_browser_selenium\n")
+        csvfile.write(f"# Platform: web_browser_selenium_{test_mode}\n")
         csvfile.write(f"# Timestamp: {timestamp}\n")
-        csvfile.write("# Description: Web platform workflow performance test using Selenium, 3 iterations per file\n")
+        csvfile.write(f"# Description: Web platform workflow performance test using Selenium, {test_mode} mode, 3 iterations per file\n")
         csvfile.write("\n")
         csvfile.write("test_file,mean_runtime_s,std_runtime_s,mean_workflow_memory_mb,std_workflow_memory_mb,success_rate\n")
         
@@ -411,15 +420,15 @@ def save_results_gto_format(results):
                          f"{stats['mean_workflow_memory']:.2f},{stats['std_workflow_memory']:.2f},"
                          f"{stats['success_rate']:.1f}\n")
     
-    # Save to JSON in GTO format
-    json_filename = "platform_performance.json"
+    # Save to JSON in GTO format with mode-specific filename
+    json_filename = f"platform_performance_{test_mode}.json"
     json_path = os.path.join("/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/tests/platform_test", json_filename)
 
     json_data = {
         "metadata": {
             "timestamp": timestamp,
-            "platform": "web_browser_selenium",
-            "description": "Web platform workflow performance test using Selenium, fair memory measurement",
+            "platform": f"web_browser_selenium_{test_mode}",
+            "description": f"Web platform workflow performance test using Selenium, {test_mode} mode, fair memory measurement",
             "workflow_steps": [
                 "click_import_button",
                 "click_config_modal_button",
@@ -498,17 +507,27 @@ def display_summary(results):
 
 def main():
     """Main function to run the performance tests"""
+    parser = argparse.ArgumentParser(description="Selenium Workflow Performance Test")
+    parser.add_argument(
+        "--mode", 
+        choices=["vs_local", "vs_galaxy"], 
+        default="vs_local",
+        help="Test mode: 'vs_local' uses AllMis_2400.json, BraLanc_464.json, HomoSapiens_3300.json, HydCol_1000.json; 'vs_galaxy' uses BraLanc_464_Galaxy.json"
+    )
+    
+    args = parser.parse_args()
+    
     try:
-        # Run performance tests
-        results = run_performance_tests()
+        # Run performance tests with specified mode
+        results = run_performance_tests(test_mode=args.mode)
         
         # Save results in GTO format
-        save_results_gto_format(results)
+        save_results_gto_format(results, test_mode=args.mode)
         
         # Display summary
         display_summary(results)
         
-        print("\nPerformance testing completed!")
+        print(f"\nPerformance testing completed in {args.mode} mode!")
         return 0
         
     except Exception as e:

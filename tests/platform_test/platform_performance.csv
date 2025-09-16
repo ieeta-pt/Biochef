@@ -1,10 +1,7 @@
 # Platform Performance Results
 # Platform: web_browser_selenium
-# Timestamp: 2025-08-28T15:03:29.704125
+# Timestamp: 2025-09-05T21:18:05.917265
 # Description: Web platform workflow performance test using Selenium, 3 iterations per file
 
 test_file,mean_runtime_s,std_runtime_s,mean_workflow_memory_mb,std_workflow_memory_mb,success_rate
-AllMis_2400.json,4.746,0.221,234.43,4.81,1.0
-BraLanc_464.json,4.581,0.066,234.95,6.84,1.0
-HomoSapiens_3300.json,4.945,0.338,257.85,37.56,1.0
-HydCol_1000.json,5.173,0.045,250.92,17.12,1.0
+BraLanc_464_2.json,3.440,0.171,228.74,5.00,1.0

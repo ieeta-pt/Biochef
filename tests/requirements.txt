@@ -1,0 +1,6 @@
+psutil
+pandas
+matplotlib
+seaborn
+pathlib
+selenium
