@@ -53,7 +53,6 @@
     "gto_brute_force_string.json",
     "gto_fasta_extract.json",
     "gto_fasta_split_reads.json",
-    "seqtk.json",
     "gto_fastq_pack.json",
     "gto_fastq_minimum_local_quality_score_reverse.json",
     "gto_fastq_variation_map.json",
