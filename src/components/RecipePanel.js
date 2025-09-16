@@ -40,11 +40,10 @@ import {
 import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
 import React, { useContext, useEffect, useState } from 'react';
-import { getTool, getAllTools } from '../utils/toolUtils';
+import { getTool, getAllTools, runTool } from '../utils/toolUtils';
 import { DataTypeContext } from '../contexts/DataTypeContext';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { ValidationErrorsContext } from '../contexts/ValidationErrorsContext';
-import { loadWasmModule } from '../gtoWasm';
 import { detectDataType } from '../utils/detectDataType';
 import { exportRecipeConfigFile } from '../utils/exportRecipeConfigFile';
 import { exportRecipeScript } from '../utils/exportRecipeScript';
@@ -444,14 +443,9 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
 
   // Load help message for a tool
   const loadHelpMessage = async (toolName) => {
-    try {
-      const runFunction = await loadWasmModule(toolName);
-      const outputData = await runFunction('', ['-h']); // Execute the tool with -h flag
-
-      if (outputData.stderr) {
-        console.error(`Error in ${toolName} help message: ${outputData.stderr}`);
-      } else {
-        const helpLines = outputData.stdout.split('\n'); // Divida o texto da ajuda em linhas
+    runTool(toolName, "", ['-h'])
+      .then(result => {
+        const helpLines = result.stdout.split('\n'); // Divida o texto da ajuda em linhas
         const flagsHelp = {};
         let generalHelp = '';
 
@@ -481,10 +475,10 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
             flags: flagsHelp, // Store the flags help
           },
         }));
-      }
-    } catch (error) {
-      console.error(`Failed to load help message for ${toolName}: ${error.message}`);
-    }
+      })
+      .catch(error => {
+        console.error(`Failed to load help message for ${toolName}:`, error);
+      });
   };
 
   // Validate the workflow to ensure compatibility between tools
@@ -996,8 +990,8 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
     const nextInputTypes = nextTool.input.format.split(',').map(f => f.trim())
 
     const filteredOperations = getAllTools().filter((tool) => {
-        const toolInputTypes = tool.input.format.split(',').map(f => f.trim());
-        const toolOutputTypes = tool.output.format.split(',').map(f => f.trim());
+      const toolInputTypes = tool.input.format.split(',').map(f => f.trim());
+      const toolOutputTypes = tool.output.format.split(',').map(f => f.trim());
 
       return toolInputTypes.includes(previousOutputType) && toolOutputTypes.some((type) => nextInputTypes.includes(type));
     });
@@ -1014,9 +1008,6 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
 
   const executeTool = async (tool, input) => {
     try {
-      // Load the wrapper function dynamically
-      const runFunction = await loadWasmModule(tool.toolName);
-
       const toolConfig = getTool(tool.toolName)
       if (!toolConfig) {
         showNotification(`Configuration for tool ${tool.toolName} not found.`, 'error');
@@ -1067,7 +1058,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
           }
 
           // Execute the tool for this input
-          const outputData = await runFunction(content, args);
+          const outputData = await runTool(tool.toolName, content, args);
 
           results[filename] = outputData;
         }
@@ -1082,10 +1073,10 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
         let outputData;
         if (input === '' && toolParameterFiles[tool.id] && Object.keys(toolParameterFiles[tool.id]).length > 0) {
           // If input is empty and there are parameter files for the tool, use them
-          outputData = await runFunction(toolParameterFiles[tool.id], args);
+          outputData = await runTool(tool.toolName, toolParameterFiles[tool.id], args);
         } else {
           // Execute the tool
-          outputData = await runFunction(input, args);
+          outputData = await runTool(tool.toolName, input, args);
         }
 
         // Return the output data

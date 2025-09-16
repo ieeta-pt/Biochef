@@ -21,7 +21,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { getTool } from '../utils/toolUtils';
 import { DataTypeContext } from '../contexts/DataTypeContext';
 import { NotificationContext } from '../contexts/NotificationContext';
-import { loadWasmModule } from '../gtoWasm';
+import { runTool } from '../utils/toolUtils';
 import { detectDataType } from '../utils/detectDataType';
 import { processFile } from '../utils/fileProcessor';
 
@@ -52,14 +52,9 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
 
     // Load help message for a tool
     const loadHelpMessage = async (toolName) => {
-        try {
-            const runFunction = await loadWasmModule(toolName);
-            const outputData = await runFunction('', ['-h']); // Execute the tool with -h flag
-
-            if (outputData.stderr) {
-                console.error(`Error in ${toolName} help message: ${outputData.stderr}`);
-            } else {
-                const helpLines = outputData.stdout.split('\n'); // Divida o texto da ajuda em linhas
+        runTool(toolName, "", ['-h'])
+            .then(result => {
+                const helpLines = result.stdout.split('\n'); // Divida o texto da ajuda em linhas
                 const flagsHelp = {};
                 let generalHelp = '';
 
@@ -88,10 +83,10 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
                         flags: flagsHelp, // Store the flags help
                     },
                 );
-            }
-        } catch (error) {
-            console.error(`Failed to load help message for ${toolName}: ${error.message}`);
-        }
+            })
+            .catch(error => {
+                console.error(`Failed to load help message for ${toolName}:`, error);
+            });
     };
 
     // Validate parameters based on expected type
@@ -188,9 +183,6 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
                 return;
             }
 
-            // Load the wrapper function dynamically
-            const runFunction = await loadWasmModule(tool.name);
-
             const toolConfig = getTool(tool.name)
             if (!toolConfig) {
                 showNotification(`Configuration for tool ${tool.name} not found.`, 'error');
@@ -238,10 +230,10 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
             let outputData;
             if (inputData === '' && toolParameterFiles && Object.keys(toolParameterFiles).length > 0) {
                 // If input is empty and there are parameter files for the tool, use them
-                outputData = await runFunction(toolParameterFiles, args);
+                outputData = await runTool(tool.name, toolParameterFiles, args);
             } else {
                 // Execute the tool
-                outputData = await runFunction(inputData, args);
+                outputData = await runTool(tool.name, inputData, args);
             }
 
             // Handle messages in stderr

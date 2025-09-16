@@ -93,3 +93,60 @@ export async function loadTools() {
     })
   );
 }
+
+export function runTool(toolName, inputString, args) {
+  return new Promise((resolve, reject) => {
+    let output = {
+      stdout: '',
+      stderr: '',
+    } 
+    console.log(`Running tool ${toolName} with arguments:`, args);
+    
+    const script = document.createElement('script');
+    script.src = `/wasm/${toolName}.js`;
+    script.onerror = function(event) {
+      reject(`Failed to load script ${toolName}.js: ${event}`);
+    };
+
+    script.onload = async function() {
+      try {
+        let inputIndex = 0;
+        const Module = {
+          thisProgram: `./${toolName}`,
+          noInitialRun: true,
+          preRun: [
+            () => {
+              Module.FS.init(
+                // stdin
+                () => {
+                  if (inputIndex >= inputString.length) return null;
+                  return inputString.charCodeAt(inputIndex++);
+                },
+                // stdout
+                (charCode) => {
+                  if (charCode === null) return;
+                  output.stdout += String.fromCharCode(charCode);
+                },
+                // stderr
+                (charCode) => {
+                  if (charCode === null) return;
+                  output.stderr += String.fromCharCode(charCode);
+                }
+              );
+            }
+          ],
+        };
+
+        const ModuleFactory = window[toolName];
+        const myModule = await ModuleFactory(Module);
+        myModule.callMain(args);
+
+        resolve(output);
+      } catch (err) {
+        reject(`Error initializing WebAssembly module: ${err.message}`);
+      }
+    };
+
+    document.head.appendChild(script);
+  });
+}

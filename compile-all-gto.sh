@@ -115,7 +115,7 @@ for tool_filename in $tool_filenames; do
 
         # Define compilation flags as an array (updated)
         emcc_flags=(
-            -O3
+            # -O3
             -Wall
             -ffast-math
             -DPROGRESS
@@ -126,8 +126,8 @@ for tool_filename in $tool_filenames; do
             -sMODULARIZE=1
             -sEXPORT_NAME="$module_name"
             -sENVIRONMENT=web,worker
-            -sEXPORTED_FUNCTIONS='["_main","_real_main","_malloc","_free"]'
-            -sEXPORTED_RUNTIME_METHODS='["ccall","cwrap","FS","setValue","stringToUTF8","callMain"]'
+            -sEXPORTED_FUNCTIONS='["_main","_malloc","_free"]'
+            -sEXPORTED_RUNTIME_METHODS='["ccall","cwrap","FS","setValue","stringToUTF8","callMain",'FS_open','FS_close','FS_createDataFile','FS_mkdev']'
             -sEXIT_RUNTIME=1   # Add this line
         )
 
@@ -138,20 +138,8 @@ for tool_filename in $tool_filenames; do
             link_objects="$common_objects"
         fi
 
-        # Create post.js to assign module factory to window
-        post_js_content="window['$module_name'] = $module_name;"
-        echo "$post_js_content" > "$WASM_DIR/${module_name}_post.js"
-
-        # Create a temporary copy of the source file
-        temp_source="$SCRIPT_DIR/gto/src/temp_${module_name}.c"
-        cp "$full_source_path" "$temp_source"
-
-        # Replace 'main' with 'real_main' in the temporary source file
-        sed -i 's/\bmain\b/real_main/g' "$temp_source"
-
         # Compile the temp source file with main_wrapper.c
-        emcc "${emcc_flags[@]}" "$temp_source" "$SCRIPT_DIR/gto/src/main_wrapper.c" $link_objects -o "$output_js" -lm \
-            --post-js "$WASM_DIR/${module_name}_post.js" >> "$compile_log" 2>&1
+        emcc "${emcc_flags[@]}" "$full_source_path" $link_objects -o "$output_js" -lm >> "$compile_log" 2>&1
 
         # Remove the temporary source file
         rm -f "$temp_source"
@@ -160,19 +148,6 @@ for tool_filename in $tool_filenames; do
             echo "Successfully compiled ${module_name}." | tee -a "$MAIN_LOG_FILE"
             compiled_programs=$((compiled_programs + 1))
 
-            # Generate the wrapper script
-            echo "Generating wrapper for ${module_name} with input_type='${input_type}' and output_type='${output_type}'..." | tee -a "$MAIN_LOG_FILE"
-            python "$SCRIPT_DIR/generate_wrapper.py" "$module_name" "$input_type" "$output_type" "$is_multi_output" >> "$MAIN_LOG_FILE" 2>&1
-
-            # Verify if wrapper was generated successfully
-            wrapper_file="$WASM_DIR/${module_name}_wrapper.js"
-            if [[ -f "$wrapper_file" ]]; then
-                echo "Wrapper generated successfully at $wrapper_file" | tee -a "$MAIN_LOG_FILE"
-            else
-                echo "Error: Wrapper file $wrapper_file was not created." | tee -a "$MAIN_LOG_FILE"
-                failed_programs=$((failed_programs + 1))
-                failed_list+=("$module_name (Wrapper generation failed)")
-            fi
         else
             failed_programs=$((failed_programs + 1))
             failed_list+=("$module_name")
