@@ -4,7 +4,7 @@ This directory contains performance tests for comparing the BioChef performance 
 
 ## Quick Start
 
-1. Make sure your GTO-WASM app is running on `localhost:8082`
+1. Make sure your BioChef app is running on `localhost:8082`
 2. Run the test script:
    ```bash
    ./run_tests.sh
@@ -22,7 +22,7 @@ This directory contains performance tests for comparing the BioChef performance 
 
 - Python 3.x
 - Chrome browser (for Selenium tests)
-- GTO-WASM application running on localhost:8082
+- BioChef application running on localhost:8082
 
 ## Results
 
