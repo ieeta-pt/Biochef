@@ -4,3 +4,5 @@ matplotlib
 seaborn
 pathlib
 selenium
+jupyter
+nbconvert

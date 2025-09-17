@@ -1,0 +1,10 @@
+# GTO Performance Results
+# Platform: local_machine
+# Timestamp: 2025-09-17T11:32:24.305417
+# Description: GTO workflow performance test using GNU time, 3 iterations per file
+
+test_file,mean_runtime_s,std_runtime_s,mean_memory_mb,std_memory_mb
+AllMis_2400_parcial.fasta,0.03333333333333333,0.005773502691896259,1.8997395833333333,0.04510548978043951
+BraLanc_464_parcial.fasta,0.03666666666666667,0.005773502691896259,1.8515625,0.04894517221149089
+HydCol_1000_parcial.fasta,0.03,0.0,1.8619791666666667,0.04285021529141754
+HomoSapiens_3300_parcial.fasta,0.026666666666666665,0.005773502691896257,1.9231770833333333,0.01626301562082916

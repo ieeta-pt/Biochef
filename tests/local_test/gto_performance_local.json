@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "timestamp": "2025-09-01T21:04:36.818003",
+    "timestamp": "2025-09-17T11:32:24.305417",
     "platform": "local_machine",
     "description": "GTO workflow performance test using GNU time, 3 iterations per file",
     "workflow_steps": [
@@ -15,48 +15,44 @@
   },
   "results": {
     "AllMis_2400_parcial.fasta": {
+      "mean_runtime": 0.03333333333333333,
+      "std_runtime": 0.005773502691896259,
+      "min_runtime": 0.03,
+      "max_runtime": 0.04,
+      "mean_memory": 1.8997395833333333,
+      "std_memory": 0.04510548978043951,
+      "min_memory": 1.84765625,
+      "max_memory": 1.92578125
+    },
+    "BraLanc_464_parcial.fasta": {
       "mean_runtime": 0.03666666666666667,
       "std_runtime": 0.005773502691896259,
       "min_runtime": 0.03,
       "max_runtime": 0.04,
-      "mean_memory": 1.9153645833333333,
-      "std_memory": 0.06991350915968124,
-      "min_memory": 1.875,
-      "max_memory": 1.99609375,
-      "success_rate": 1.0
-    },
-    "BraLanc_464_parcial.fasta": {
-      "mean_runtime": 0.03333333333333333,
-      "std_runtime": 0.005773502691896259,
-      "min_runtime": 0.03,
-      "max_runtime": 0.04,
-      "mean_memory": 1.9557291666666667,
-      "std_memory": 0.06991350915968124,
-      "min_memory": 1.875,
-      "max_memory": 1.99609375,
-      "success_rate": 1.0
+      "mean_memory": 1.8515625,
+      "std_memory": 0.04894517221149089,
+      "min_memory": 1.8046875,
+      "max_memory": 1.90234375
     },
     "HydCol_1000_parcial.fasta": {
-      "mean_runtime": 0.043333333333333335,
-      "std_runtime": 0.005773502691896259,
-      "min_runtime": 0.04,
-      "max_runtime": 0.05,
-      "mean_memory": 1.9153645833333333,
-      "std_memory": 0.06991350915968124,
-      "min_memory": 1.875,
-      "max_memory": 1.99609375,
-      "success_rate": 1.0
+      "mean_runtime": 0.03,
+      "std_runtime": 0.0,
+      "min_runtime": 0.03,
+      "max_runtime": 0.03,
+      "mean_memory": 1.8619791666666667,
+      "std_memory": 0.04285021529141754,
+      "min_memory": 1.828125,
+      "max_memory": 1.91015625
     },
     "HomoSapiens_3300_parcial.fasta": {
-      "mean_runtime": 0.03333333333333333,
-      "std_runtime": 0.005773502691896259,
-      "min_runtime": 0.03,
-      "max_runtime": 0.04,
-      "mean_memory": 1.8841145833333333,
-      "std_memory": 0.0379395892821184,
-      "min_memory": 1.8515625,
-      "max_memory": 1.92578125,
-      "success_rate": 1.0
+      "mean_runtime": 0.026666666666666665,
+      "std_runtime": 0.005773502691896257,
+      "min_runtime": 0.02,
+      "max_runtime": 0.03,
+      "mean_memory": 1.9231770833333333,
+      "std_memory": 0.01626301562082916,
+      "min_memory": 1.91015625,
+      "max_memory": 1.94140625
     }
   }
 }

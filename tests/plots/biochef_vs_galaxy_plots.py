@@ -1,8 +1,30 @@
+import json
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 
 # Set up the figure with two subplots
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+
+# Load BioChef data from platform_performance_vs_galaxy.json
+json_path = '../platform_test/platform_performance_vs_galaxy.json'
+if os.path.exists(json_path):
+    with open(json_path, 'r') as f:
+        biochef_data = json.load(f)
+
+    # Extract BioChef values from the first (and typically only) result
+    result_key = list(biochef_data['results'].keys())[0]
+    biochef_result = biochef_data['results'][result_key]
+
+    biochef_runtime = biochef_result['mean_runtime']
+    biochef_runtime_error = biochef_result['std_runtime']
+    biochef_memory = biochef_result['mean_workflow_memory']
+    biochef_memory_error = biochef_result['std_workflow_memory']
+else:
+    print(f"Error: JSON file '{json_path}' not found.")
+    # Stop execution of the script
+    exit(1)
 
 # Define colors
 biochef_color = '#2E86AB'  # Blue
@@ -10,8 +32,8 @@ galaxy_color = '#F24236'   # Orange-red
 
 # Panel A - Runtime Comparison
 platforms = ['BioChef', 'Galaxy']
-runtimes = [3.44, 39]
-runtime_errors = [0.17, 0]  # No error data for Galaxy
+runtimes = [biochef_runtime, 39]   # BioChef from JSON, Galaxy manual value
+runtime_errors = [biochef_runtime_error, 0]  # BioChef error from JSON
 
 bars1 = ax1.bar(platforms, runtimes, 
                 yerr=[runtime_errors[0], 0], 
@@ -23,13 +45,6 @@ ax1.set_title('A. Runtime Comparison', fontsize=14, fontweight='bold')
 ax1.grid(True, alpha=0.3, axis='y')
 ax1.set_ylim(0, 45)
 
-# Add annotation for speed difference
-# ax1.annotate('11.3× faster', 
-#              xy=(0, 3.44), xytext=(0.5, 20),
-#              arrowprops=dict(arrowstyle='->', color='black', lw=1.5),
-#              fontsize=12, fontweight='bold', ha='center',
-#              bbox=dict(boxstyle="round,pad=0.3", facecolor='lightgreen', alpha=0.7))
-
 # Add value labels on bars
 for i, (bar, runtime) in enumerate(zip(bars1, runtimes)):
     height = bar.get_height()
@@ -38,12 +53,10 @@ for i, (bar, runtime) in enumerate(zip(bars1, runtimes)):
              ha='center', va='bottom', fontweight='bold')
 
 # Panel B - Memory Usage Comparison
-# BioChef data
-biochef_memory = 228.7
-biochef_memory_error = 5.0
+# BioChef data loaded from JSON above
 
 # Galaxy individual job data
-galaxy_memory = [253.4, 246.4, 257.4, 253.6]
+galaxy_memory = [253.4, 246.4, 257.4, 253.6]    # REPLACE WITH THE ACTUAL GALAXY MEMORY USAGE DATA
 galaxy_avg = np.mean(galaxy_memory)
 galaxy_std = np.std(galaxy_memory, ddof=1)  # Sample standard deviation
 
@@ -61,12 +74,6 @@ ax2.set_ylabel('Memory Usage (MB)', fontsize=12, fontweight='bold')
 ax2.set_title('B. Memory Usage Comparison', fontsize=14, fontweight='bold')
 ax2.grid(True, alpha=0.3, axis='y')
 ax2.set_ylim(200, 280)
-
-# Add annotation for similar memory footprint
-# ax2.annotate('Similar memory\nfootprint', 
-#              xy=(0.5, 240), xytext=(0.5, 265),
-#              ha='center', fontsize=12, fontweight='bold',
-#              bbox=dict(boxstyle="round,pad=0.3", facecolor='lightblue', alpha=0.7))
 
 # Add value labels on bars
 for i, (bar, mem_val, mem_err) in enumerate(zip(bars2, memory_values, memory_errors)):
@@ -89,9 +96,5 @@ fig.text(0.5, 0.02, 'Dataset: Branchiostoma lanceolatum (partial genome)\nWorkfl
 # Adjust layout to accommodate annotations
 plt.subplots_adjust(top=0.85, bottom=0.15)
 
-# Display the plot
-# plt.show()
-
-# Optional: Save the figure
-# plt.savefig('biochef_galaxy_comparison.pdf', dpi=300, bbox_inches='tight')
+# Save the figure
 plt.savefig('biochef_galaxy_comparison.png', dpi=300, bbox_inches='tight')

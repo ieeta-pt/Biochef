@@ -1,6 +1,6 @@
-# GTO-WASM Performance Tests
+# BioChef Performance Tests
 
-This directory contains performance tests for comparing GTO execution across different platforms.
+This directory contains performance tests for comparing the BioChef performance against local execution and Galaxy platform execution.
 
 ## Quick Start
 
@@ -30,6 +30,24 @@ Test results are saved as:
 - `local_test/gto_performance_local.json`
 - `platform_test/platform_performance_vs_local.csv/json`
 - `platform_test/platform_performance_vs_galaxy.csv/json`
+
+After running `run_tests.sh`, is possible to generate performance plots by executing:
+
+- For BioChef vs local comparison:
+```bash
+python plots/biochef_vs_local_plots.py
+```
+
+- For BioChef vs Galaxy comparison:
+```bash
+python plots/biochef_vs_galaxy_plots.py
+```
+
+**NOTE:** Is necessary to switch the Galaxy values in `biochef_vs_galaxy_plots.py` with the actual values obtained from the execution of the Galaxy workflow.
+
+The plots are saved as:
+- `plots/local_vs_platform_comparison.png`
+- `plots/biochef_galaxy_comparison.png`
 
 ## Manual Setup (if needed)
 

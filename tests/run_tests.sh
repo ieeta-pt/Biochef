@@ -103,7 +103,7 @@ cd ..
 # Step 5: Run platform tests vs local
 print_status "Running platform tests (vs local mode)..."
 echo "=================================================="
-echo "STEP 2: PLATFORM VS LOCAL TESTS"
+echo "PLATFORM VS LOCAL TESTS"
 echo "=================================================="
 
 cd platform_test
@@ -127,33 +127,22 @@ fi
 # Step 6: Run platform tests vs Galaxy
 print_status "Running platform tests (vs Galaxy mode)..."
 echo "=================================================="
-echo "STEP 3: PLATFORM VS GALAXY TESTS"
+echo "PLATFORM VS GALAXY TESTS"
 echo "=================================================="
 
-print_warning "This test requires manual Galaxy platform setup"
-print_warning "Please ensure Galaxy platform is accessible and configured"
-echo ""
-echo "Do you want to run Galaxy comparison tests? (y/n)"
-read -p "Enter your choice: " choice
+print_status "Running Selenium tests in vs_galaxy mode..."
+python selenium_workflow_test.py --mode vs_galaxy
+print_success "Platform vs Galaxy tests completed"
 
-case "$choice" in
-    y|Y|yes|Yes|YES)
-        print_status "Running Selenium tests in vs_galaxy mode..."
-        python selenium_workflow_test.py --mode vs_galaxy
-        print_success "Platform vs Galaxy tests completed"
-        
-        # Check if results were generated
-        if [ -f "platform_performance_vs_galaxy.csv" ]; then
-            print_success "Platform vs Galaxy CSV results saved to: $(pwd)/platform_performance_vs_galaxy.csv"
-        fi
-        if [ -f "platform_performance_vs_galaxy.json" ]; then
-            print_success "Platform vs Galaxy JSON results saved to: $(pwd)/platform_performance_vs_galaxy.json"
-        fi
-        ;;
-    *)
-        print_warning "Skipping Galaxy comparison tests"
-        ;;
-esac
+# Check if results were generated
+if [ -f "platform_performance_vs_galaxy.csv" ]; then
+    print_success "Platform vs Galaxy CSV results saved to: $(pwd)/platform_performance_vs_galaxy.csv"
+fi
+if [ -f "platform_performance_vs_galaxy.json" ]; then
+    print_success "Platform vs Galaxy JSON results saved to: $(pwd)/platform_performance_vs_galaxy.json"
+fi
+
+print_warning "Skipping Galaxy comparison tests"
 
 cd ..
 
@@ -211,3 +200,6 @@ print_success "Test suite execution completed!"
 
 # Deactivate virtual environment
 deactivate
+
+# Remove the virtual environment directory
+rm -rf venv

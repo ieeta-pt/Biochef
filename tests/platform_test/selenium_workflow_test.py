@@ -376,8 +376,6 @@ def save_results_gto_format(results, test_mode="vs_local"):
             min_workflow_memory = min(workflow_memories)  # NEW
             max_workflow_memory = max(workflow_memories)  # NEW
             
-            success_rate = len(successful_results) / len(file_results)
-            
             stats_by_file[file] = {
                 'mean_runtime': mean_runtime,
                 'std_runtime': std_runtime,
@@ -386,8 +384,7 @@ def save_results_gto_format(results, test_mode="vs_local"):
                 'mean_workflow_memory': mean_workflow_memory,  # NEW - comparable to local
                 'std_workflow_memory': std_workflow_memory,   # NEW
                 'min_workflow_memory': min_workflow_memory,   # NEW
-                'max_workflow_memory': max_workflow_memory,   # NEW
-                'success_rate': success_rate
+                'max_workflow_memory': max_workflow_memory   # NEW
             }
         else:
             # All runs failed
@@ -399,8 +396,7 @@ def save_results_gto_format(results, test_mode="vs_local"):
                 'mean_workflow_memory': 0.0,  # NEW
                 'std_workflow_memory': 0.0,   # NEW
                 'min_workflow_memory': 0.0,   # NEW
-                'max_workflow_memory': 0.0,   # NEW
-                'success_rate': 0.0
+                'max_workflow_memory': 0.0   # NEW
             }
     
     # Save to CSV in GTO format with mode-specific filename
@@ -413,12 +409,11 @@ def save_results_gto_format(results, test_mode="vs_local"):
         csvfile.write(f"# Timestamp: {timestamp}\n")
         csvfile.write(f"# Description: Web platform workflow performance test using Selenium, {test_mode} mode, 3 iterations per file\n")
         csvfile.write("\n")
-        csvfile.write("test_file,mean_runtime_s,std_runtime_s,mean_workflow_memory_mb,std_workflow_memory_mb,success_rate\n")
+        csvfile.write("test_file,mean_runtime_s,std_runtime_s,mean_workflow_memory_mb,std_workflow_memory_mb\n")
         
         for file, stats in stats_by_file.items():
             csvfile.write(f"{file},{stats['mean_runtime']:.3f},{stats['std_runtime']:.3f},"
-                         f"{stats['mean_workflow_memory']:.2f},{stats['std_workflow_memory']:.2f},"
-                         f"{stats['success_rate']:.1f}\n")
+                         f"{stats['mean_workflow_memory']:.2f},{stats['std_workflow_memory']:.2f}\n")
     
     # Save to JSON in GTO format with mode-specific filename
     json_filename = f"platform_performance_{test_mode}.json"
@@ -452,8 +447,7 @@ def save_results_gto_format(results, test_mode="vs_local"):
             "mean_workflow_memory": round(stats['mean_workflow_memory'], 2),  # NEW
             "std_workflow_memory": round(stats['std_workflow_memory'], 2),   # NEW
             "min_workflow_memory": round(stats['min_workflow_memory'], 2),   # NEW
-            "max_workflow_memory": round(stats['max_workflow_memory'], 2),   # NEW
-            "success_rate": round(stats['success_rate'], 1)
+            "max_workflow_memory": round(stats['max_workflow_memory'], 2)   # NEW
         }
     
     with open(json_path, 'w') as jsonfile:

@@ -13,7 +13,7 @@ def load_results():
         local_data = json.load(f)
     
     # Load platform results
-    with open('../platform_test/platform_performance.json', 'r') as f:
+    with open('../platform_test/platform_performance_vs_local.json', 'r') as f:
         platform_data = json.load(f)
     
     return local_data, platform_data
