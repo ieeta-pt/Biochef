@@ -1,7 +1,0 @@
-# Platform Performance Results
-# Platform: web_browser_selenium
-# Timestamp: 2025-09-05T21:18:05.917265
-# Description: Web platform workflow performance test using Selenium, 3 iterations per file
-
-test_file,mean_runtime_s,std_runtime_s,mean_workflow_memory_mb,std_workflow_memory_mb,success_rate
-BraLanc_464_2.json,3.440,0.171,228.74,5.00,1.0
