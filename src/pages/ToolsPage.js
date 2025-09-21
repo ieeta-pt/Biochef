@@ -16,7 +16,10 @@ const ToolsPage = () => {
         setSelectedTool(tool); // Update the selected tool
 
         try {
+            const startTime = performance.now();
             const runFunction = await loadWasmModule(tool.name);
+            const loadTime = performance.now() - startTime;
+            console.log(`Module ${tool.name} loaded in ${loadTime.toFixed(2)}ms`);
             const outputData = await runFunction('', ['-h']);
 
             if (outputData.stderr) {

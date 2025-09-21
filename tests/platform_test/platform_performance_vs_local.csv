@@ -1,0 +1,10 @@
+# Platform Performance Results
+# Platform: web_browser_selenium_vs_local
+# Timestamp: 2025-09-17T11:35:39.263131
+# Description: Web platform workflow performance test using Selenium, vs_local mode, 3 iterations per file
+
+test_file,mean_runtime_s,std_runtime_s,mean_workflow_memory_mb,std_workflow_memory_mb
+AllMis_2400.json,4.706,0.214,251.33,4.85
+BraLanc_464.json,4.985,0.254,253.18,8.10
+HomoSapiens_3300.json,4.933,0.222,252.19,4.08
+HydCol_1000.json,5.092,0.092,250.85,8.45

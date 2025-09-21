@@ -1,0 +1,29 @@
+{
+  "metadata": {
+    "timestamp": "2025-09-17T11:36:24.013287",
+    "platform": "web_browser_selenium_vs_galaxy",
+    "description": "Web platform workflow performance test using Selenium, vs_galaxy mode, fair memory measurement",
+    "workflow_steps": [
+      "click_import_button",
+      "click_config_modal_button",
+      "click_upload_modal_button",
+      "upload_file",
+      "click_final_import_button",
+      "wait_for_output_change"
+    ],
+    "measurement_method": "selenium_webdriver_memory_growth",
+    "memory_note": "Measures workflow memory growth only, comparable to local execution"
+  },
+  "results": {
+    "BraLanc_464_Galaxy.json": {
+      "mean_runtime": 3.356,
+      "std_runtime": 0.112,
+      "min_runtime": 3.289,
+      "max_runtime": 3.485,
+      "mean_workflow_memory": 241.45,
+      "std_workflow_memory": 6.87,
+      "min_workflow_memory": 233.67,
+      "max_workflow_memory": 246.69
+    }
+  }
+}
