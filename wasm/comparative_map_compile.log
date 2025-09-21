@@ -1045,3 +1045,18 @@ cache:INFO:  - ok
       |                                 ^~~~
       |                                 llabs
 2 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:8: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |        ^~~~
+      |        llabs
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: warning: absolute value function 'labs' given an argument of type 'int64_t' (aka 'long long') but has parameter of type 'long' which may cause truncation of value [-Wabsolute-value]
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_comparative_map.c:100:33: note: use function 'llabs' instead
+  100 |     if(labs(ry-rx) < minimum || labs(cx-cy) < minimum)
+      |                                 ^~~~
+      |                                 llabs
+2 warnings generated.
