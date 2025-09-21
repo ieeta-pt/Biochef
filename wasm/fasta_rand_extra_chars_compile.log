@@ -740,3 +740,23 @@ cache:INFO:  - ok
    29 |   uint8_t  value, line = 0, position = 1;
       |                             ^~~~~~~~
 3 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_fasta_rand_extra_chars.c:29:12: warning: unused variable 'value' [-Wunused-variable]
+   29 |   uint8_t  value, line = 0, position = 1;
+      |            ^~~~~
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_fasta_rand_extra_chars.c:29:19: warning: unused variable 'line' [-Wunused-variable]
+   29 |   uint8_t  value, line = 0, position = 1;
+      |                   ^~~~
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_fasta_rand_extra_chars.c:29:29: warning: unused variable 'position' [-Wunused-variable]
+   29 |   uint8_t  value, line = 0, position = 1;
+      |                             ^~~~~~~~
+3 warnings generated.
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_fasta_rand_extra_chars.c:29:12: warning: unused variable 'value' [-Wunused-variable]
+   29 |   uint8_t  value, line = 0, position = 1;
+      |            ^~~~~
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_fasta_rand_extra_chars.c:29:19: warning: unused variable 'line' [-Wunused-variable]
+   29 |   uint8_t  value, line = 0, position = 1;
+      |                   ^~~~
+/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/gto/src/temp_fasta_rand_extra_chars.c:29:29: warning: unused variable 'position' [-Wunused-variable]
+   29 |   uint8_t  value, line = 0, position = 1;
+      |                             ^~~~~~~~
+3 warnings generated.
