@@ -1,0 +1,71 @@
+# BioChef Performance Tests
+
+This directory contains performance tests for comparing the BioChef performance against local execution and Galaxy platform execution.
+
+## Quick Start
+
+1. Make sure your BioChef app is running on `localhost:8082`
+2. Run the test script:
+   ```bash
+   ./run_tests.sh
+   ```
+
+## What the script does
+
+- Creates a Python virtual environment
+- Installs dependencies from `requirements.txt`
+- Runs local workflow tests (`local_test/local_workflow_test.ipynb`)
+- Runs platform vs local tests (`platform_test/selenium_workflow_test.py --mode vs_local`)
+- Runs platform vs Galaxy tests (`platform_test/selenium_workflow_test.py --mode vs_galaxy`)
+
+## Requirements
+
+- Python 3.x
+- Chrome browser (for Selenium tests)
+- BioChef application running on localhost:8082
+
+## Results
+
+Test results are saved as:
+- `local_test/gto_performance_local.json`
+- `platform_test/platform_performance_vs_local.csv/json`
+- `platform_test/platform_performance_vs_galaxy.csv/json`
+
+After running `run_tests.sh`, is possible to generate performance plots by executing:
+
+- For BioChef vs local comparison:
+```bash
+python plots/biochef_vs_local_plots.py
+```
+
+- For BioChef vs Galaxy comparison:
+```bash
+python plots/biochef_vs_galaxy_plots.py
+```
+
+**NOTE:** Is necessary to switch the Galaxy values in `biochef_vs_galaxy_plots.py` with the actual values obtained from the execution of the Galaxy workflow.
+
+The plots are saved as:
+- `plots/local_vs_platform_comparison.png`
+- `plots/biochef_galaxy_comparison.png`
+
+## Manual Setup (if needed)
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+pip install jupyter nbconvert
+```
+
+Then run tests individually:
+```bash
+# Local tests
+cd local_test
+jupyter nbconvert --to notebook --execute --inplace local_workflow_test.ipynb
+
+# Platform tests
+cd ../platform_test
+python selenium_workflow_test.py --mode vs_local
+python selenium_workflow_test.py --mode vs_galaxy
+```
