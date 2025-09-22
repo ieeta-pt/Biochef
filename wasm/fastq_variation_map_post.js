@@ -1,1 +1,0 @@
-window.fastq_variation_map=fastq_variation_map;
