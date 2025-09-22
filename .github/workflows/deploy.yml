@@ -30,6 +30,9 @@ jobs:
       with:
         version: 'latest'
 
+    - name: Verify
+      run: emcc -v
+
     - name: Install dependencies
       run: npm ci
 
