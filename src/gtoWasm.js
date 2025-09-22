@@ -8,8 +8,8 @@ export async function loadWasmModule(toolName) {
   try {
     console.log(`Attempting to load module for tool: ${toolName}`);
     const moduleName = toolName; // Assume toolName is without 'gto_' prefix
-    const scriptUrl = process.env.NODE_ENV === 'production' 
-      ? `/gto-wasm-app/wasm/${moduleName}_wrapper.js`
+    const scriptUrl = process.env.NODE_ENV === 'production'
+      ? `/Biochef/wasm/${moduleName}_wrapper.js`
       : `/wasm/${moduleName}_wrapper.js`;
     console.log(`Script URL: ${scriptUrl}`);
 

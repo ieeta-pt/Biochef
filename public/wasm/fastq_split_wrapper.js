@@ -24,7 +24,7 @@
           if (path.endsWith('.wasm')) {
             const basePath = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
               ? '/wasm/' 
-              : '/gto-wasm-app/wasm/';
+              : '/Biochef/wasm/';
             return basePath + path;
           }
           return path;
@@ -106,7 +106,7 @@
       const script = document.createElement('script');
       const basePath = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
         ? '/wasm/' 
-        : '/gto-wasm-app/wasm/';
+        : '/Biochef/wasm/';
       script.src = basePath + `${moduleName}.js`;
       script.onload = () => resolve();
       script.onerror = () => reject(new Error(`Failed to load ${moduleName}.js`));

@@ -1,6 +1,6 @@
 {
-  "homepage": "https://github.com/ieeta-pt/Biochef",
-  "name": "gto-wasm-app",
+  "homepage": "https://ieeta-pt.github.io/Biochef",
+  "name": "Biochef",
   "version": "1.0.0",
   "description": "GTO BioChef",
   "main": "index.js",

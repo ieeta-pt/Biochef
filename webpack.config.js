@@ -8,7 +8,7 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: '[name].[contenthash].js',
-    publicPath: process.env.NODE_ENV === 'production' ? '/gto-wasm-app/' : '/',
+    publicPath: process.env.NODE_ENV === 'production' ? '/Biochef/' : '/',
     webassemblyModuleFilename: 'wasm/[hash].wasm',
   },
   module: {
@@ -58,6 +58,7 @@ module.exports = {
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
       process: 'process/browser',
+      React: 'react',
     }),
     new CopyWebpackPlugin({
       patterns: [
