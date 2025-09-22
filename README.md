@@ -65,8 +65,8 @@ BioChef includes a wide array of genomic tools, categorized for easy access:
 
 1. Clone the repository:
    ```
-   git clone https://github.com/jorgeMFS/gto-wasm-app.git
-   cd gto-wasm-app
+   git clone https://github.com/ieeta-pt/Biochef.git
+   cd Biochef
    ```
 
 2. Install dependencies:

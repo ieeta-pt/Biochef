@@ -1,4 +1,4 @@
-# gto-wasm-app/generate_wrapper.py
+# Biochef/generate_wrapper.py
 import os
 import sys
 

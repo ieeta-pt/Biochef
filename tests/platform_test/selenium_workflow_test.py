@@ -155,7 +155,9 @@ class WorkflowSeleniumTest:
         
         # If no file path provided, use the test workflow JSON file
         if file_path is None:
-            file_path = "/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/tests/platform_test/BraLanc_464.json"
+            # Use relative path from current script location
+            script_dir = Path(__file__).parent
+            file_path = script_dir / "BraLanc_464.json"
             
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"File not found: {file_path}")
@@ -293,7 +295,8 @@ def run_performance_tests(test_mode="vs_local"):
     else:
         raise ValueError(f"Invalid test mode: {test_mode}. Use 'vs_local' or 'vs_galaxy'")
     
-    platform_test_dir = "/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/tests/platform_test"
+    # Use relative path from current script location
+    platform_test_dir = Path(__file__).parent
     results = []
     
     print(f"Starting Selenium Workflow Performance Tests - {test_mode.upper()} Mode")
@@ -401,7 +404,9 @@ def save_results_gto_format(results, test_mode="vs_local"):
     
     # Save to CSV in GTO format with mode-specific filename
     csv_filename = f"platform_performance_{test_mode}.csv"
-    csv_path = os.path.join("/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/tests/platform_test", csv_filename)
+    # Use relative path from current script location
+    script_dir = Path(__file__).parent
+    csv_path = script_dir / csv_filename
     
     with open(csv_path, 'w', newline='') as csvfile:
         csvfile.write("# Platform Performance Results\n")
@@ -417,7 +422,9 @@ def save_results_gto_format(results, test_mode="vs_local"):
     
     # Save to JSON in GTO format with mode-specific filename
     json_filename = f"platform_performance_{test_mode}.json"
-    json_path = os.path.join("/home/jake/Desktop/Uni/Bolsa/gto-wasm-app/tests/platform_test", json_filename)
+    # Use relative path from current script location
+    script_dir = Path(__file__).parent
+    json_path = script_dir / json_filename
 
     json_data = {
         "metadata": {
