@@ -9,12 +9,6 @@
         "type": "stdout",
         "format": "SVG"
     },
-    "flags": [
-        "-h",
-        "-v",
-        "-a",
-        "-e"
-    ],
     "parameters": [
         {
             "name": "tFile1",

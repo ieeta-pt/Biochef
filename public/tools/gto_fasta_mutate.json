@@ -9,61 +9,37 @@
         "type": "stdout",
         "format": "FASTA, Multi-FASTA"
     },
-    "flags": [
-        {
-            "flag": "-h",
-            "parameter": null,
-            "required": false
-        },
-        {
-            "flag": "-s",
-            "parameter": "seed",
-            "required": false
-        },
-        {
-            "flag": "-e",
-            "parameter": "edit-rate",
-            "required": false
-        },
-        {
-            "flag": "-d",
-            "parameter": "deletion-rate",
-            "required": false
-        },
-        {
-            "flag": "-i",
-            "parameter": "insertion-rate",
-            "required": false
-        },
-        {
-            "flag": "-a",
-            "parameter": "ACGTN-alphabet",
-            "required": false
-        }
-    ],
     "parameters": [
         {
             "name": "seed",
             "type": "integer",
-            "maxLength": 9
+            "maxLength": 9,
+            "flag": "-s",
+            "required": false
         },
         {
             "name": "edit-rate",
             "type": "float",
             "min": 0,
-            "max": 1
+            "max": 1,
+            "flag": "-e",
+            "required": false
         },
         {
             "name": "deletion-rate",
             "type": "float",
             "min": 0,
-            "max": 1
+            "max": 1,
+            "flag": "-d",
+            "required": false
         },
         {
             "name": "insertion-rate",
             "type": "float",
             "min": 0,
-            "max": 1
+            "max": 1,
+            "flag": "-i",
+            "required": false
         }
     ],
     "is_multi_output": false,

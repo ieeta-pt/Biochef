@@ -9,13 +9,6 @@
         "type": "file",
         "format": "FASTA"
     },
-    "flags": [
-        {
-            "flag": "-h",
-            "parameter": null,
-            "required": false
-        }
-    ],
     "parameters": [],
     "is_multi_output": true,
     "is_multi_type_output": false,

@@ -9,40 +9,24 @@
         "type": "stdout",
         "format": "FASTQ"
     },
-    "flags": [
-        {
-            "flag": "-h",
-            "parameter": null,
-            "required": false
-        },
-        {
-            "flag": "-k",
-            "parameter": "windowsize",
-            "required": false
-        },
-        {
-            "flag": "-w",
-            "parameter": "minavg",
-            "required": false
-        },
-        {
-            "flag": "-m",
-            "parameter": "minqs",
-            "required": false
-        }
-    ],
     "parameters": [
         {
             "name": "windowsize",
-            "type": "integer"
+            "type": "integer",
+            "flag": "-k",
+            "required": false
         },
         {
             "name": "minavg",
-            "type": "integer"
+            "type": "integer",
+            "flag": "-w",
+            "required": false
         },
         {
             "name": "minqs",
-            "type": "integer"
+            "type": "integer",
+            "flag": "-m",
+            "required": false
         }
     ],
     "is_multi_output": false,

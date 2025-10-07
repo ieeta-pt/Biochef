@@ -9,19 +9,6 @@
         "type": "stdout",
         "format": "SEQ"
     },
-    "flags": [
-        "-h",
-        "-V",
-        "-F",
-        "-v",
-        "-x",
-        "-s",
-        "-e",
-        "-l",
-        "-tm",
-        "-rm",
-        "-r"
-    ],
     "parameters": [
         {
             "name": "level",

@@ -9,55 +9,24 @@
         "type": "stdout",
         "format": "NUM"
     },
-    "flags": [
-        {
-            "flag": "-h",
-            "parameter": null,
-            "required": false
-        },
-        {
-            "flag": "-w",
-            "parameter": "windowsize",
-            "required": false
-        },
-        {
-            "flag": "-d",
-            "parameter": "drop",
-            "required": false
-        },
-        {
-            "flag": "-t",
-            "parameter": "windowtype",
-            "required": false
-        },
-        {
-            "flag": "-c",
-            "parameter": "onecolumn",
-            "required": false
-        },
-        {
-            "flag": "-p",
-            "parameter": "printone",
-            "required": false
-        },
-        {
-            "flag": "-r",
-            "parameter": "reverse",
-            "required": false
-        }
-    ],
     "parameters": [
         {
             "name": "windowsize",
-            "type": "integer"
+            "type": "integer",
+            "flag": "-w",
+            "required": false
         },
         {
             "name": "drop",
-            "type": "float"
+            "type": "float",
+            "flag": "-d",
+            "required": false
         },
         {
             "name": "windowtype",
-            "type": "integer"
+            "type": "integer",
+            "flag": "-t",
+            "required": false
         }
     ],
     "is_multi_output": false,

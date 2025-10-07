@@ -9,43 +9,27 @@
         "type": "stdout",
         "format": "DNA"
     },
-    "flags": [
-        {
-            "flag": "-h",
-            "parameter": null,
-            "required": false
-        },
-        {
-            "flag": "-s",
-            "parameter": "seed",
-            "required": false
-        },
-        {
-            "flag": "-n",
-            "parameter": "nSymbols",
-            "required": false
-        },
-        {
-            "flag": "-f",
-            "parameter": "frequency",
-            "required": false
-        }
-    ],
     "parameters": [
         {
             "name": "seed",
             "type": "integer",
-            "maxLength": 9
+            "maxLength": 9,
+            "flag": "-s",
+            "required": false
         },
         {
             "name": "nSymbols",
             "type": "integer",
             "min": 0,
-            "max": 100000
+            "max": 100000,
+            "flag": "-n",
+            "required": false
         },
         {
             "name": "frequency",
-            "type": "string"
+            "type": "string",
+            "flag": "-f",
+            "required": false
         }
     ],
     "is_multi_output": false,

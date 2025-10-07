@@ -9,23 +9,6 @@
         "type": "stdout",
         "format": "NUM"
     },
-    "flags": [
-        {
-            "flag": "-h",
-            "parameter": null,
-            "required": false
-        },
-        {
-            "flag": "-r",
-            "parameter": "sumrows",
-            "required": false
-        },
-        {
-            "flag": "-a",
-            "parameter": "sumall",
-            "required": false
-        }
-    ],
     "parameters": [],
     "is_multi_output": false,
     "is_multi_type_output": false,

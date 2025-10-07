@@ -9,13 +9,6 @@
         "type": "stdout",
         "format": "TEXT"
     },
-    "flags": [
-        {
-            "flag": "-h",
-            "parameter": null,
-            "required": false
-        }
-    ],
     "parameters": [],
     "is_multi_output": false,
     "is_multi_type_output": false,

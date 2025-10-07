@@ -9,32 +9,19 @@
         "type": "stdout",
         "format": "FASTA, Multi-FASTA"
     },
-    "flags": [
-        {
-            "flag": "-h",
-            "parameter": null,
-            "required": false
-        },
-        {
-            "flag": "-b",
-            "parameter": "numbases",
-            "required": true
-        },
-        {
-            "flag": "-s",
-            "parameter": "seed",
-            "required": true
-        }
-    ],
     "parameters": [
         {
             "name": "numbases",
-            "type": "integer"
+            "type": "integer",
+            "flag": "-b",
+            "required": true
         },
         {
             "name": "seed",
             "type": "integer",
-            "maxLength": 9
+            "maxLength": 9,
+            "flag": "-s",
+            "required": true
         }
     ],
     "is_multi_output": false,

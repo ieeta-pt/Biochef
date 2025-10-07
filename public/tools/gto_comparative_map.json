@@ -9,96 +9,48 @@
         "type": "stdout",
         "format": "SVG"
     },
-    "flags": [
-        {
-            "flag": "-h",
-            "parameter": null,
-            "required": false
-        },
-        {
-            "flag": "-V",
-            "parameter": "versionNumber",
-            "required": false
-        },
-        {
-            "flag": "-v",
-            "parameter": "verboseMode",
-            "required": false
-        },
-        {
-            "flag": "-l",
-            "parameter": "link",
-            "required": false
-        },
-        {
-            "flag": "-w",
-            "parameter": "width",
-            "required": false
-        },
-        {
-            "flag": "-s",
-            "parameter": "space",
-            "required": false
-        },
-        {
-            "flag": "-m",
-            "parameter": "mult",
-            "required": false
-        },
-        {
-            "flag": "-b",
-            "parameter": "begin",
-            "required": false
-        },
-        {
-            "flag": "-c",
-            "parameter": "minimum",
-            "required": false
-        },
-        {
-            "flag": "-i",
-            "parameter": "notShowInversion",
-            "required": false
-        },
-        {
-            "flag": "-r",
-            "parameter": "notShowRegular",
-            "required": false
-        },
-        {
-            "flag": "-o",
-            "parameter": "FILE",
-            "required": false
-        }
-    ],
     "parameters": [
         {
             "name": "link",
-            "type": "integer"
+            "type": "integer",
+            "flag": "-l",
+            "required": false
         },
         {
             "name": "width",
-            "type": "integer"
+            "type": "integer",
+            "flag": "-w",
+            "required": false
         },
         {
             "name": "space",
-            "type": "integer"
+            "type": "integer",
+            "flag": "-s",
+            "required": false
         },
         {
             "name": "mult",
-            "type": "integer"
+            "type": "integer",
+            "flag": "-m",
+            "required": false
         },
         {
             "name": "begin",
-            "type": "integer"
+            "type": "integer",
+            "flag": "-b",
+            "required": false
         },
         {
             "name": "minimum",
-            "type": "integer"
+            "type": "integer",
+            "flag": "-c",
+            "required": false
         },
         {
             "name": "FILE",
-            "type": "string"
+            "type": "string",
+            "flag": "-o",
+            "required": false
         }
     ],
     "is_multi_output": false,

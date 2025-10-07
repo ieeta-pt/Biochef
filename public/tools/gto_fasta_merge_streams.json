@@ -9,13 +9,6 @@
         "type": "stdout",
         "format": "FASTA, Multi-FASTA"
     },
-    "flags": [
-        {
-            "flag": "-h",
-            "parameter": null,
-            "required": false
-        }
-    ],
     "parameters": [
         {
             "name": "headers"

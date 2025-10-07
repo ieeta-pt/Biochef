@@ -9,32 +9,6 @@
         "type": "stdout",
         "format": "FASTQ"
     },
-    "flags": [
-        "-h",
-        "-v",
-        "-t",
-        "-hf",
-        "-i",
-        "-o",
-        "-ls",
-        "-ld",
-        "-n",
-        "-f",
-        "-rn",
-        "-ri",
-        "-ra",
-        "-rm",
-        "-rr",
-        "-qt",
-        "-qf",
-        "-qc",
-        "-eh",
-        "-eo",
-        "-ed",
-        "-edb",
-        "-es",
-        "-s"
-    ],
     "parameters": [
         {
             "name": "sequencingType",

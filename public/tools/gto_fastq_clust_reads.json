@@ -9,10 +9,6 @@
         "type": "stdout",
         "format": "FASTQ"
     },
-    "flags": [
-        "-h",
-        "-c"
-    ],
     "parameters": [
         {
             "name": "ctx",

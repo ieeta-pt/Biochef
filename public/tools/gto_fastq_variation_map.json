@@ -9,15 +9,6 @@
         "type": "stdout",
         "format": "TEXT"
     },
-    "flags": [
-        "-h",
-        "-v",
-        "-a",
-        "-s",
-        "-i",
-        "-p",
-        "-k"
-    ],
     "parameters": [
         {
             "name": "rFile1",

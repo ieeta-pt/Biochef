@@ -9,31 +9,18 @@
         "type": "stdout",
         "format": "FASTA"
     },
-    "flags": [
-        {
-            "flag": "-h",
-            "parameter": null,
-            "required": false
-        },
-        {
-            "flag": "-n",
-            "parameter": "name",
-            "required": false
-        },
-        {
-            "flag": "-l",
-            "parameter": "lineSize",
-            "required": false
-        }
-    ],
     "parameters": [
         {
             "name": "name",
-            "type": "string"
+            "type": "string",
+            "flag": "-n",
+            "required": false
         },
         {
             "name": "lineSize",
-            "type": "integer"
+            "type": "integer",
+            "flag": "-l",
+            "required": false
         }
     ],
     "is_multi_output": false,

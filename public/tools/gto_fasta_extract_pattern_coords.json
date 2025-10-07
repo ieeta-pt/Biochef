@@ -9,22 +9,12 @@
         "type": "stdout",
         "format": "TEXT"
     },
-    "flags": [
-        {
-            "flag": "-h",
-            "parameter": null,
-            "required": false
-        },
-        {
-            "flag": "-p",
-            "parameter": "pattern",
-            "required": true
-        }
-    ],
     "parameters": [
         {
             "name": "pattern",
-            "type": "string"
+            "type": "string",
+            "flag": "-p",
+            "required": true
         }
     ],
     "is_multi_output": false,

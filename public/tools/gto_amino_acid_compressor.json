@@ -9,18 +9,6 @@
         "type": "stdout",
         "format": "AminoAcids"
     },
-    "flags": [
-        "-h",
-        "-s",
-        "-v",
-        "-V",
-        "-f",
-        "-l",
-        "-t",
-        "-e",
-        "-rm",
-        "-tm"
-    ],
     "parameters": [
         {
             "name": "level",

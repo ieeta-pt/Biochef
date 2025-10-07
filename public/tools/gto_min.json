@@ -9,31 +9,18 @@
         "type": "stdout",
         "format": "NUM"
     },
-    "flags": [
-        {
-            "flag": "-h",
-            "parameter": null,
-            "required": false
-        },
-        {
-            "flag": "-f",
-            "parameter": "first_file",
-            "required": true
-        },
-        {
-            "flag": "-s",
-            "parameter": "second_file",
-            "required": true
-        }
-    ],
     "parameters": [
         {
             "name": "first_file",
-            "type": "file"
+            "type": "file",
+            "flag": "-f",
+            "required": true
         },
         {
             "name": "second_file",
-            "type": "file"
+            "type": "file",
+            "flag": "-s",
+            "required": true
         }
     ],
     "is_multi_output": false,

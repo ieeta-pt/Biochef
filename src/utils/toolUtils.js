@@ -19,6 +19,16 @@ export function getTool(toolName) {
   return toolMap.get(toolName);
 }
 
+export function getToolParameters(toolName) {
+  const tool = getTool(toolName);
+  const parameters = {}
+  tool.parameters.forEach((param) => {
+    parameters[param.name] = param
+  })
+
+  return parameters
+}
+
 /**
  * Retrieves all tools in the tool map.
  * 

@@ -9,14 +9,6 @@
         "type": "stdout",
         "format": "TEXT"
     },
-    "flags": [
-        "-h",
-        "-v",
-        "-a",
-        "-t",
-        "-w",
-        "-u"
-    ],
     "parameters": [
         {
             "name": "tFile1",

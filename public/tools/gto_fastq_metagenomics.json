@@ -9,20 +9,6 @@
         "type": "stdout",
         "format": "CSV"
     },
-    "flags": [
-        "-h",
-        "-F",
-        "-V",
-        "-v",
-        "-Z",
-        "-s",
-        "-l",
-        "-p",
-        "-t",
-        "-n",
-        "-x",
-        "-y"
-    ],
     "parameters": [
         {
             "name": "FILE1",

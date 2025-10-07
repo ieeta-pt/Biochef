@@ -9,31 +9,18 @@
         "type": "stdout",
         "format": "TEXT"
     },
-    "flags": [
-        {
-            "flag": "-h",
-            "parameter": null,
-            "required": false
-        },
-        {
-            "flag": "-a",
-            "parameter": "alphabet",
-            "required": true
-        },
-        {
-            "flag": "-s",
-            "parameter": "size",
-            "required": true
-        }
-    ],
     "parameters": [
         {
             "name": "alphabet",
-            "type": "string"
+            "type": "string",
+            "flag": "-a",
+            "required": true
         },
         {
             "name": "size",
-            "type": "integer"
+            "type": "integer",
+            "flag": "-s",
+            "required": true
         }
     ],
     "is_multi_output": false,

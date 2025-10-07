@@ -9,22 +9,12 @@
         "type": "stdout",
         "format": "text, NUM"
     },
-    "flags": [
-        {
-            "flag": "-h",
-            "parameter": null,
-            "required": false
-        },
-        {
-            "flag": "-t",
-            "parameter": "threshold",
-            "required": true
-        }
-    ],
     "parameters": [
         {
             "name": "threshold",
-            "type": "float"
+            "type": "float",
+            "flag": "-t",
+            "required": true
         }
     ],
     "is_multi_output": false,
