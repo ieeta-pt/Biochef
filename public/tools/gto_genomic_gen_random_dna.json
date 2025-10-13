@@ -1,5 +1,7 @@
 {
     "name": "gto_genomic_gen_random_dna",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Generates a synthetic DNA.",
     "input": {
         "type": "",

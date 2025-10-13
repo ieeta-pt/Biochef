@@ -1,5 +1,7 @@
 {
     "name": "gto_fastq_exclude_n",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Discards the FASTQ reads with the minimum number of 'N' symbols. If present, it will erase the second header (after +).",
     "input": {
         "type": "stdin",

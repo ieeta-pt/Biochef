@@ -1,5 +1,7 @@
 {
     "name": "gto_genomic_count_bases",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Counts the number of bases in sequence, FASTA or FASTQ files.",
     "input": {
         "type": "stdin",

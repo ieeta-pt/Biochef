@@ -1,5 +1,7 @@
 {
     "name": "gto_filter",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Filters numerical sequences using a low-pass filter.",
     "input": {
         "type": "stdin",

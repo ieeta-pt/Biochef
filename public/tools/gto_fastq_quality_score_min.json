@@ -1,5 +1,7 @@
 {
     "name": "gto_fastq_quality_score_min",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Analyses the minimal quality-scores of a FASTQ file.",
     "input": {
         "type": "stdin",

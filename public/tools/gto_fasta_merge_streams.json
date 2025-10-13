@@ -1,5 +1,7 @@
 {
     "name": "gto_fasta_merge_streams",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "It merges the three channels of information (headers, extra and DNA) and writes it into a FASTA file.",
     "input": {
         "type": "file",

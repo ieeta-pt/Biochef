@@ -1,5 +1,7 @@
 {
     "name": "gto_fasta_extract_pattern_coords",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Extracts the header and coordinates from a Multi-FASTA file format given a pattern/motif in the sequence.",
     "input": {
         "type": "stdin",

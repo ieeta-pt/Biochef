@@ -1,5 +1,7 @@
 {
     "name": "gto_fastq_minimum_local_quality_score_forward",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Filters the reads considering the quality score average of a defined window size of bases.",
     "input": {
         "type": "stdin",

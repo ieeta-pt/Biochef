@@ -1,5 +1,7 @@
 {
     "name": "gto_fastq_cut",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Cuts read sequences in a FASTQ file. It requires that the initial and end positions for the cut.",
     "input": {
         "type": "stdin",

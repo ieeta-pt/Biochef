@@ -1,5 +1,7 @@
 {
     "name": "gto_fastq_reverse",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Reverses the ACGT bases order for each read in a FASTQ file format.",
     "input": {
         "type": "stdin",

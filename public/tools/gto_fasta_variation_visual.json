@@ -1,5 +1,7 @@
 {
     "name": "gto_fasta_variation_visual",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "This tool is an alias to gto_fastq_variation_visual tool. Please check the documentation of this tool in the in the section of FASTQ tools.",
     "input": {
         "type": "stdin",

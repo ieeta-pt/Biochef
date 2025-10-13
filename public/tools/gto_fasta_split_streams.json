@@ -1,5 +1,7 @@
 {
     "name": "gto_fasta_split_streams",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Splits and writes a FASTA file into three channels of information: headers, extra and DNA.",
     "input": {
         "type": "stdin",

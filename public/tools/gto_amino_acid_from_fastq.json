@@ -1,5 +1,7 @@
 {
     "name": "gto_amino_acid_from_fastq",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Converts DNA sequences in the FASTQ file format to an amino acid sequence.",
     "input": {
         "type": "stdin",

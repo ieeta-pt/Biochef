@@ -13,10 +13,8 @@
 /emsdk
 
 # WebAssembly files
-/public/wasm/*.wasm
-/public/wasm/*.log
-/public/wasm/*.js
-public/wasm/
+/public/wasm/*
+!/public/wasm/.gitkeep
 /dist/*
 
 
@@ -52,15 +50,5 @@ Thumbs.db
 /env
 /venv
 
-# .gitignore of gto directory
-/gto/manual/manual.aux
-/gto/manual/manual.log
-/gto/manual/manual.toc
-/gto/manual/manual.bbl
-/gto/manual/manual.blg
-/gto/src/xs
-/gto/src/ac
-/gto/src/geco2
-/gto/src/falcon
-/gto/src/chester
-/gto/src/*.o
+# ignore for when testing locally
+biowasm

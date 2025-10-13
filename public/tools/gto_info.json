@@ -1,5 +1,7 @@
 {
     "name": "gto_info",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Gives the basic properties of the file, namely size, cardinality, distribution percentage of the symbols, among others.",
     "input": {
         "type": "stdin",

@@ -48,7 +48,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
             const updatedParams = { ...prevParams };
 
             toolConfig.parameters.forEach((param) => {
-                if (param.name in updatedParams) return
+                if (param.name in updatedParams && !param.hidden) return
                 updatedParams[param.name] = {
                     value: param.default !== undefined ? param.default : '',
                     enabled: false
@@ -60,9 +60,14 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
     }, [toolConfig]);
 
     useEffect(() => {
-        if (tool && tool.name) {
-            setHelpMessages(getToolHelpMessage(tool.name));
-        }
+        const fetchHelpMessages = async () => {
+            if (tool && tool.name) {
+                const help = await getToolHelpMessage(tool.name);
+                setHelpMessages(help);
+            }
+        };
+
+        fetchHelpMessages();
     }, [tool]);
 
     const handleParameterChange = async (name, value) => {
@@ -108,16 +113,8 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
 
     const handleExecuteTool = async (tool) => {
         try {
-            // convert params to {name: value}
-            const paramValues = Object.entries(parameters).reduce((result, [name, { value, enabled }]) => {
-                if (enabled) {
-                    result[name] = value;
-                }
-                return result;
-            }, {});
-
             // Validate parameters before executing the tool
-            const { isValid, errors } = validateParameters(tool.name, paramValues);
+            const { isValid, errors } = validateParameters(tool.name, parameters);
             if (!isValid) {
                 // If validation fails, notify the user and cancel execution
                 showNotification('Please correct the parameters highlighted in red.', 'error');
@@ -136,7 +133,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
             toolConfig.parameters.forEach((param) => {
                 if (param.required || parameters[param.name].enabled) {
                     if (param.flag) args.push(param.flag);
-                    if (param.type != "flag"){
+                    if (param.type != "flag") {
                         args.push(parameters[param.name].value);
                     }
                 }
@@ -161,14 +158,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
             }
 
             // Execute the tool
-            let outputData;
-            if (inputData === '' && toolParameterFiles && Object.keys(toolParameterFiles).length > 0) {
-                // If input is empty and there are parameter files for the tool, use them
-                outputData = await runTool(tool.name, inputData, args, toolParameterFiles);
-            } else {
-                // Execute the tool
-                outputData = await runTool(tool.name, inputData, args);
-            }
+            let outputData = await runTool(tool.name, inputData, args, toolParameterFiles);
 
             // Handle messages in stderr
             if (outputData.stderr) {
@@ -232,7 +222,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
                             Tool: {tool.name}
                         </Typography>
                         <Tooltip
-                            title={<pre style={{ whiteSpace: 'pre-wrap' }}>{helpMessages.general || 'Loading help...'}</pre>}
+                            title={<pre style={{ whiteSpace: 'pre-wrap' }}>{helpMessages?.general || 'Loading help...'}</pre>}
                             arrow
                             componentsProps={{
                                 tooltip: {
@@ -279,7 +269,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
                         toolConfig={toolConfig}
                         parameters={parameters}
                         validationErrors={validationErrors}
-                        helpMessages={helpMessages.flags}
+                        helpMessages={helpMessages?.flags}
                         handleParameterChange={handleParameterChange}
                         toggleParameter={toggleParameter}
                     />

@@ -1,5 +1,7 @@
 {
     "name": "gto_fastq_quality_score_max",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Analyses the maximal quality-scores of a FASTQ file.",
     "input": {
         "type": "stdin",

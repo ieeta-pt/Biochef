@@ -1,5 +1,7 @@
 {
     "name": "gto_comparative_map",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Creates a visualization for comparative maps.",
     "input": {
         "type": "stdin",

@@ -1,5 +1,7 @@
 {
     "name": "gto_amino_acid_from_seq",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Converts DNA sequence to an amino acid sequence.",
     "input": {
         "type": "stdin",

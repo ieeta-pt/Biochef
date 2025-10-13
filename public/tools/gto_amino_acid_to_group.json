@@ -1,5 +1,7 @@
 {
     "name": "gto_amino_acid_to_group",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Converts an amino acid sequence to a group sequence.",
     "input": {
         "type": "stdin",

@@ -1,5 +1,7 @@
 {
     "name": "gto_upper_bound",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Sets an upper bound in a file with a value per line.",
     "input": {
         "type": "stdin",

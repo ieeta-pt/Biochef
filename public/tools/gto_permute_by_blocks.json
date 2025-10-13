@@ -1,5 +1,7 @@
 {
     "name": "gto_permute_by_blocks",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Permutates by block sequence, FASTA and Multi-FASTA files.",
     "input": {
         "type": "stdin",

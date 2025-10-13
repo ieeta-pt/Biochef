@@ -1,5 +1,7 @@
 {
     "name": "gto_fastq_mutate",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Creates a synthetic mutation of a FASTQ file given specific rates of mutations, deletions and additions.",
     "input": {
         "type": "stdin",

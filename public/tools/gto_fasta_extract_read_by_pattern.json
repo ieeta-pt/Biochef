@@ -1,5 +1,7 @@
 {
     "name": "gto_fasta_extract_read_by_pattern",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Extracts reads from a Multi-FASTA file format given a pattern in the header. Also, this pattern is case insensitive.",
     "input": {
         "type": "stdin",

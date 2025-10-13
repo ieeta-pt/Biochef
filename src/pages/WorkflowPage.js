@@ -70,7 +70,7 @@ const WorkflowPage = () => {
 
     // Save workflow in localStorage
     useEffect(() => {
-        if (isVariableLoaded) {
+        if (isVariableLoaded && toolsLoaded) {
             // Create a copy of the workflow and remove file input parameters
             const workflowToSave = workflow.map(tool => {
                 const toolConfig = getTool(tool.toolName)
@@ -85,7 +85,7 @@ const WorkflowPage = () => {
             });
             localStorage.setItem('workflow', JSON.stringify(workflowToSave));
         }
-    }, [workflow, isVariableLoaded]);
+    }, [workflow, isVariableLoaded, toolsLoaded]);
 
     // Save input in localStorage
     useEffect(() => {

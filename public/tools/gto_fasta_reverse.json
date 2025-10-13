@@ -1,5 +1,7 @@
 {
     "name": "gto_fasta_reverse",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Reverses the order of a FASTA or Multi-FASTA file format.",
     "input": {
         "type": "stdin",

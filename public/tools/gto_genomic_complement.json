@@ -1,5 +1,7 @@
 {
     "name": "gto_genomic_complement",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Replaces the ACGT bases with their complements in a DNA sequence. It works in sequence file formats.",
     "input": {
         "type": "stdin",

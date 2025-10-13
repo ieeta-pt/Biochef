@@ -1,5 +1,7 @@
 {
     "name": "gto_lower_bound",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Sets an lower bound in a file with a value per line.",
     "input": {
         "type": "stdin",

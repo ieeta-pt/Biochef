@@ -1,5 +1,7 @@
 {
     "name": "gto_min",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Computes the minium value in each row between two files.",
     "input": {
         "type": "file",

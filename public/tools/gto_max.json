@@ -1,8 +1,10 @@
 {
     "name": "gto_max",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Computes the maximum value in each row between two files.",
     "input": {
-        "type": "file",
+        "type": "",
         "format": ""
     },
     "output": {

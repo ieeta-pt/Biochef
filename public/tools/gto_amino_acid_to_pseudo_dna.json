@@ -1,5 +1,7 @@
 {
     "name": "gto_amino_acid_to_pseudo_dna",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Converts an amino acid (protein) sequence to a pseudo DNA sequence.",
     "input": {
         "type": "stdin",

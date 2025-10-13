@@ -1,5 +1,7 @@
 {
     "name": "gto_fasta_extract_by_read",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Extracts sequences from each read in a Multi-FASTA file (splited by \\n), which the range is defined by the user in the parameters.",
     "input": {
         "type": "stdin",

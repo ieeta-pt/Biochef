@@ -1,5 +1,7 @@
 {
     "name": "gto_genomic_reverse",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Reverses the ACGT bases order for each read in a sequence file.",
     "input": {
         "type": "stdin",

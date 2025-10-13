@@ -1,5 +1,7 @@
 {
     "name": "gto_fasta_complement",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Replaces the ACGT bases with their complements in FASTA or Multi-FASTA file format.",
     "input": {
         "type": "stdin",

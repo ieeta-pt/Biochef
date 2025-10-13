@@ -1,5 +1,7 @@
 {
     "name": "gto_new_line_on_new_x",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Splits different rows with a new empty row.",
     "input": {
         "type": "stdin",

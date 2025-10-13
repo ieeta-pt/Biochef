@@ -1,5 +1,7 @@
 {
     "name": "gto_genomic_rand_seq_extra_chars",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Substitutes in the DNA sequence the outside ACGT chars by random ACGT symbols. It works in sequence file formats.",
     "input": {
         "type": "stdin",

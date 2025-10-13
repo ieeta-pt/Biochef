@@ -1,5 +1,7 @@
 {
     "name": "gto_fastq_clust_reads",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Agroups reads and creates an index file. It cluster reads in therms of Seq k-mer Lexicographical order.",
     "input": {
         "type": "stdin",

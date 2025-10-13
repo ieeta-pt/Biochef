@@ -1,5 +1,7 @@
 {
     "name": "gto_fastq_minimum_quality_score",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Discards reads with average quality-score below of the defined.",
     "input": {
         "type": "stdin",

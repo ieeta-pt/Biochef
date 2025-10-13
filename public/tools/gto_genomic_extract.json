@@ -1,5 +1,7 @@
 {
     "name": "gto_genomic_extract",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Extracts sequences from a sequence file, which the range is defined by the user in the parameters.",
     "input": {
         "type": "stdin",

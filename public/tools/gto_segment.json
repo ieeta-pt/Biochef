@@ -1,5 +1,7 @@
 {
     "name": "gto_segment",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Segments a filtered sequence based on a threshold.",
     "input": {
         "type": "stdin",

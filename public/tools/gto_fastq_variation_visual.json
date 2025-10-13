@@ -1,5 +1,7 @@
 {
     "name": "gto_fastq_variation_visual",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Depicts the regions of singularity using the output from gto_fastq_variation_filter into an SVG image.",
     "input": {
         "type": "stdin",

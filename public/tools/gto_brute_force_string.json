@@ -1,5 +1,7 @@
 {
     "name": "gto_brute_force_string",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Generates all combinations, line by line, for an inputted alphabet and specific size.",
     "input": {
         "type": "",

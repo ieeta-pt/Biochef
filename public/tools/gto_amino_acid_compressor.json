@@ -1,5 +1,7 @@
 {
     "name": "gto_amino_acid_compressor",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "A new lossless compressor to compress efficiently amino acid sequences (proteins). It uses a cooperation between multiple context and substitutional tolerant context models. The cooperation between models is balanced with weights that benefit the models with better performance according to a forgetting function specific for each model.",
     "input": {
         "type": "stdin",

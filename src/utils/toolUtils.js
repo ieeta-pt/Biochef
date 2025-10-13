@@ -1,3 +1,5 @@
+import Aioli from "@biowasm/aioli";
+
 const toolMap = new Map();
 
 /**
@@ -104,62 +106,55 @@ export async function loadTools() {
   );
 }
 
-export function runTool(toolName, input, args, files = {}) {
-  return new Promise((resolve, reject) => {
-    let output = {
-      stdout: '',
-      stderr: '',
-      outputs: {}
-    }
+export async function runTool(toolName, input, args, files = {}) {
     console.log(`Running tool ${toolName} with arguments:`, args);
+    const toolConfig = getTool(toolName)
+    const toolProgram = toolConfig.program || toolName
 
-    const script = document.createElement('script');
-    script.src = `/wasm/${toolName}.js`;
-    script.onerror = function (event) {
-      reject(`Failed to load script ${toolName}.js: ${event}`);
-    };
+    try {
+      const CLI = await new Aioli([{
+        program: toolProgram,
+        urlPrefix: `${window.location.origin}/wasm/${toolConfig.tool}//${toolConfig.version}/`,
+        loading: "lazy",
+        reinit: false,
+      }], {
+        printInterleaved: false,
+        debug: true,
+      });
 
-    script.onload = async function () {
-      try {
-        let inputIndex = 0;
-        const Module = {
-          thisProgram: `./${toolName}`,
-          noInitialRun: true,
-          preRun: () => {
-            Object.values(files).forEach(file => {
-              Module.FS.writeFile(file.name, file.data);
-            });
-
-            Module.FS.init(
-              // stdin
-              () => {
-                if (inputIndex >= input.length) return null;
-                return input.charCodeAt(inputIndex++);
-              },
-              // stdout
-              (charCode) => {
-                if (charCode === null) return;
-                output.stdout += String.fromCharCode(charCode);
-              },
-              // stderr
-              (charCode) => {
-                if (charCode === null) return;
-                output.stderr += String.fromCharCode(charCode);
-              }
-            );
-          }
-        };
-
-        const ModuleFactory = window[toolName];
-        const myModule = await ModuleFactory(Module);
-        myModule.callMain(args);
-
-        resolve(output);
-      } catch (err) {
-        reject(`Error initializing WebAssembly module: ${err.message}`);
+      // create necessary files
+      if (files && Object.keys(files).length > 0) {
+        await CLI.mount(Object.values(files));
       }
-    };
 
-    document.head.appendChild(script);
-  });
+      if (toolConfig.input.type == "file") {
+        // TODO: find a way for the user to not upload a file with this name
+        // and maybe create a file with the correct format instead of txt
+        await CLI.mount({ name: "input.txt", data: input })
+        args.push("input.txt")
+      }
+      else {
+        CLI.stdin = input;
+      }
+
+      // let result = { stdout: tool.stdout, stderr: tool.stderr };
+      const result = await CLI.exec(toolProgram, args);
+
+      // read output files if tool outputs to a file
+      const ignoreList = [".", ".."];
+      if (toolConfig.is_multi_output && toolConfig.output.type == "file") {
+        result.outputs = {}
+        for (const fileName of await CLI.ls(".")) {
+          if (ignoreList.includes(fileName)) continue
+          const fileData = await CLI.cat(fileName);
+          console.log(fileName, fileData);
+          result.outputs[fileName] = fileData;
+        }
+      }
+
+    return result;
+
+  } catch (error) {
+    console.error(`Error running tool ${toolName}:`, error);
+  }
 }

@@ -1,5 +1,7 @@
 {
     "name": "gto_fasta_mutate",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Creates a synthetic mutation of a FASTA file given specific rates of editions, deletions and additions.",
     "input": {
         "type": "stdin",

@@ -1,5 +1,7 @@
 {
     "name": "gto_char_to_line",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Splits a sequence into lines, creating an output sequence which has a char for each line.",
     "input": {
         "type": "stdin",

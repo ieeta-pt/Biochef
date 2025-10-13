@@ -1,5 +1,7 @@
 {
     "name": "gto_fastq_unpack",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Unpacks the FASTQ reads packaged using the gto_fastq_pack tool.",
     "input": {
         "type": "stdin",

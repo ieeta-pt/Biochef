@@ -1,5 +1,7 @@
 {
     "name": "gto_amino_acid_from_fasta",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Converts DNA sequences in FASTA or Multi-FASTA file format to an amino acid sequence.",
     "input": {
         "type": "stdin",

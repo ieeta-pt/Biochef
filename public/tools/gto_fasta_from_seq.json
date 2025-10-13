@@ -1,5 +1,7 @@
 {
     "name": "gto_fasta_from_seq",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Converts a genomic sequence to pseudo FASTA file format.",
     "input": {
         "type": "stdin",

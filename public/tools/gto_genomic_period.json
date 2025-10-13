@@ -1,5 +1,7 @@
 {
     "name": "gto_genomic_period",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Calculates the best order depth of a sequence, using FCMs. It only works \"ACGT\", while the rest will be discarded.",
     "input": {
         "type": "stdin",

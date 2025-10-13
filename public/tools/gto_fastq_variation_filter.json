@@ -1,5 +1,7 @@
 {
     "name": "gto_fastq_variation_filter",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Filters and segments the regions of singularity from the output of gto_fastq_variation_map.",
     "input": {
         "type": "stdin",

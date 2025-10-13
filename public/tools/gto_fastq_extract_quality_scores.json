@@ -1,5 +1,7 @@
 {
     "name": "gto_fastq_extract_quality_scores",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Extracts all the quality-scores from FASTQ reads.",
     "input": {
         "type": "stdin",

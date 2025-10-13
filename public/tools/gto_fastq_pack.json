@@ -1,5 +1,7 @@
 {
     "name": "gto_fastq_pack",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Packages each FASTQ read in a single line. It can show the read score first or the dna sequence, depending on the execution mode.",
     "input": {
         "type": "stdin",

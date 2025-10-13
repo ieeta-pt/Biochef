@@ -53,6 +53,8 @@ import { getExtensionForType } from '../utils/getExtensionDataType';
 import { importRecipeCommand } from '../utils/importRecipeCommand';
 import { importRecipeConfigFile } from '../utils/importRecipeConfigFile';
 import SortableItem from './SortableItem';
+import { validateParameters, getToolHelpMessage } from '../utils/parameterUtils';
+import ToolParameterSection from './ToolParameterSection';
 
 export function classifyStderrLines(stderr) {
   const result = { info: [], error: [] };
@@ -103,6 +105,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
   }); // Track which output type is selected for multi-type output tools
   const { validateData } = useContext(DataTypeContext);
   const showNotification = useContext(NotificationContext);
+  const [paramsLoaded, setParamsLoaded] = useState(false);
 
   // Update outputs initialization to handle both modes
   const outputs = React.useMemo(() => {
@@ -183,6 +186,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
 
   // Update data type and outputs mapping
   useEffect(() => {
+    if (!paramsLoaded) return
     const updateDataTypeAndOutputsMapping = async () => {
       setIsLoading(true);
 
@@ -218,11 +222,22 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
 
           try {
             // Validate parameters
-            const isValid = validateParameters(tool, data);
+            const { isValid, errors } = validateParameters(tool.toolName, tool.params);
+
             if (!isValid) {
               setDataType('UNKNOWN');
+              setValidationErrors((prevErrors) => ({
+                ...prevErrors,
+                [tool.id]: errors,
+              }));
               break;
             }
+
+            // clear errors if valid
+            setValidationErrors((prevErrors) => {
+              const { [tool.id]: _, ...updatedErrors } = prevErrors;
+              return updatedErrors;
+            });
 
             let output;
 
@@ -389,23 +404,38 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
   }, [workflow, inputData, selectedInput, inputDataType, selectedOutputTypes]);
 
   // Run validateParameters when the page is loaded
+  // and also init the param values
   useEffect(() => {
     // if (workflow.length > 0) {
     workflow.forEach((tool) => {
-      validateParameters(tool);
+      tool.params = {};
+      getTool(tool.toolName).parameters.forEach((param) => {
+        if (param.name in tool.params && !param.hidden) return
+        tool.params[param.name] = {
+          value: param.default !== undefined ? param.default : '',
+          enabled: false,
+        };
+      });
+
+      validateParameters(tool.toolName, tool.params);
     });
+    setParamsLoaded(true)
     // }
-  }, [workflow]);
+  }, []);
 
   // State to store help messages for tools
   useEffect(() => {
-    workflow.forEach((tool) => {
-      if (!helpMessages[tool.toolName]) {
-        loadHelpMessage(tool.toolName);
-      }
-    });
+    const fetchHelpMessages = async (toolName) => {
+      const help = await getToolHelpMessage(toolName);
+      setHelpMessages((prev) => ({
+        ...prev,
+        [toolName]: help
+      }));
+    };
 
-    // console.log('helpMessages ON RECIPEPANEL:', helpMessages);
+    workflow.forEach((tool) => {
+      fetchHelpMessages(tool.toolName)
+    });
   }, [workflow]);
 
   // Export
@@ -441,46 +471,6 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
     }
   }, [workflowInput, tabIndex]);
 
-  // Load help message for a tool
-  const loadHelpMessage = async (toolName) => {
-    runTool(toolName, "", ['-h'])
-      .then(result => {
-        const helpLines = result.stdout.split('\n'); // Divida o texto da ajuda em linhas
-        const flagsHelp = {};
-        let generalHelp = '';
-
-        // Process each line of the help message
-        helpLines.forEach((line) => {
-          line = line.trim();
-
-          // Separating flags and descriptions
-          if (/^-/.test(line)) {
-            const [flag, ...descriptionParts] = line.split(/\s+/); // Separating flag and description
-            const normalizedFlag = flag.replace(/[, ]/g, '').trim(); // Removing commas and spaces
-            flagsHelp[normalizedFlag] = descriptionParts.join(' '); // Store the description
-          } else if (
-            !line.includes('--help') &&
-            !line.toLowerCase().includes('optional') &&
-            !line.toLowerCase().includes('optional options')
-          ) {
-            generalHelp += `${line}\n`;
-          }
-        });
-
-        // Store the help messages
-        setHelpMessages((prev) => ({
-          ...prev,
-          [toolName]: {
-            general: generalHelp.trim(),
-            flags: flagsHelp, // Store the flags help
-          },
-        }));
-      })
-      .catch(error => {
-        console.error(`Failed to load help message for ${toolName}:`, error);
-      });
-  };
-
   // Validate the workflow to ensure compatibility between tools
   const validateWorkflow = (workflow, inputDataType) => {
     const firstTool = getTool(workflow[0].toolName);
@@ -492,7 +482,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
 
     for (let i = 0; i < workflow.length - 1; i++) {
       const currentTool = getTool(workflow[i].toolName);
-      const nextTool = getTool(workflow[i+1].toolName);
+      const nextTool = getTool(workflow[i + 1].toolName);
 
       if (!currentTool || !nextTool) {
         return false;
@@ -510,70 +500,6 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
     }
     return true;
   };
-
-  // Validate parameters based on expected type
-  const validateParameters = (tool) => {
-    const toolConfig = getTool(tool.toolName);
-    const errors = {};
-    console.log(tool, toolConfig)
-    toolConfig.flags.forEach((flagObj) => {
-      const isFlagRequired = flagObj.required;
-      const flagValue = !!tool.params[flagObj.flag];
-      const paramValue = tool.params[flagObj.parameter];
-      const paramConfig = toolConfig.parameters.find((param) => param.name === flagObj.parameter);
-
-      if (paramConfig) {
-        if (isFlagRequired || flagValue) { // Check if the flag is required or active
-          if (paramConfig.type === 'integer' && !/^-?\d+$/.test(paramValue)) {
-            errors[flagObj.parameter] = 'Invalid integer value';
-          } else if (paramConfig.type === 'float' && !/^-?\d+(\.\d+)?$/.test(paramValue)) {
-            errors[flagObj.parameter] = 'Invalid float value';
-          } else if (paramValue === undefined || paramValue === '') {
-            errors[flagObj.parameter] = 'Parameter value cannot be empty';
-          } else {
-            const numericValue = parseFloat(paramValue);
-            if (paramConfig.min !== undefined && numericValue < paramConfig.min) {
-              errors[flagObj.parameter] = `Value must be at least ${paramConfig.min}`;
-            }
-            if (paramConfig.max !== undefined && numericValue > paramConfig.max) {
-              errors[flagObj.parameter] = `Value must be at most ${paramConfig.max}`;
-            }
-            if (paramConfig.maxLength !== undefined && paramValue.length > paramConfig.maxLength) {
-              errors[flagObj.parameter] = `Maximum input length is ${paramConfig.maxLength}`;
-            }
-          }
-        }
-      } else if (isFlagRequired && (paramValue === undefined || paramValue === '')) {
-        errors[flagObj.flag] = 'Required flag cannot be empty';
-      }
-    });
-
-    // brute_force_string need to be limited, otherwise it will crash the browser
-    if (tool.toolName === 'brute_force_string') {
-      const alphabet = tool.params['alphabet'];
-      const size = tool.params['size'];
-      const max = 250000;
-
-      if (alphabet && size && alphabet.length ** size > max) {
-        showNotification('The number of possible combinations is too high. Please reduce the alphabet or the size.', 'error');
-        toolConfig.flags.forEach((flagObj) => {
-          errors[flagObj.parameter] = 'Number of combinations is too high';
-        });
-      }
-    }
-
-    setValidationErrors((prevErrors) => ({
-      ...prevErrors,
-      [tool.id]: errors,
-    }));
-
-    if (Object.keys(errors).length > 0) {
-      showNotification('Please correct the parameters highlighted in red.', 'error');
-    }
-
-    return Object.keys(errors).length === 0;
-  };
-
 
   const handleDragStart = (event) => {
     setActiveId(event.active.id);
@@ -964,7 +890,10 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
           ...item,
           params: {
             ...item.params,
-            [name]: paramValue, // Sets either flag toggle or parameter value
+            [name]: {
+              value: paramValue,
+              enabled: item.params[name]?.enabled ?? true,
+            }, // Sets either flag toggle or parameter value
           },
         }
         : item
@@ -973,7 +902,26 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
     setWorkflow(newWorkflow);
 
     // Validate the parameter value
-    validateParameters(newWorkflow[toolIndex]);
+    validateParameters(newWorkflow[toolIndex].toolName, newWorkflow[toolIndex].params);
+  };
+
+  const toggleParameter = (id, name) => {
+    const newWorkflow = workflow.map((item) =>
+      item.id === id
+        ? {
+          ...item,
+          params: {
+            ...item.params,
+            [name]: {
+              ...item.params[name],
+              enabled: !item.params[name]?.enabled,
+            },
+          },
+        }
+        : item
+    );
+
+    setWorkflow(newWorkflow);
   };
 
   const handleListOperations = (index) => {
@@ -1008,6 +956,18 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
 
   const executeTool = async (tool, input) => {
     try {
+      // Validate parameters before executing the tool
+      const { isValid, errors } = validateParameters(tool.toolName, tool.params);
+      if (!isValid) {
+        // If validation fails, notify the user and cancel execution
+        showNotification('Please correct the parameters highlighted in red.', 'error');
+        setValidationErrors((prevErrors) => ({
+          ...prevErrors,
+          [tool.id]: errors,
+        }));
+        return;
+      }
+
       const toolConfig = getTool(tool.toolName)
       if (!toolConfig) {
         showNotification(`Configuration for tool ${tool.toolName} not found.`, 'error');
@@ -1030,22 +990,14 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
 
       // Prepare arguments based on tool configuration and user-set parameters
       let args = [];
-      if (tool.params && Object.keys(tool.params).length > 0) {
-        // Handle flags
-        toolConfig.flags.forEach((flagObj) => {
-          if (flagObj.required || tool.params[flagObj.flag]) {
-            args.push(flagObj.flag);
-            // Check if the flag has an associated parameter
-            if (
-              flagObj.parameter &&
-              tool.params[flagObj.parameter] !== undefined &&
-              tool.params[flagObj.parameter] !== ''
-            ) {
-              args.push(`${tool.params[flagObj.parameter]}`);
-            }
+      toolConfig.parameters.forEach((param) => {
+        if (param.required || tool.params[param.name].enabled) {
+          if (param.flag) args.push(param.flag);
+          if (param.type != "flag") {
+            args.push(tool.params[param.name].value);
           }
-        });
-      }
+        }
+      });
 
       // Handle multiple inputs
       if (typeof input === 'object' && !Array.isArray(input)) {
@@ -1070,14 +1022,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
           input = '';
         }
 
-        let outputData;
-        if (input === '' && toolParameterFiles[tool.id] && Object.keys(toolParameterFiles[tool.id]).length > 0) {
-          // If input is empty and there are parameter files for the tool, use them
-          outputData = await runTool(tool.toolName, input, args,  toolParameterFiles[tool.id]);
-        } else {
-          // Execute the tool
-          outputData = await runTool(tool.toolName, input, args);
-        }
+        let outputData = await runTool(tool.toolName, input, args, toolParameterFiles[tool.id]);
 
         // Return the output data
         return outputData;
@@ -1106,6 +1051,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
   };
 
   const handleSaveOutput = async (stopAtIndex) => {
+    if (!paramsLoaded) return
     const endIndex = stopAtIndex !== undefined ? stopAtIndex : workflow.length - 1;
 
     const allInputs = tabIndex === 0
@@ -1375,244 +1321,6 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
     );
   };
 
-  const renderParameters = (tool) => {
-    const toolConfig = getTool(tool.toolName);
-    if (!toolConfig) return null;
-
-    const toolErrors = validationErrors[tool.id] || {};
-    const toolHelp = helpMessages[tool.toolName] || { general: 'Loading help...', flags: {} };
-    const flagHelpMessages = toolHelp.flags || {};
-
-    // Filter flags based on required and optionals
-    const requiredFlags = toolConfig.flags.filter((flagObj) => flagObj.required && flagObj.flag !== '-h');
-    const optionalFlags = toolConfig.flags.filter((flagObj) => !flagObj.required && flagObj.flag !== '-h');
-    const toolParameters = toolConfig.parameters;
-
-    // Check if this is a multi-type output tool that has output
-    const isMultiTypeOutputTool = toolConfig.is_multi_type_output && outputs?.[tool.id];
-
-    return (
-      <Box sx={{ marginTop: 2 }}>
-        {/* Add the output type selector at the top for multi-type output tools */}
-        {isMultiTypeOutputTool && (
-          <>
-            {renderOutputTypeSelector(tool)}
-            <Divider sx={{ my: 2 }} />
-          </>
-        )}
-
-        {/* Required Flags */}
-        {requiredFlags.length > 0 && (
-          <Box>
-            <Typography
-              variant="subtitle2"
-              sx={{
-                marginBottom: 1,
-                color: 'text.secondary',
-              }}
-            >
-              Required Flags
-            </Typography>
-            {requiredFlags.map((flagObj) => {
-              const flagValue = !!tool.params[flagObj.flag];
-              const paramConfig = toolParameters.find((p) => p.name === flagObj.parameter);
-              const parameterValue = tool.params[flagObj.parameter] || '';
-              const error = toolErrors[flagObj.parameter] || '';
-
-              return (
-                <Box
-                  key={flagObj.flag}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    marginBottom: 1,
-                    gap: 2,
-                  }}
-                >
-                  <FormControlLabel
-                    control={<span />}
-                    label={
-                      <Tooltip
-                        title={flagHelpMessages[flagObj.flag] || 'Loading help message...'}
-                        arrow
-                        componentsProps={{
-                          tooltip: {
-                            sx: {
-                              maxWidth: 300,
-                              whiteSpace: 'pre-wrap',
-                            },
-                          },
-                        }}
-                      >
-                        <span>
-                          {flagObj.parameter} <span style={{ color: 'red' }}>*</span>
-                        </span>
-                      </Tooltip>
-                    }
-                    sx={{ alignItems: 'center', margin: 0 }}
-                  />
-                  {paramConfig && (
-                    paramConfig.type === 'file' ? (
-                      <>
-                        <Button variant="outlined" component="label" size="small">
-                          {parameterValue ? 'Change File' : 'Upload File'}
-                          <input
-                            type="file"
-                            hidden
-                            onChange={(e) =>
-                              handleParameterChange(tool.id, flagObj.parameter, e.target.files[0])
-                            }
-                          />
-                        </Button>
-                        {parameterValue && (
-                          <Typography variant="caption" sx={{ ml: 1 }}>
-                            {parameterValue.name || parameterValue}
-                          </Typography>
-                        )}
-                      </>
-                    ) : (
-                      <TextField
-                        value={parameterValue}
-                        onChange={(e) =>
-                          handleParameterChange(tool.id, flagObj.parameter, e.target.value)
-                        }
-                        size="small"
-                        label={paramConfig.type}
-                        error={!!toolErrors[flagObj.parameter]}
-                        helperText={toolErrors[flagObj.parameter]}
-                        type={paramConfig.type === 'integer' || paramConfig.type === 'float' ? 'number' : 'text'}
-                        inputProps={paramConfig.type === 'integer' || paramConfig.type === 'float' ? { step: 'any' } : {}}
-                        sx={{ flexGrow: 1 }}
-                      />
-                    )
-                  )}
-                </Box>
-              );
-            })}
-          </Box>
-        )}
-
-        {/* Optional Flags */}
-        {optionalFlags.length > 0 && (
-          <Box sx={{ marginTop: 2 }}>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                cursor: 'pointer',
-                transition: 'background-color 0.3s ease',
-                '&:hover': {
-                  backgroundColor: 'rgba(0, 0, 0, 0.05)',
-                },
-                padding: '4px 8px',
-                borderRadius: '4px',
-              }}
-              onClick={() => toggleExpand(tool.id)}
-            >
-              <Typography
-                variant="subtitle2"
-                sx={{
-                  marginBottom: 1,
-                  color: 'text.secondary',
-                  flexGrow: 1,
-                }}
-              >
-                Optional Flags
-              </Typography>
-              {expandedTools.includes(tool.id) ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
-            </Box>
-
-            {/* Collapse */}
-            <Collapse in={expandedTools.includes(tool.id) || (validationErrors[tool.id] && Object.keys(validationErrors[tool.id]).length > 0)} timeout="auto" unmountOnExit>
-              {optionalFlags.map((flagObj) => {
-                const paramConfig = toolParameters.find((p) => p.name === flagObj.parameter);
-                const flagValue = !!tool.params[flagObj.flag];
-                const parameterValue = tool.params[flagObj.parameter] || '';
-                const error = toolErrors[flagObj.parameter] || '';
-
-                return (
-                  <Box
-                    key={flagObj.flag}
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      marginBottom: 1,
-                      gap: 2,
-                    }}
-                  >
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={flagValue}
-                          onChange={(e) =>
-                            handleParameterChange(tool.id, flagObj.flag, e.target.checked)
-                          }
-                        />
-                      }
-                      label={
-                        <Tooltip
-                          title={flagHelpMessages[flagObj.flag] || 'Loading help message...'}
-                          arrow
-                          componentsProps={{
-                            tooltip: {
-                              sx: {
-                                maxWidth: 300,
-                                whiteSpace: 'pre-wrap',
-                              },
-                            },
-                          }}
-                        >
-                          <span>{flagObj.parameter}</span>
-                        </Tooltip>
-                      }
-                      sx={{ alignItems: 'center', margin: 0 }}
-                    />
-                    {paramConfig && flagValue && (
-                      paramConfig.type === 'file' ? (
-                        <>
-                          <Button variant="outlined" component="label" size="small">
-                            {parameterValue ? 'Change File' : 'Upload File'}
-                            <input
-                              type="file"
-                              hidden
-                              onChange={(e) =>
-                                handleParameterChange(tool.id, flagObj.parameter, e.target.files[0])
-                              }
-                            />
-                          </Button>
-                          {parameterValue && (
-                            <Typography variant="caption" sx={{ ml: 1 }}>
-                              {parameterValue.name || parameterValue}
-                            </Typography>
-                          )}
-                        </>
-                      ) : (
-                        <TextField
-                          value={parameterValue}
-                          onChange={(e) =>
-                            handleParameterChange(tool.id, flagObj.parameter, e.target.value)
-                          }
-                          size="small"
-                          label={paramConfig.type}
-                          error={!!toolErrors[flagObj.parameter]}
-                          helperText={toolErrors[flagObj.parameter]}
-                          type={paramConfig.type === 'integer' || paramConfig.type === 'float' ? 'number' : 'text'}
-                          inputProps={paramConfig.type === 'integer' || paramConfig.type === 'float' ? { step: 'any' } : {}}
-                          sx={{ flexGrow: 1 }}
-                        />
-                      )
-                    )}
-                  </Box>
-                );
-              })}
-            </Collapse>
-          </Box>
-        )}
-      </Box>
-    );
-  };
-
-
   return (
     <Paper
       elevation={3}
@@ -1709,7 +1417,21 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
                     onPartialSave={() => handleSaveOutput(index)}
                     toolMessageMap={toolMessageMap[tool.id]}
                   >
-                    {renderParameters(tool)}
+                    {getTool(tool.toolName).is_multi_type_output && outputs?.[tool.id] && (
+                      <>
+                        {renderOutputTypeSelector(tool)}
+                        <Divider sx={{ my: 2 }} />
+                      </>
+                    )}
+                    <ToolParameterSection
+                      toolConfig={getTool(tool.toolName)}
+                      parameters={tool.params}
+                      validationErrors={validationErrors[tool.id] || []}
+                      helpMessages={helpMessages.flags}
+                      handleParameterChange={(name, value) => handleParameterChange(tool.id, name, value)}
+                      toggleParameter={(name) => toggleParameter(tool.id, name)}
+                    />
+
                     <Box sx={{ display: 'flex', alignItems: 'center', marginTop: 1 }}>
                       <Tooltip title={workflow.slice(0, index + 1).some((prevTool) => validationErrors[prevTool.id] && Object.keys(validationErrors[prevTool.id]).length > 0) ? (
                         <Typography align="center" variant="body2">

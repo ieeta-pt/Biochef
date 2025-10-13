@@ -1,5 +1,7 @@
 {
     "name": "gto_fasta_to_seq",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Converts a FASTA or Multi-FASTA file format to a seq.",
     "input": {
         "type": "stdin",

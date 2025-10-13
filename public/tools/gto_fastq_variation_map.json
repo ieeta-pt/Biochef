@@ -1,5 +1,7 @@
 {
     "name": "gto_fastq_variation_map",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Identifies the variation that occurs in the sequences relative to the reads or a set of reads. The (probabilistic) Bloom filter is automatically set.",
     "input": {
         "type": "stdin",

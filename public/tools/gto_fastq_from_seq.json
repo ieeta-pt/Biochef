@@ -1,5 +1,7 @@
 {
     "name": "gto_fastq_from_seq",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Converts a genomic sequence to pseudo FASTQ file format.",
     "input": {
         "type": "stdin",

@@ -75,5 +75,7 @@
     "gto_info.json",
     "gto_fastq_complement.json",
     "gto_genomic_rand_seq_extra_chars.json",
-    "gto_word_search.json"
+    "gto_word_search.json",
+    "seqtk_seq.json",
+    "seqtk_trimfq.json"
 ]

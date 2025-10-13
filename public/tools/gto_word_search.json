@@ -1,5 +1,7 @@
 {
     "name": "gto_word_search",
+    "tool": "gto",
+    "version": "1.6.3",
     "description": "Search for a word in a file. It is case sensitive.",
     "input": {
         "type": "stdin",
