@@ -105,7 +105,6 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
   }); // Track which output type is selected for multi-type output tools
   const { validateData } = useContext(DataTypeContext);
   const showNotification = useContext(NotificationContext);
-  const [paramsLoaded, setParamsLoaded] = useState(false);
 
   // Update outputs initialization to handle both modes
   const outputs = React.useMemo(() => {
@@ -186,7 +185,16 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
 
   // Update data type and outputs mapping
   useEffect(() => {
-    if (!paramsLoaded) return
+    workflow.forEach((tool) => {
+      getTool(tool.toolName).parameters.forEach((param) => {
+        if (param.name in tool.params && !param.hidden) return
+        tool.params[param.name] = {
+          value: param.default !== undefined ? param.default : '',
+          enabled: false,
+        };
+      });
+    });
+
     const updateDataTypeAndOutputsMapping = async () => {
       setIsLoading(true);
 
@@ -404,22 +412,11 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
   }, [workflow, inputData, selectedInput, inputDataType, selectedOutputTypes]);
 
   // Run validateParameters when the page is loaded
-  // and also init the param values
   useEffect(() => {
     // if (workflow.length > 0) {
     workflow.forEach((tool) => {
-      tool.params = {};
-      getTool(tool.toolName).parameters.forEach((param) => {
-        if (param.name in tool.params && !param.hidden) return
-        tool.params[param.name] = {
-          value: param.default !== undefined ? param.default : '',
-          enabled: false,
-        };
-      });
-
       validateParameters(tool.toolName, tool.params);
     });
-    setParamsLoaded(true)
     // }
   }, []);
 
@@ -1051,7 +1048,6 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
   };
 
   const handleSaveOutput = async (stopAtIndex) => {
-    if (!paramsLoaded) return
     const endIndex = stopAtIndex !== undefined ? stopAtIndex : workflow.length - 1;
 
     const allInputs = tabIndex === 0
