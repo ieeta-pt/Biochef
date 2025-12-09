@@ -13,7 +13,7 @@ import ErrorBoundary from '/src/components/ErrorBoundary'; // Ensure this compon
 import OperationsPanel from '/src/components/OperationsPanel';
 import RecipePanel from '/src/components/RecipePanel';
 import { DataTypeContext } from '/src/contexts/DataTypeContext';
-import { loadTools } from '../utils/toolUtils';
+import { loadToolIndex, loadTool } from '../utils/toolUtils';
 
 const WorkflowPage = () => {
     const [workflow, setWorkflow] = useState([]);
@@ -25,12 +25,13 @@ const WorkflowPage = () => {
     const [isVariableLoaded, setIsVariableLoaded] = useState(false); // Control if the workflow was loaded
     const [selectedFiles, setSelectedFiles] = useState(new Set()); // Track selected files
     const [tabIndex, setTabIndex] = useState(0);    // Track the selected tab index for input mode
-    const [toolsLoaded, setToolsLoaded] = useState(false);
+    const [toolIndexLoaded, setToolIndexLoaded] = useState(false);
+    const [workflowToolsLoaded, setWorkflowToolsLoaded] = useState(false);
 
     useEffect(() => {
         const fetchTools = async () => {
-            await loadTools();
-            setToolsLoaded(true); 
+            await loadToolIndex();
+            setToolIndexLoaded(true); 
         };
         
         fetchTools();
@@ -51,26 +52,38 @@ const WorkflowPage = () => {
 
     // Load workflow and input data from localStorage
     useEffect(() => {
-        const savedWorkflow = localStorage.getItem('workflow');
-        const savedInputData = localStorage.getItem('inputData');
-        const savedInputDataType = localStorage.getItem('inputDataType');
+        if (!toolIndexLoaded) return
+        const loadWorkflowData = async () => {
+            const savedWorkflow = localStorage.getItem('workflow');
+            const savedInputData = localStorage.getItem('inputData');
+            const savedInputDataType = localStorage.getItem('inputDataType');
 
-        if (savedWorkflow) {
-            setWorkflow(JSON.parse(savedWorkflow));
-        }
-        if (savedInputData) {
-            setInputData(savedInputData);
-        }
-        if (savedInputDataType) {
-            setInputDataType(savedInputDataType);
+            if (savedWorkflow) {
+                const parsedWorkflow = JSON.parse(savedWorkflow);
+                for (const tool of parsedWorkflow) {
+                    await loadTool(tool.toolName.replace(/-\d+$/, ''))
+                }
+                setWorkflow(parsedWorkflow);
+            }
+            setWorkflowToolsLoaded(true)
+
+            if (savedInputData) {
+                setInputData(savedInputData);
+            }
+            if (savedInputDataType) {
+                setInputDataType(savedInputDataType);
+            }
+
+            setIsVariableLoaded(true); // Set flag to true after loading workflow
         }
 
-        setIsVariableLoaded(true); // Set flag to true after loading workflow
-    }, []);
+        loadWorkflowData(); 
+
+    }, [toolIndexLoaded]);
 
     // Save workflow in localStorage
     useEffect(() => {
-        if (isVariableLoaded && toolsLoaded) {
+        if (isVariableLoaded && toolIndexLoaded) {
             // Create a copy of the workflow and remove file input parameters
             const workflowToSave = workflow.map(tool => {
                 const toolConfig = getTool(tool.toolName)
@@ -85,7 +98,7 @@ const WorkflowPage = () => {
             });
             localStorage.setItem('workflow', JSON.stringify(workflowToSave));
         }
-    }, [workflow, isVariableLoaded, toolsLoaded]);
+    }, [workflow, isVariableLoaded, toolIndexLoaded]);
 
     // Save input in localStorage
     useEffect(() => {
@@ -100,7 +113,8 @@ const WorkflowPage = () => {
     }, [inputDataType, isVariableLoaded]);
 
 
-    const handleAddOperation = (toolName, insertAtIndex = null, params = {}) => {
+    const handleAddOperation = async (toolName, insertAtIndex = null, params = {}) => {
+        await loadTool(toolName);
         const uniqueId = `${toolName}-${Date.now()}`;
         const newOperation = {
             id: uniqueId,
@@ -123,7 +137,7 @@ const WorkflowPage = () => {
 
     const isWorkflowEmpty = workflow.length === 0;
 
-    if (!toolsLoaded) {
+    if (!toolIndexLoaded || !workflowToolsLoaded) {
         return (
             <Box
                 sx={{

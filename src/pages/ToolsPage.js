@@ -4,28 +4,32 @@ import AllOperationsPanel from '/src/components/AllOperationsPanel';
 import ToolInputPanel from '/src/components/ToolInputPanel';
 import ToolOutputPanel from '/src/components/ToolOutputPanel';
 import ToolTestingPanel from '/src/components/ToolTestingPanel';
-import { loadTools } from '../utils/toolUtils';
+import { loadToolIndex, loadTool } from '../utils/toolUtils';
 
 const ToolsPage = () => {
     const [selectedTool, setSelectedTool] = useState(null);
     const [inputData, setInputData] = useState('');
     const [outputData, setOutputData] = useState('');
-    const [toolsLoaded, setToolsLoaded] = useState(false);
+    const [toolIndexLoaded, setToolIndexLoaded] = useState(false);
+    const [loadingTool, setLoadingTool] = useState(false);
 
     useEffect(() => {
         const fetchTools = async () => {
-            await loadTools();
-            setToolsLoaded(true); 
+            await loadToolIndex();
+            setToolIndexLoaded(true); 
         };
         
         fetchTools();
     }, []);
 
     const handleToolClick = async (tool) => {
-        setSelectedTool(tool); // Update the selected tool
+        setLoadingTool(true);
+        await loadTool(tool.name);
+        setSelectedTool(tool);
+        setLoadingTool(false);
     };
 
-    if (!toolsLoaded) {
+    if (!toolIndexLoaded) {
         return (
             <Box
                 sx={{
@@ -88,7 +92,18 @@ const ToolsPage = () => {
                             maxHeight: '100%',
                         }}
                     >
-                        {selectedTool ? (
+                        {loadingTool ? (
+                            <Box
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    height: '100%',
+                                }}
+                            >
+                                <CircularProgress />
+                            </Box>
+                        ) : selectedTool ? (
                             <ToolTestingPanel tool={selectedTool} inputData={inputData} setOutputData={setOutputData} />
                         ) : (
                             <Typography align="center" variant="h6" sx={{ marginTop: '20%' }}>

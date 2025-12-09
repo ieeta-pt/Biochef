@@ -1,16 +1,14 @@
-import Aioli from "@biowasm/aioli";
+import Aioli from "./aioli-custom/aioli"
 
 const toolMap = new Map();
+const blobMap = new Map();
+const REGISTRY_URL = process.env.REGISTRY_URL;
+const REPO_OWNER = process.env.REPO_OWNER;
+const REGISTRY_USERNAME = process.env.REGISTRY_USERNAME;
+const REGISTRY_PASSWORD = process.env.REGISTRY_PASSWORD;
 
-/**
- * Retrieves a tool by its name from the tool map.
- * 
- * @function
- * @param {string} toolName - The name of the tool to retrieve.
- * @returns {Object|undefined} The tool object if found, otherwise `undefined`.
- * 
- * @throws {Error} Will log an error if the tool is not found in the tool map.
- */
+const IS_GHCR = REGISTRY_URL?.includes("ghcr.io") || false;
+
 export function getTool(toolName) {
   if (!toolMap.has(toolName)) {
     // TODO: make a logging utility
@@ -31,29 +29,10 @@ export function getToolParameters(toolName) {
   return parameters
 }
 
-/**
- * Retrieves all tools in the tool map.
- * 
- * @function
- * @returns {Array} An array of all tool objects.
- * 
- * @example
- * const tools = getAllTools();
- */
 export function getAllTools() {
   return [...toolMap.values()];
 }
 
-/**
- * Retrieves tools categorized by their category.
- * If a tool does not have a category, it will be grouped under "Uncategorized".
- * 
- * @function
- * @returns {Object} An object where each key is a category and each value is an array of tools in that category.
- * 
- * @example
- * const categorizedTools = getToolsByCategory();
- */
 export function getToolsByCategory() {
   const categorizedTools = {};
 
@@ -70,87 +49,198 @@ export function getToolsByCategory() {
   return categorizedTools;
 }
 
-/**
- * Loads tools from a JSON index file and adds them to the tool map.
- * 
- * This function fetches an index file (`/tool_index.json`) that contains the filenames of tool data files,
- * then fetches each tool data file and loads it into the `toolMap`.
- * 
- * @async
- * @function
- * @returns {Promise<void>} A promise that resolves when all tools are loaded and added to the tool map.
- * 
- * @example
- * await loadTools(); // Load all tools
- */
-export async function loadTools() {
-  const indexRes = await fetch("/tool_index.json");
+async function getGHCRToken(repo) {
+  const tokenRes = await fetch(
+    `${REGISTRY_URL}/token?scope=repository:${REPO_OWNER}/${repo}:pull`,
+    {
+      headers: {
+        Authorization: "Basic " + btoa(`${REGISTRY_USERNAME}:${REGISTRY_PASSWORD}`)
+      }
+    }
+  );
 
-  if (!indexRes.ok) {
-    throw new Error(`Failed to fetch tool index, status: ${indexRes.status}`);
+  if (!tokenRes.ok) {
+    const errText = await tokenRes.text();
+    throw new Error(`Failed to fetch GHCR token: ${tokenRes.status} ${tokenRes.statusText}\n${errText}`);
   }
 
-  const filenames = await indexRes.json();
-  await Promise.all(
-    filenames.map(async (filename) => {
-      const res = await fetch(`/tools/${filename}`);
+  const { token } = await tokenRes.json();
+  return token;
+}
 
-      if (!res.ok) {
-        console.error(`Failed to fetch tool: ${filename}, status: ${res.status}`);
-        return;
-      }
+async function getAuthorizationAndBaseUrl(repo) {
+  if (IS_GHCR) {
+    const token = await getGHCRToken(repo);
+    return {
+      authorization: `Bearer ${token}`,
+      base_url: `${REGISTRY_URL}/v2/${REPO_OWNER}`,
+    };
+  } else {
+    return {
+      authorization: "Basic " + btoa(`${REGISTRY_USERNAME}:${REGISTRY_PASSWORD}`),
+      base_url: `${REGISTRY_URL}/v2`,
+    };
+  }
+}
 
-      const toolData = await res.json();
-      toolMap.set(filename.replace(/\.json$/, ''), toolData);
-    })
+async function fetchManifest(base_url, repo, tag, authorization, ) {
+  const res = await fetch(`${base_url}/${repo}/manifests/${tag}`, {
+    headers: {
+      Accept: "application/vnd.oci.image.manifest.v1+json",
+      Authorization: authorization,
+    },
+  });
+
+  if (!res.ok) throw new Error(`Failed to fetch manifest for ${repo}`);
+  return await res.json();
+}
+
+async function fetchBlob(base_url, repo, digest, authorization, accept) {
+  const res = await fetch(`${base_url}/${repo}/blobs/${digest}`, {
+    headers: {
+      Accept: accept,
+      Authorization: authorization,
+    },
+  });
+  if (!res.ok) throw new Error(`Failed to fetch blob ${digest}`);
+  return await res.json();
+}
+
+export async function loadToolIndex() {
+  const { authorization, base_url } = await getAuthorizationAndBaseUrl("biochef-plugins-index");
+  const manifest = await fetchManifest(base_url, "biochef-plugins-index", "index", authorization);
+  const digest = manifest.layers[0].digest;
+  const indexJson = await fetchBlob(base_url, "biochef-plugins-index", digest, authorization, "application/vnd.oci.image.manifest.v1+json");
+
+  for (const [key, plugin] of Object.entries(indexJson)) {
+    const bundle = {
+      repo: key,
+      name: plugin.name,
+      description: plugin.description,
+      category: plugin.category,
+      // TODO change the code elsewhere instead of transforming these intro strings
+      inputTypes: plugin.inputTypes,
+      outputTypes: plugin.outputTypes
+    };
+    toolMap.set(bundle.name, bundle);
+  }
+}
+
+export async function loadTool(toolName) {
+  const bundleEntry = toolMap.get(toolName);
+  if (bundleEntry.parameters) return;
+
+  const repo = bundleEntry.repo;
+  const { authorization, base_url } = await getAuthorizationAndBaseUrl(repo);
+  const manifest = await fetchManifest(base_url, repo, "latest", authorization);
+
+  const bundleLayer = manifest.layers.find(
+    layer =>
+      layer.mediaType === "application/vnd.biochef.bundle+json" ||
+      layer.annotations?.["org.opencontainers.image.title"] === "bundle.json"
   );
+
+  if (!bundleLayer) {
+    console.error(`No bundle.json layer found for ${repo}`);
+    return;
+  }
+
+  var bundle = await fetchBlob(base_url, repo, bundleLayer.digest, authorization, "application/vnd.oci.image.manifest.v1+json");
+  bundle = { ...toolMap.get(bundle.name), ...bundle }
+  
+  bundle.repo = repo;
+
+  bundle.input = {
+    type: bundle.manifest.io.inputs[0].mode,
+    format: bundle.manifest.io.inputs[0].types.join(", ")
+  };
+  bundle.output = {
+    type: bundle.manifest.io.outputs[0].mode,
+    format: bundle.manifest.io.outputs[0].types.join(", ")
+  };
+  bundle.is_multi_output = bundle.manifest.io.outputs.length > 1 || bundle.manifest.io.outputs.some(output => output.mode === 'files');;
+  bundle.is_multi_type_output = bundle.outputTypes.length > 1;
+  bundle.parameters = bundle.manifest.parameters;
+
+  toolMap.set(bundle.name, bundle);
+}
+
+async function generateBlob(url, type, authorization) {
+  if (blobMap.has(url)) return blobMap.get(url);
+
+  try {
+    const res = await fetch(url, {
+      headers: {
+        Authorization: authorization,
+        Accept: type
+      },
+    });
+    if (!res.ok) throw new Error(`Failed to fetch blob: ${res.status} ${res.statusText}`);
+
+    const arrayBuffer = await res.arrayBuffer();
+    const blob = new Blob([arrayBuffer], { type });
+    const blobURL = URL.createObjectURL(blob);
+    blobMap.set(url, blobURL);
+    return blobURL;
+  } catch (err) {
+    console.error("Failed to load authenticated blob:", err);
+    return null;
+  }
 }
 
 export async function runTool(toolName, input, args, files = {}) {
-    console.log(`Running tool ${toolName} with arguments:`, args);
-    const toolConfig = getTool(toolName)
-    const toolProgram = toolConfig.program || toolName
+  console.log(`Running tool ${toolName} with arguments:`, args);
+  const toolConfig = getTool(toolName)
+  const toolProgram = toolConfig.program || toolName
 
-    try {
-      const CLI = await new Aioli([{
-        program: toolProgram,
-        urlPrefix: `${window.location.origin}/wasm/${toolConfig.tool}//${toolConfig.version}/`,
-        loading: "lazy",
-        reinit: false,
-      }], {
-        printInterleaved: false,
-        debug: true,
-      });
+  const { authorization, base_url } = await getAuthorizationAndBaseUrl(toolConfig.repo);
 
-      // create necessary files
-      if (files && Object.keys(files).length > 0) {
-        await CLI.mount(Object.values(files));
+  const wasmUrl = `${base_url}/${toolConfig.repo}/blobs/${toolConfig.runtime.wasm.wasm_digest}`
+  const jsUrl = `${base_url}/${toolConfig.repo}/blobs/${toolConfig.runtime.wasm.js_digest}`
+  const wasmBlob = await generateBlob(wasmUrl, "application/wasm", authorization)
+  const jsBlob = await generateBlob(jsUrl, "application/javascript", authorization)
+
+  try {
+    const CLI = await new Aioli([{
+      program: toolProgram,
+      // urlPrefix: `${window.location.origin}/wasm/${toolConfig.tool}//${toolConfig.version}/`,
+      scriptUrl: jsBlob,
+      wasmUrl: wasmBlob,
+      loading: "lazy",
+      reinit: false,
+    }], {
+      printInterleaved: false,
+      debug: false,
+    });
+
+    // create necessary files
+    if (files && Object.keys(files).length > 0) {
+      await CLI.mount(Object.values(files));
+    }
+
+    if (toolConfig.input.type == "file") {
+      // TODO: find a way for the user to not upload a file with this name
+      // and maybe create a file with the correct format instead of txt
+      await CLI.mount({ name: "input.txt", data: input })
+      args.push("input.txt")
+    }
+    else {
+      CLI.stdin = input;
+    }
+    
+    // let result = { stdout: tool.stdout, stderr: tool.stderr };
+    const result = await CLI.exec(toolProgram, args);
+
+    // read output files if tool outputs to a file
+    const ignoreList = [".", ".."];
+    if (toolConfig.is_multi_output && (toolConfig.output.type == "file" || toolConfig.output.type == "files")) {
+      result.outputs = {}
+      for (const fileName of await CLI.ls(".")) {
+        if (ignoreList.includes(fileName)) continue
+        const fileData = await CLI.cat(fileName);
+        result.outputs[fileName] = fileData;
       }
-
-      if (toolConfig.input.type == "file") {
-        // TODO: find a way for the user to not upload a file with this name
-        // and maybe create a file with the correct format instead of txt
-        await CLI.mount({ name: "input.txt", data: input })
-        args.push("input.txt")
-      }
-      else {
-        CLI.stdin = input;
-      }
-
-      // let result = { stdout: tool.stdout, stderr: tool.stderr };
-      const result = await CLI.exec(toolProgram, args);
-
-      // read output files if tool outputs to a file
-      const ignoreList = [".", ".."];
-      if (toolConfig.is_multi_output && toolConfig.output.type == "file") {
-        result.outputs = {}
-        for (const fileName of await CLI.ls(".")) {
-          if (ignoreList.includes(fileName)) continue
-          const fileData = await CLI.cat(fileName);
-          console.log(fileName, fileData);
-          result.outputs[fileName] = fileData;
-        }
-      }
+    }
 
     return result;
 

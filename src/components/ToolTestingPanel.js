@@ -36,9 +36,8 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
 
     // Find tool configuration and supported input formats
     const toolConfig = getTool(tool.name)
-    const inputFormats = toolConfig?.input.format.split(',').map((f) => f.trim()) || [];
-    const outputFormats = toolConfig?.output.format.split(',').map((f) => f.trim()) || [];
-
+    const inputFormats = toolConfig.inputTypes
+    const outputFormats = toolConfig.outputTypes
     const showNotification = useContext(NotificationContext);
 
     // load default values for each parameter

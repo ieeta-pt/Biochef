@@ -6,6 +6,7 @@ export function validateParameters(toolName, parameters) {
 
   for (const [paramName, paramData] of Object.entries(parameters)) {
     const paramConfig = toolParams[paramName];
+    if (!paramConfig) continue
     if (!paramConfig.required && !paramData.enabled) continue
 
     if (!paramConfig) {

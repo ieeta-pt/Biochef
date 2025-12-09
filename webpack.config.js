@@ -1,6 +1,8 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const webpack = require('webpack');
+const webpack = require("webpack");
+const dotenv = require("dotenv");
+dotenv.config();
 
 module.exports = {
   entry: './src/index.js',
@@ -59,6 +61,12 @@ module.exports = {
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
       process: 'process/browser',
+    }),
+    new webpack.DefinePlugin({
+      "process.env.REGISTRY_URL": JSON.stringify(process.env.REGISTRY_URL),
+      "process.env.REPO_OWNER": JSON.stringify(process.env.REPO_OWNER),
+      "process.env.REGISTRY_USERNAME": JSON.stringify(process.env.REGISTRY_USERNAME),
+      "process.env.REGISTRY_PASSWORD": JSON.stringify(process.env.REGISTRY_PASSWORD),
     }),
   ],
   resolve: {

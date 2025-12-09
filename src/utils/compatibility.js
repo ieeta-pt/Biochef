@@ -28,7 +28,8 @@ export const getCompatibleTools = (currentFormat, isWorkflowEmpty, workflow = []
     }
     
     // Normal compatibility logic
-    const isToolInputEmpty = tool.input.format === '';
-    return (isToolInputEmpty && isWorkflowEmpty) || tool.input.format.includes(currentFormat);
+    const isToolInputEmpty = tool.inputTypes === '';
+    if (currentFormat == 'UNKNOWN') currentFormat = ''
+    return (isToolInputEmpty && isWorkflowEmpty) || tool.inputTypes.includes(currentFormat);
   });
 };

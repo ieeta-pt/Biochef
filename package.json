@@ -22,6 +22,7 @@
     "@emotion/styled": "^11.13.0",
     "@mui/icons-material": "^5.16.7",
     "@mui/material": "^5.16.7",
+    "dotenv": "^17.2.3",
     "file-saver": "^2.0.5",
     "framer-motion": "^12.11.0",
     "jszip": "^3.10.1",
