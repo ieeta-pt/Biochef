@@ -102,8 +102,10 @@ const WorkflowPage = () => {
 
     // Save input in localStorage
     useEffect(() => {
-        localStorage.setItem('inputData', inputData);
-    }, [inputData]);
+        if (isVariableLoaded) {
+            localStorage.setItem('inputData', inputData);
+        }
+    }, [inputData, isVariableLoaded]);
 
     // Save input data type in localStorage
     useEffect(() => {

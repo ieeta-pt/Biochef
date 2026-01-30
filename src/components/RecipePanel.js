@@ -471,7 +471,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
   // Validate the workflow to ensure compatibility between tools
   const validateWorkflow = (workflow, inputDataType) => {
     const firstTool = getTool(workflow[0].toolName);
-    const firstToolInputFormats = firstTool.input.format.split(',').map(f => f.trim());
+    const firstToolInputFormats = firstTool.inputTypes;
 
     if (firstToolInputFormats[0] !== "" && inputDataType !== "UNKNOWN" && !firstToolInputFormats.includes(inputDataType)) {
       return false;
@@ -485,8 +485,8 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
         return false;
       }
 
-      const currentOutputFormats = currentTool.output.format.split(',').map(f => f.trim());
-      const nextInputFormats = nextTool.input.format.split(',').map(f => f.trim());
+      const currentOutputFormats = currentTool.outputTypes;
+      const nextInputFormats = nextTool.inputTypes;
 
       // Check if there is a common format between the output of the current tool and the input of the next tool
       const isValid = currentOutputFormats.some((format) => nextInputFormats.includes(format));
@@ -932,11 +932,11 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
 
     const next = workflow[index + 1]
     const nextTool = getTool(next.toolName)
-    const nextInputTypes = nextTool.input.format.split(',').map(f => f.trim())
+    const nextInputTypes = nextTool.inputTypes
 
     const filteredOperations = getAllTools().filter((tool) => {
-      const toolInputTypes = tool.input.format.split(',').map(f => f.trim());
-      const toolOutputTypes = tool.output.format.split(',').map(f => f.trim());
+      const toolInputTypes = tool.inputTypes;
+      const toolOutputTypes = tool.outputTypes;
 
       return toolInputTypes.includes(previousOutputType) && toolOutputTypes.some((type) => nextInputTypes.includes(type));
     });
@@ -952,6 +952,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
   };
 
   const executeTool = async (tool, input) => {
+    console.log("executing tool!");
     try {
       // Validate parameters before executing the tool
       const { isValid, errors } = validateParameters(tool.toolName, tool.params);
@@ -1413,7 +1414,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
                     onPartialSave={() => handleSaveOutput(index)}
                     toolMessageMap={toolMessageMap[tool.id]}
                   >
-                    {getTool(tool.toolName).is_multi_type_output && outputs?.[tool.id] && (
+                    {getTool(tool.toolName).is_multi_output && outputs?.[tool.id] && (
                       <>
                         {renderOutputTypeSelector(tool)}
                         <Divider sx={{ my: 2 }} />

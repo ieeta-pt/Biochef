@@ -23,7 +23,7 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
         if (tool) {
             // Update the input format based on the selected tool
             const toolConfig = getTool(tool.name);
-            const inputFormats = toolConfig?.input.format.split(',').map((f) => f.trim()) || [];
+            const inputFormats = toolConfig.inputTypes;
             setToolInputFormat(inputFormats);
 
             // Reset input format and data if the tool changes

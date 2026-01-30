@@ -114,13 +114,8 @@ export async function loadToolIndex() {
 
   for (const [key, plugin] of Object.entries(indexJson)) {
     const bundle = {
-      repo: key,
-      name: plugin.name,
-      description: plugin.description,
-      category: plugin.category,
-      // TODO change the code elsewhere instead of transforming these intro strings
-      inputTypes: plugin.inputTypes,
-      outputTypes: plugin.outputTypes
+      ...plugin,
+      repo: key
     };
     toolMap.set(bundle.name, bundle);
   }
@@ -149,19 +144,6 @@ export async function loadTool(toolName) {
   bundle = { ...toolMap.get(bundle.name), ...bundle }
   
   bundle.repo = repo;
-
-  bundle.input = {
-    type: bundle.manifest.io.inputs[0].mode,
-    format: bundle.manifest.io.inputs[0].types.join(", ")
-  };
-  bundle.output = {
-    type: bundle.manifest.io.outputs[0].mode,
-    format: bundle.manifest.io.outputs[0].types.join(", ")
-  };
-  bundle.is_multi_output = bundle.manifest.io.outputs.length > 1 || bundle.manifest.io.outputs.some(output => output.mode === 'files');;
-  bundle.is_multi_type_output = bundle.outputTypes.length > 1;
-  bundle.parameters = bundle.manifest.parameters;
-
   toolMap.set(bundle.name, bundle);
 }
 
@@ -216,9 +198,9 @@ export async function runTool(toolName, input, args, files = {}) {
     // create necessary files
     if (files && Object.keys(files).length > 0) {
       await CLI.mount(Object.values(files));
-    }
+    } 
 
-    if (toolConfig.input.type == "file") {
+    if (toolConfig.io.inputs[0].mode == "file") {
       // TODO: find a way for the user to not upload a file with this name
       // and maybe create a file with the correct format instead of txt
       await CLI.mount({ name: "input.txt", data: input })
