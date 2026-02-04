@@ -22,6 +22,7 @@ import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { DataTypeContext } from '../contexts/DataTypeContext';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { ValidationErrorsContext } from '../contexts/ValidationErrorsContext';
+import { TourContext } from '../contexts/TourContext';
 import { getCompatibleTools } from '../utils/compatibility';
 import operationCategories from '../utils/operationCategories';
 
@@ -32,6 +33,7 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
   const { dataType } = useContext(DataTypeContext);
   const showNotification = useContext(NotificationContext);
   const { validationErrors } = useContext(ValidationErrorsContext); // Access validation errors
+  const { tourRegisterSteps, tourMoveNext } = useContext(TourContext);
   const hasValidationErrors = Object.values(validationErrors).some(error => Object.keys(error).length > 0);
   const noFilesSelected = tabIndex === 1 && selectedFiles.size === 0;
   const shouldDisableInteraction = hasValidationErrors || noFilesSelected;
@@ -75,6 +77,26 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
     // Assuming tool names in operationCategories do not have the 'gto_' prefix
     return new Set(compatible.map((tool) => tool.name.replace(/^gto_/, '')));
   }, [dataType, isWorkflowEmpty, workflow]);
+
+  useEffect(() => {
+    tourRegisterSteps("w-operations", [
+      {
+        element: '[data-tour="operations-panel"]',
+        popover: {
+          title: "Operations",
+          description: "This panel lets you choose tools.",
+        },
+      },
+      {
+        element: '[data-tour="add-operation"]',
+        popover: {
+          title: "Add tools",
+          description: "Click here to add a tool to your workflow.",
+          showButtons: ["previous", "exit"]
+        },
+      },
+    ]);
+  }, []);
 
   // Expand categories with available tools
   useEffect(() => {
@@ -121,7 +143,7 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
 `;
 
   return (
-    <Paper elevation={3} sx={{ padding: 2, height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+    <Paper data-tour="operations-panel" elevation={3} sx={{ padding: 2, height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
       {insertAtIndex !== null && addingATool && (
         <Box
           sx={{
@@ -255,6 +277,7 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
                             bgcolor: (theme) => alpha(theme.palette.primary.main, 0.4), // Slightly darker on hover
                           },
                         }}
+                        data-tour={operation.name === "fasta_to_seq" ? "add-operation" : undefined}
                         onClick={() => {
                           setIsLoading(true);
                           if (insertAtIndex !== null && addingATool) {
@@ -266,6 +289,7 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
                           } else {
                             onAddOperation(operation.name);
                           }
+                          tourMoveNext();
                         }}
                       >
                         <ListItemText primary={operation.name} />

@@ -6,16 +6,19 @@ import {
     Tab,
     Tabs,
     TextField,
-    Typography
+    Typography,
+    Button
 } from '@mui/material';
 import React, { useContext, useEffect, useState } from 'react';
 import { DataTypeContext } from '../contexts/DataTypeContext';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { detectDataType } from '../utils/detectDataType';
 import FileExplorer from './FileExplorer';
+import { TourContext } from '../contexts/TourContext';
 
 const InputPanel = ({ tabIndex, setTabIndex, selectedFiles, setSelectedFiles, inputData, setInputData, tree, setTree }) => {
     const showNotification = useContext(NotificationContext);
+    const { tourRegisterSteps, tourMoveNext } = useContext(TourContext);
     const { setInputDataType, validateData, inputDataType } = useContext(DataTypeContext);
     const [isValid, setIsValid] = useState(true);
     const [debounceTimer, setDebounceTimer] = useState(null);
@@ -78,6 +81,63 @@ const InputPanel = ({ tabIndex, setTabIndex, selectedFiles, setSelectedFiles, in
         setDebounceTimer(timer);
     };
 
+    const handleAddExampleData = (e) => {
+        const exampleData = ">seq\nTTGCACTGACCTGAAGTCTTGGAGTATGACCGCGGCTCGGCTCTATCGAACGCTCGATCTAGCGCTATAGGTGGTGCCGAAGGCGGTCTGTCGTCGTA"
+
+        // First, set the example data
+        setInputData(exampleData);
+
+        // Simulate the text change logic by calling handleTextChange directly
+        // This is like what handleTextChange does after setting inputData
+        handleTextChange({
+            target: { value: exampleData }
+        });
+
+        tourMoveNext();
+    };
+
+
+    useEffect(() => {
+        tourRegisterSteps("w-input", [
+            {
+                element: '[data-tour="input-panel"]',
+                popover: {
+                    title: "Input",
+                    description: "This panel lets you choose the input.",
+                },
+            },
+            {
+                element: '[data-tour="input-modes"]',
+                popover: {
+                    title: "Input Modes",
+                    description: "You can choose to input the data manually or upload a file/folder.",
+                },
+            },
+            {
+                element: '[data-tour="input-box"]',
+                popover: {
+                    title: "Input Box",
+                    description: "You can write your input here.",
+                },
+            },
+            {
+                element: '[data-tour="add-example-data"]',
+                popover: {
+                    title: "Add Example Data",
+                    description: "For this tour let's add some example data",
+                    showButtons: ["previous", "exit"]
+                },
+            },
+            {
+                element: '[data-tour="input-type"]',
+                popover: {
+                    title: "Dinamic Input Type",
+                    description: "As we can see the input type changed automatically",
+                },
+            },
+        ]);
+    }, []);
+
     // Cleanup the debounce timer on unmount
     useEffect(() => {
         return () => {
@@ -88,11 +148,11 @@ const InputPanel = ({ tabIndex, setTabIndex, selectedFiles, setSelectedFiles, in
     }, [debounceTimer]);
 
     return (
-        <Paper elevation={3} sx={{
+        <Paper data-tour="input-panel" elevation={3} sx={{
             height: '100%', display: 'flex', flexDirection: 'column'
         }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 2, flexShrink: 0 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Box data-tour="input-type" sx={{ display: 'flex', alignItems: 'center' }}>
                     <Typography variant="h6">Input:</Typography>
                     <Typography variant="body1" color="textSecondary" sx={{ marginLeft: 1 }}>
                         {inputDataType}
@@ -103,6 +163,7 @@ const InputPanel = ({ tabIndex, setTabIndex, selectedFiles, setSelectedFiles, in
             <Divider />
 
             <Tabs
+                data-tour="input-modes"
                 value={tabIndex}
                 onChange={handleTabChange}
                 variant="fullWidth"
@@ -132,6 +193,7 @@ const InputPanel = ({ tabIndex, setTabIndex, selectedFiles, setSelectedFiles, in
                 <Box>
                     < Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: 2 }}>
                         <TextField
+                            data-tour="input-box"
                             variant="outlined"
                             value={inputData}
                             onChange={handleTextChange}
@@ -169,6 +231,17 @@ const InputPanel = ({ tabIndex, setTabIndex, selectedFiles, setSelectedFiles, in
                         <Typography variant="caption" color="textSecondary" sx={{ marginRight: 'auto' }}>
                             {inputData.length}/100000 characters, {numberOfLines} lines
                         </Typography>
+                        {inputData.length == 0 && (
+                            <Button
+                                data-tour="add-example-data"
+                                variant="contained"
+                                color="primary"
+                                sx={{ marginRight: 0 }}
+                                onClick={handleAddExampleData}
+                            >
+                                Add Example Data
+                            </Button>
+                        )}
                     </Box>
                 </Box>
             )}

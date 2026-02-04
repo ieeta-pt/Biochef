@@ -5,6 +5,7 @@ import description from '../../description.json';
 import { DataTypeContext } from '../contexts/DataTypeContext';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { detectDataType } from '../utils/detectDataType';
+import { TourContext } from '../contexts/TourContext';
 
 const ToolInputPanel = ({ tool, inputData, setInputData }) => {
     const [fileName, setFileName] = useState('');
@@ -14,6 +15,30 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
     const [isAcceptable, setIsAcceptable] = useState(true);
     const [toolInputFormat, setToolInputFormat] = useState([]);
     const [selectedInputFormat, setSelectedInputFormat] = useState('');
+    const { tourRegisterSteps } = useContext(TourContext);
+
+    useEffect(() => {
+        tourRegisterSteps("t-input", [
+            {
+                element: '[data-tour="input-section"]',
+                popover: {
+                    title: "Choosing Input",
+                    description: "You can write out your input here",
+                },
+            },
+            {
+                element: '[data-tour="example-input"]',
+                popover: {
+                    title: "Example Input",
+                    description: "Based on the chosen tool input formatyou can choose to use an example input",
+                    // onNextClick: () => {
+                    //     handleInputFormatChange("FASTA");
+                    //     tourMoveNext();
+                    // },
+                },
+            },
+        ]);
+    }, []);
 
     // Define acceptable file extensions
     const acceptableExtensions = ['.fasta', '.fa', '.fastq', '.fq', '.pos', '.svg', '.txt', '.num'];
@@ -155,11 +180,12 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
     const numberOfLines = inputData.split('\n').length;
 
     return (
-        <Paper elevation={3} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <Paper elevation={3} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }} data-tour="input-section">
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 2 }}>
                 <Typography variant="h6">Input</Typography>
                 <Box sx={{ minWidth: 200 }}>
                     <Select
+                        data-tour="example-input"
                         value={selectedInputFormat}
                         onChange={(e) => handleInputFormatChange(e.target.value)}
                         displayEmpty

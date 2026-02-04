@@ -2,11 +2,25 @@ import SaveIcon from '@mui/icons-material/Save';
 import { Box, FormControl, IconButton, MenuItem, Paper, Select, TextField, Tooltip, Typography } from '@mui/material';
 import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
+import { TourContext } from '../contexts/TourContext';
 
 const ToolOutputPanel = ({ outputData, setOutputData, workflow = null, tool = null, inputData, page }) => {
     const [selectedFile, setSelectedFile] = useState('');
     const [displayedOutput, setDisplayedOutput] = useState('');
+    const { tourRegisterSteps } = useContext(TourContext);
+
+    useEffect(() => {
+        tourRegisterSteps("t-output", [
+            {
+                element: '[data-tour="output"]',
+                popover: {
+                    title: "Output",
+                    description: "Here you can see the output",
+                },
+            },
+        ]);
+    }, []);
 
     // Update displayed output when outputData or selectedFile changes
     useEffect(() => {
@@ -73,7 +87,7 @@ const ToolOutputPanel = ({ outputData, setOutputData, workflow = null, tool = nu
     };
 
     return (
-        <Paper elevation={3} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <Paper elevation={3} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }} data-tour="output">
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 2, flexShrink: 0 }}>
                 <Typography variant="h6">Output</Typography>
                 {typeof outputData === 'object' && !Array.isArray(outputData) && Object.keys(outputData).length > 0 && (

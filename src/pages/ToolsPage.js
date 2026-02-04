@@ -1,19 +1,38 @@
 import { Box, Container, Grid, Typography } from '@mui/material';
-import React, { useState } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { loadWasmModule } from '../gtoWasm';
 import AllOperationsPanel from '/src/components/AllOperationsPanel';
 import ToolInputPanel from '/src/components/ToolInputPanel';
 import ToolOutputPanel from '/src/components/ToolOutputPanel';
 import ToolTestingPanel from '/src/components/ToolTestingPanel';
+import { TourContext } from '../contexts/TourContext';
 
 const ToolsPage = () => {
     const [selectedTool, setSelectedTool] = useState(null);
     const [helpMessage, setHelpMessage] = useState('');
     const [inputData, setInputData] = useState('');
     const [outputData, setOutputData] = useState('');
+    const { tourStart, tourRegisterSteps, tourMoveNext } = useContext(TourContext);
+
+    useEffect(() => {
+        if (!localStorage.getItem("toolsPageTourCompleted")) {
+            tourRegisterSteps("t-intro", [
+                {
+                    popover: {
+                        title: "Intro",
+                        description: "Intro",
+                    },
+                },
+            ]);
+
+            tourStart(["t-intro", "t-tools", "t-input", "t-testing"]);
+        }
+    }, []);
+
 
     const handleToolClick = async (tool) => {
         setSelectedTool(tool); // Update the selected tool
+        tourMoveNext(); // TODO maybe check if tour is active
 
         try {
             const startTime = performance.now();

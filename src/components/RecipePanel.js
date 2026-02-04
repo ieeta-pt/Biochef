@@ -54,6 +54,7 @@ import { getExtensionForType } from '../utils/getExtensionDataType';
 import { importRecipeCommand } from '../utils/importRecipeCommand';
 import { importRecipeConfigFile } from '../utils/importRecipeConfigFile';
 import SortableItem from './SortableItem';
+import { TourContext } from '../contexts/TourContext';
 
 export function classifyStderrLines(stderr) {
   const result = { info: [], error: [] };
@@ -104,6 +105,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
   }); // Track which output type is selected for multi-type output tools
   const { validateData } = useContext(DataTypeContext);
   const showNotification = useContext(NotificationContext);
+  const {tourRegisterSteps} = useContext(TourContext)
 
   // Update outputs initialization to handle both modes
   const outputs = React.useMemo(() => {
@@ -123,6 +125,39 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
     useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
   );
+
+  useEffect(() => {
+    tourRegisterSteps("w-workflows", [
+      {
+        element: '[data-tour="data-type"]',
+        popover: {
+          title: "Current Data type",
+          description: "When adding a new tool, the current data type is automatically updated",
+        },
+      },
+      {
+        element: '[data-tour="workflow-steps"]',
+        popover: {
+          title: "Workflow Steps",
+          description: "Each workflow step will be shown here",
+        },
+      },
+      {
+        element: '[data-tour="workflow-output"]',
+        popover: {
+          title: "Workflow Output",
+          description: "The final output can be found here",
+        },
+      },
+      {
+        element: '[data-tour="import-export"]',
+        popover: {
+          title: "Importing and Exporting Workflows",
+          description: "You can also import and export workflows",
+        },
+      },
+    ]);
+  }, []);
 
   // Save only ManualInput outputMap in localStorage
   useEffect(() => {
@@ -1657,6 +1692,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
           Workflow
         </Typography>
         <Typography
+          data-tour="data-type"
           variant="body2"
           color="textSecondary"
           sx={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }}
@@ -1696,7 +1732,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
           </Select>
         )}
       </Box>
-      <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
+      <Box sx={{ flexGrow: 1, overflowY: 'auto' }} data-tour="workflow-steps">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -1903,7 +1939,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
       <Divider />
 
       {workflow.length > 0 && (
-        <Box sx={{ marginTop: 1 }}>
+        <Box sx={{ marginTop: 1 }} data-tour="workflow-output">
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
             <Typography variant="h6" sx={{ paddingBottom: 2 }}>{typeof outputs?.[workflow[workflow.length - 1]?.id] === 'object' ? 'Outputs' : 'Output'}</Typography>
             <Box
@@ -1999,7 +2035,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
 
       <Divider sx={{ marginY: 2 }} />
 
-      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, position: 'relative' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, position: 'relative' }} data-tour="import-export">
         {/* Overlay to block interaction */}
         {(Object.values(validationErrors).some(error => Object.keys(error).length > 0)) || (tabIndex === 1 && selectedFiles.size === 0) && (
           <Box

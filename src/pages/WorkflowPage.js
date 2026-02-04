@@ -12,7 +12,7 @@ import ErrorBoundary from '/src/components/ErrorBoundary'; // Ensure this compon
 import OperationsPanel from '/src/components/OperationsPanel';
 import RecipePanel from '/src/components/RecipePanel';
 import { DataTypeContext } from '/src/contexts/DataTypeContext';
-
+import { TourContext } from '../contexts/TourContext';
 
 const WorkflowPage = () => {
     const [workflow, setWorkflow] = useState([]);
@@ -24,6 +24,7 @@ const WorkflowPage = () => {
     const [isVariableLoaded, setIsVariableLoaded] = useState(false); // Control if the workflow was loaded
     const [selectedFiles, setSelectedFiles] = useState(new Set()); // Track selected files
     const [tabIndex, setTabIndex] = useState(0);    // Track the selected tab index for input mode
+    const { tourStart, tourRegisterSteps } = useContext(TourContext);
 
     const initialTree = {
         id: 'root',
@@ -56,6 +57,25 @@ const WorkflowPage = () => {
 
         setIsVariableLoaded(true); // Set flag to true after loading workflow
     }, []);
+
+    useEffect(() => {
+        tourRegisterSteps("w-intro", [
+            {
+                popover: {
+                    title: "Intro",
+                    description: "Intro",
+                },
+            },
+        ]);
+    }, []);
+
+    useEffect(() => {
+        if (isVariableLoaded) {
+            if (workflow.length == 0 && inputData == "") {
+                tourStart(["w-intro", "w-input", "w-operations", "w-workflows"]);
+            }
+        }
+    }, [isVariableLoaded]);
 
     // Save workflow in localStorage
     useEffect(() => {
