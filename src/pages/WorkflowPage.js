@@ -3,7 +3,8 @@ import {
     Container,
     Grid,
     useMediaQuery,
-    useTheme
+    useTheme,
+    Button
 } from '@mui/material';
 import React, { useContext, useEffect, useState } from 'react';
 import description from '../../description.json';
@@ -58,21 +59,47 @@ const WorkflowPage = () => {
         setIsVariableLoaded(true); // Set flag to true after loading workflow
     }, []);
 
-    useEffect(() => {
-        tourRegisterSteps("w-intro", [
-            {
-                popover: {
-                    title: "Intro",
-                    description: "Intro",
-                },
-            },
-        ]);
-    }, []);
+    const runWorkflowTour = () => {
+        tourStart(["w-intro", "w-input", "w-operations", "w-workflows"]);
+        localStorage.setItem("workflowPageTourCompleted", "true");
+    };
+
+    // NOTE (João): maybe this is too much?
+    // I'm not sure if we need to reset everything
+    // but if we dont the current tour doesn't work properly
+    const handleRerunTour = () => {
+        // Clear tour completion flags
+        localStorage.removeItem("workflowPageTourCompleted");
+
+        // Clear stored localStorage values
+        localStorage.removeItem('workflow');
+        localStorage.removeItem('inputData');
+        localStorage.removeItem('inputDataType');
+
+        // Reset workflow and input data
+        setWorkflow([]);
+        setInputData('');
+        setInputDataType('UNKNOWN');
+        setTree(initialTree);
+        setSelectedFiles(new Set());
+        setTabIndex(0);
+
+        runWorkflowTour();
+    };
 
     useEffect(() => {
         if (isVariableLoaded) {
-            if (workflow.length == 0 && inputData == "") {
-                tourStart(["w-intro", "w-input", "w-operations", "w-workflows"]);
+            tourRegisterSteps("w-intro", [
+                {
+                    popover: {
+                        title: "Welcome to the Workflows Page",
+                        description: "This page provides an interactive environment for building and managing custom workflows.<br /><br /> Users can load input data, select tools, configure parameters, and chain operations together to create a processing pipeline.<br /><br />The following tour highlights the main components of the interface and how to use them together to set up your workflow.<br /><br />You can re-run this tour at any time using the button on the top right.",
+                    },
+                },
+            ]);
+
+            if (!localStorage.getItem("workflowPageTourCompleted")) {
+                runWorkflowTour();
             }
         }
     }, [isVariableLoaded]);
@@ -107,7 +134,6 @@ const WorkflowPage = () => {
             localStorage.setItem('inputDataType', inputDataType);
         }
     }, [inputDataType, isVariableLoaded]);
-
 
     const handleAddOperation = (toolName, insertAtIndex = null, params = {}) => {
         const uniqueId = `${toolName}-${Date.now()}`;
@@ -152,6 +178,19 @@ const WorkflowPage = () => {
                         overflow: 'hidden', // Prevents overflow beyond the container
                     }}
                 >
+                    <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={handleRerunTour}
+                        sx={{
+                            position: 'fixed',
+                            top: 80,      // below app bar
+                            right: 16,
+                            zIndex: 1200,
+                        }}
+                    >
+                        Re-run tour
+                    </Button>
                     <Grid container spacing={2} sx={{ flex: 1, height: '100%', overflow: 'hidden' }}>
                         {/* Operations Panel */}
                         <Grid

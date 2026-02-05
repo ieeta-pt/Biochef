@@ -96,43 +96,42 @@ const InputPanel = ({ tabIndex, setTabIndex, selectedFiles, setSelectedFiles, in
         tourMoveNext();
     };
 
-
     useEffect(() => {
         tourRegisterSteps("w-input", [
             {
                 element: '[data-tour="input-panel"]',
                 popover: {
                     title: "Input",
-                    description: "This panel lets you choose the input.",
+                    description: "This panel allows you to select the input source for your workflow.",
                 },
             },
             {
                 element: '[data-tour="input-modes"]',
                 popover: {
                     title: "Input Modes",
-                    description: "You can choose to input the data manually or upload a file/folder.",
+                    description: "You can choose to input your data either manually or by uploading a file or folder.",
                 },
             },
             {
                 element: '[data-tour="input-box"]',
                 popover: {
                     title: "Input Box",
-                    description: "You can write your input here.",
+                    description: "Here, you can type or paste your input data directly into the box.",
                 },
             },
             {
                 element: '[data-tour="add-example-data"]',
                 popover: {
                     title: "Add Example Data",
-                    description: "For this tour let's add some example data",
-                    showButtons: ["previous", "exit"]
+                    description: "For this tour, let's use some example data to demonstrate the process.",
+                    showButtons: ["previous", "exit"],
                 },
             },
             {
                 element: '[data-tour="input-type"]',
                 popover: {
-                    title: "Dinamic Input Type",
-                    description: "As we can see the input type changed automatically",
+                    title: "Dynamic Input Type",
+                    description: "As you enter or select the input data, the input type will automatically adjust to match the format.",
                 },
             },
         ]);

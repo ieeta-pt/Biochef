@@ -48,8 +48,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
 
     useEffect(() => {
         if (!inputData) return;
-        if (localStorage.getItem("toolsPageTourCompleted")) return;
-        console.log(tourIsActive)
+        if (localStorage.getItem("toolsPageSecondTourCompleted")) return;
         if (tourIsActive) return;
 
         tourRegisterSteps("t-testing", [
@@ -78,7 +77,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
         ]);
 
         tourStart(["t-testing", "t-output"]);
-        localStorage.setItem("toolsPageTourCompleted", "true");
+        localStorage.setItem("toolsPageSecondTourCompleted", "true");
     }, [inputData, tourIsActive]);
 
 

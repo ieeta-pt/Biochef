@@ -84,15 +84,15 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
         element: '[data-tour="operations-panel"]',
         popover: {
           title: "Operations",
-          description: "This panel lets you choose tools.",
+          description: "This panel allows you to select tools for your workflow.<br /><br />You can hover over a tool to see its description, collapse tool groups for easier navigation and use the search bar to quickly find the tool you're looking for.<br /><br />The available tools are dynamically filtered based on the input type you've selected.",
         },
       },
       {
         element: '[data-tour="add-operation"]',
         popover: {
-          title: "Add tools",
-          description: "Click here to add a tool to your workflow.",
-          showButtons: ["previous", "exit"]
+          title: "Add Tools",
+          description: "For this tour, let's add this tool to your workflow.",
+          showButtons: ["previous", "exit"],
         },
       },
     ]);

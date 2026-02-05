@@ -14,6 +14,11 @@ const ToolsPage = () => {
     const [outputData, setOutputData] = useState('');
     const { tourStart, tourRegisterSteps, tourMoveNext } = useContext(TourContext);
 
+    const runToolsTour = () => {
+        tourStart(["t-intro", "t-tools", "t-input", "t-testing"]);
+        localStorage.setItem("toolsPageTourCompleted", "true");
+    };
+
     useEffect(() => {
         tourRegisterSteps("t-intro", [
             {
@@ -24,13 +29,14 @@ const ToolsPage = () => {
             },
         ]);
         if (!localStorage.getItem("toolsPageTourCompleted")) {
-            tourStart(["t-intro", "t-tools", "t-input", "t-testing"]);
+            runToolsTour();
         }
     }, []);
 
     const handleRerunTour = () => {
         localStorage.removeItem("toolsPageTourCompleted");
-        tourStart(["t-intro", "t-tools", "t-input", "t-testing"]);
+        localStorage.removeItem("toolsPageSecondTourCompleted");
+        runToolsTour();
     };
 
     const handleToolClick = async (tool) => {
