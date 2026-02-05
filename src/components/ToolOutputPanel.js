@@ -15,12 +15,20 @@ const ToolOutputPanel = ({ outputData, setOutputData, workflow = null, tool = nu
             {
                 element: '[data-tour="output"]',
                 popover: {
-                    title: "Output",
-                    description: "Here you can see the output",
+                    title: "Viewing Output",
+                    description: "This section displays the results of the tool after it has finished running.",
+                },
+            },
+            {
+                element: '[data-tour="export-output"]',
+                popover: {
+                    title: "Exporting Output",
+                    description: "If you want to save your results, you can export the output to a file using this icon.",
                 },
             },
         ]);
     }, []);
+
 
     // Update displayed output when outputData or selectedFile changes
     useEffect(() => {
@@ -141,7 +149,7 @@ const ToolOutputPanel = ({ outputData, setOutputData, workflow = null, tool = nu
                 }}
             >
                 <Tooltip title="Save Output">
-                    <IconButton color={'primary'} onClick={handleSaveOutput}>
+                    <IconButton color={'primary'} onClick={handleSaveOutput} data-tour="export-output">
                         <SaveIcon />
                     </IconButton>
                 </Tooltip>

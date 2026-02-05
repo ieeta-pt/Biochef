@@ -32,7 +32,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
     const [helpMessages, setHelpMessages] = useState({}); // To store help messages
     const [toolParameterFiles, setToolParameterFiles] = useState({}); // To store tool parameter files
     const { validateData } = useContext(DataTypeContext);
-    const { tourRegisterSteps, tourStart, tourMoveNext } = useContext(TourContext);
+    const { tourRegisterSteps, tourStart, tourMoveNext, tourIsActive } = useContext(TourContext);
 
     // Find tool configuration and supported input formats
     const toolConfig = description.tools.find((t) => t.name === `gto_${tool.name}`);
@@ -49,33 +49,38 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
     useEffect(() => {
         if (!inputData) return;
         if (localStorage.getItem("toolsPageTourCompleted")) return;
+        console.log(tourIsActive)
+        if (tourIsActive) return;
+
         tourRegisterSteps("t-testing", [
             {
                 element: '[data-tour="testing-section"]',
                 popover: {
                     title: "Testing the Tool",
-                    description: "Here you can set parameters and run the tool",
+                    description: "In this section, you can configure the tool's parameters and run the analysis.<br /><br />Let's walk through the setup process.",
                 },
             },
             {
                 element: '[data-tour="parameters"]',
                 popover: {
                     title: "Choosing Parameters",
-                    description: "There is optional and required parameters that you can activate and give values to",
+                    description: "You can set both required and optional parameters for the tool.<br /><br />You may activate them and provide the necessary values before running the tool.",
                 },
             },
             {
                 element: '[data-tour="run-tool"]',
                 popover: {
                     title: "Run Tool",
-                    description: "You can now run the tool",
+                    description: "Once you've set the parameters, click here to run the tool and start the analysis.",
                     showButtons: ["previous", "exit"]
                 },
             },
         ]);
+
         tourStart(["t-testing", "t-output"]);
         localStorage.setItem("toolsPageTourCompleted", "true");
-    }, [inputData]);
+    }, [inputData, tourIsActive]);
+
 
     useEffect(() => {
         if (tool && tool.name) {

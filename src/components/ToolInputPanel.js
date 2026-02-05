@@ -15,7 +15,7 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
     const [isAcceptable, setIsAcceptable] = useState(true);
     const [toolInputFormat, setToolInputFormat] = useState([]);
     const [selectedInputFormat, setSelectedInputFormat] = useState('');
-    const { tourRegisterSteps } = useContext(TourContext);
+    const { tourRegisterSteps, tourIsActive, tourMoveNext } = useContext(TourContext);
 
     useEffect(() => {
         tourRegisterSteps("t-input", [
@@ -23,14 +23,21 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
                 element: '[data-tour="input-section"]',
                 popover: {
                     title: "Choosing Input",
-                    description: "You can write out your input here",
+                    description: "In this section, you can manually enter or paste your input data.<br /><br />This is where you configure the data the tool will use to run its analysis.",
+                },
+            },
+            {
+                element: '[data-tour="import-input"]',
+                popover: {
+                    title: "Importing Data",
+                    description: "You could also use this icon to import your files.",
                 },
             },
             {
                 element: '[data-tour="example-input"]',
                 popover: {
                     title: "Example Input",
-                    description: "Based on the chosen tool input formatyou can choose to use an example input",
+                    description: "Based on the selected tool's input format, you can choose to use an example input.<br /><br />This helps you get started quickly with predefined data that matches the expected format.",
                     // onNextClick: () => {
                     //     handleInputFormatChange("FASTA");
                     //     tourMoveNext();
@@ -98,6 +105,7 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
     };
 
     const handleFileUpload = (event) => {
+        if (tourIsActive) tourMoveNext();
         const file = event.target.files[0];
         if (file) {
             const extension = `.${file.name.split('.').pop().toLowerCase()}`;
@@ -255,6 +263,7 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
                             color: 'white',
                         }}
                         disabled={!isAcceptable}
+                        data-tour="import-input"
                     >
                         <UploadIcon fontSize="small" />
                         <input

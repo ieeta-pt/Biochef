@@ -32,14 +32,14 @@ const AllOperationsPanel = ({ onToolClick }) => {
                 element: '[data-tour="tool-section"]',
                 popover: {
                     title: "Selecting Tools",
-                    description: "In this section you can select the tool that you want to run",
+                    description: "This panel lists all available tools.<br /><br />Hover a tool to see a brief description, collapse categories to simplify the view, and use the search box to quickly find a specific tool.",
                 },
             },
             {
                 element: '[data-tour="selected-tool"]',
                 popover: {
-                    title: "Tool",
-                    description: "Let's select this tool for this example",
+                    title: "Select a Tool",
+                    description: "For this tour, let's select this tool.",
                     showButtons: ["previous", "exit"]
                 },
             },
@@ -49,15 +49,15 @@ const AllOperationsPanel = ({ onToolClick }) => {
     useEffect(() => {
         if (tourIsActive) {
             const targetOperationName = 'fasta_extract';
-    
+
             const categoryWithTarget = Object.entries(operationCategories)
                 .find(([_, operations]) =>
                     operations.some(op => op.name === targetOperationName)
                 );
-    
+
             if (categoryWithTarget) {
                 const [categoryName] = categoryWithTarget;
-    
+
                 setExpandedCategories(prev => ({
                     ...prev,
                     [categoryName]: true,
@@ -94,7 +94,7 @@ const AllOperationsPanel = ({ onToolClick }) => {
     };
 
     return (
-        <Paper elevation={3} sx={{ padding: 2, height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}  data-tour="tool-section">
+        <Paper elevation={3} sx={{ padding: 2, height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }} data-tour="tool-section">
             <Typography variant="h6" align="center" gutterBottom>
                 All Tools
             </Typography>

@@ -24,6 +24,9 @@ export const TourProvider = ({ children }) => {
       animate: true,
       overlayOpacity: 0.6,
       steps,
+      onDestroyed: () => {
+        setTourIsActive(false);
+      },
     });
 
     driverObjRef.current.drive();

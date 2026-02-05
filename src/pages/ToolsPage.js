@@ -1,4 +1,4 @@
-import { Box, Container, Grid, Typography } from '@mui/material';
+import { Box, Container, Grid, Typography, Button } from '@mui/material';
 import React, { useState, useContext, useEffect } from 'react';
 import { loadWasmModule } from '../gtoWasm';
 import AllOperationsPanel from '/src/components/AllOperationsPanel';
@@ -15,20 +15,23 @@ const ToolsPage = () => {
     const { tourStart, tourRegisterSteps, tourMoveNext } = useContext(TourContext);
 
     useEffect(() => {
-        if (!localStorage.getItem("toolsPageTourCompleted")) {
-            tourRegisterSteps("t-intro", [
-                {
-                    popover: {
-                        title: "Intro",
-                        description: "Intro",
-                    },
+        tourRegisterSteps("t-intro", [
+            {
+                popover: {
+                    title: "Welcome to the Tools Page",
+                    description: "This page provides an interactive environment for exploring and running tools directly in the browser. Users can select a tool, configure inputs, execute it, and inspect outputs.<br /><br />The following tour briefly highlights the main components of the interface and how they are used together.<br /><br />You can re-run this tour at any time using the button on the top right.",
                 },
-            ]);
-
+            },
+        ]);
+        if (!localStorage.getItem("toolsPageTourCompleted")) {
             tourStart(["t-intro", "t-tools", "t-input", "t-testing"]);
         }
     }, []);
 
+    const handleRerunTour = () => {
+        localStorage.removeItem("toolsPageTourCompleted");
+        tourStart(["t-intro", "t-tools", "t-input", "t-testing"]);
+    };
 
     const handleToolClick = async (tool) => {
         setSelectedTool(tool); // Update the selected tool
@@ -71,6 +74,20 @@ const ToolsPage = () => {
                     height: '100%',
                 }}
             >
+                <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={handleRerunTour}
+                    sx={{
+                        position: 'fixed',
+                        top: 80,      // below app bar
+                        right: 16,
+                        zIndex: 1200,
+                    }}
+                >
+                    Re-run tour
+                </Button>
+
                 <Grid container spacing={2} sx={{ flex: 1, overflow: 'hidden' }}>
                     {/* Tool Selection Panel */}
                     <Grid
