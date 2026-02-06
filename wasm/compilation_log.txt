@@ -8,7 +8,7 @@ Collecting Jinja2 (from -r /home/runner/work/Biochef/Biochef/requirements.txt (l
 Collecting MarkupSafe>=2.0 (from Jinja2->-r /home/runner/work/Biochef/Biochef/requirements.txt (line 1))
   Downloading markupsafe-3.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.7 kB)
 Downloading jinja2-3.1.6-py3-none-any.whl (134 kB)
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 134.9/134.9 kB 8.9 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 134.9/134.9 kB 9.5 MB/s eta 0:00:00
 Downloading markupsafe-3.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (22 kB)
 Installing collected packages: MarkupSafe, Jinja2
 Successfully installed Jinja2-3.1.6 MarkupSafe-3.0.3
