@@ -27,15 +27,16 @@ const AboutPage = () => {
                             About BioChef
                         </Typography>
                         <Typography variant="body1" color="text.secondary">
-                            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla vulputate elit odio, eu fringilla nunc efficitur ac. Praesent molestie pharetra ante nec egestas. In hac habitasse platea dictumst. Proin semper hendrerit fringilla. In hac habitasse platea dictumst. Donec sed egestas sem, pulvinar ullamcorper quam. Donec leo purus, commodo ut sapien vitae, aliquam ultricies nibh. Vivamus efficitur metus nibh, ut faucibus purus hendrerit sed.
+                            BioChef is a browser-based platform designed to democratize access to bioinformatics tools, making genomic data analysis more accessible to researchers without deep computational expertise. By leveraging WebAssembly (WASM), BioChef allows complex C-based genomic tools to run directly in a browser, ensuring data privacy and eliminating the need for installation or command-line expertise.
+                            <br /><br />
+                            The platform aims to bridge the gap between biologists, healthcare professionals, and computational tools, improving the efficiency and autonomy of genomics research workflows.
                         </Typography>
                     </Grid>
 
-                    {/* Credits / Contributors */}
                     <Grid item xs={12}>
                         <Divider sx={{ mb: 2 }} />
                         <Typography variant="h5" gutterBottom>
-                            Credits & Contributors
+                            Contributors
                         </Typography>
                         {/* <Typography variant="body1" paragraph>
                             BioChef is developed and maintained by researchers and engineers from:
@@ -43,13 +44,39 @@ const AboutPage = () => {
 
                         <List dense>
                             <ListItem>
-                                <ListItemText primary="Lorem ipsum" />
+                                <ListItemText primary="José Luis Oliveira - Project Supervisor" />
                             </ListItem>
                             <ListItem>
-                                <ListItemText primary="Lorem ipsum" />
+                                <ListItemText primary="Jorge Miguel Silva - Project Supervisor" />
                             </ListItem>
                             <ListItem>
-                                <ListItemText primary="Lorem ipsum" />
+                                <ListItemText primary="Joaquim Rosa - Main Developer" />
+                            </ListItem>
+                            <ListItem>
+                                <ListItemText primary="João Andrade - Contributor" />
+                            </ListItem>
+                        </List>
+
+                    </Grid>
+
+                    <Grid item xs={12}>
+                        <Divider sx={{ mb: 2 }} />
+                        <Typography variant="h5" gutterBottom>
+                            Credits
+                        </Typography>
+
+                        <List dense>
+                            <ListItem>
+                                <ListItemText
+                                    primary={
+                                        <>
+                                            GTO Toolkit:{' '}
+                                            <Link href="https://github.com/ieeta-pt/gto" target="_blank" rel="noopener">
+                                                Github
+                                            </Link>
+                                        </>
+                                    }
+                                />
                             </ListItem>
                         </List>
                     </Grid>
@@ -103,20 +130,14 @@ const AboutPage = () => {
                         <List dense>
                             <ListItem>
                                 <ListItemText
-                                    primary="vX.X.X"
-                                    secondary="Lorem ipsum"
+                                    primary="v1.0.0"
+                                    secondary="Initial release of BioChef"
                                 />
                             </ListItem>
                             <ListItem>
                                 <ListItemText
-                                    primary="vX.X.X"
-                                    secondary="Lorem ipsum"
-                                />
-                            </ListItem>
-                            <ListItem>
-                                <ListItemText
-                                    primary="vX.X.X"
-                                    secondary="Lorem ipsum"
+                                    primary="v1.1.0"
+                                    secondary="Introduced an 'About' page and implemented interactive tours for the Tools and Workflows pages."
                                 />
                             </ListItem>
                         </List>
@@ -126,5 +147,6 @@ const AboutPage = () => {
         </Box>
     );
 };
+
 
 export default AboutPage;
