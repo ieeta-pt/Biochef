@@ -38,9 +38,6 @@ const AboutPage = () => {
                         <Typography variant="h5" gutterBottom>
                             Contributors
                         </Typography>
-                        {/* <Typography variant="body1" paragraph>
-                            BioChef is developed and maintained by researchers and engineers from:
-                        </Typography> */}
 
                         <List dense>
                             <ListItem>

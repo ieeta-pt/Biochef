@@ -12,7 +12,7 @@ const ToolsPage = () => {
     const [helpMessage, setHelpMessage] = useState('');
     const [inputData, setInputData] = useState('');
     const [outputData, setOutputData] = useState('');
-    const { tourStart, tourRegisterSteps, tourMoveNext } = useContext(TourContext);
+    const { tourStart, tourRegisterSteps, tourMoveNext, tourIsActive } = useContext(TourContext);
 
     const runToolsTour = () => {
         tourStart(["t-intro", "t-tools", "t-input", "t-testing"]);
@@ -41,7 +41,7 @@ const ToolsPage = () => {
 
     const handleToolClick = async (tool) => {
         setSelectedTool(tool); // Update the selected tool
-        tourMoveNext(); // TODO maybe check if tour is active
+        if(tourIsActive) tourMoveNext();
 
         try {
             const startTime = performance.now();

@@ -37,7 +37,7 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
                 element: '[data-tour="example-input"]',
                 popover: {
                     title: "Example Input",
-                    description: "Based on the selected tool's input format, you can choose to use an example input.<br /><br />This helps you get started quickly with predefined data that matches the expected format.",
+                    description: "Based on the selected tool's input format, you can choose to use an example input.<br /><br />This helps you get started quickly with predefined data that matches the expected format.<br /><br />Now choose an example input or upload a file and the tour will continue from there.",
                     // onNextClick: () => {
                     //     handleInputFormatChange("FASTA");
                     //     tourMoveNext();
