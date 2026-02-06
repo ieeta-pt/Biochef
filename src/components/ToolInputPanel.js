@@ -5,6 +5,7 @@ import description from '../../description.json';
 import { DataTypeContext } from '../contexts/DataTypeContext';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { detectDataType } from '../utils/detectDataType';
+import { TourContext } from '../contexts/TourContext';
 
 const ToolInputPanel = ({ tool, inputData, setInputData }) => {
     const [fileName, setFileName] = useState('');
@@ -14,6 +15,37 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
     const [isAcceptable, setIsAcceptable] = useState(true);
     const [toolInputFormat, setToolInputFormat] = useState([]);
     const [selectedInputFormat, setSelectedInputFormat] = useState('');
+    const { tourRegisterSteps, tourIsActive, tourMoveNext } = useContext(TourContext);
+
+    useEffect(() => {
+        tourRegisterSteps("t-input", [
+            {
+                element: '[data-tour="input-section"]',
+                popover: {
+                    title: "Choosing Input",
+                    description: "In this section, you can manually enter or paste your input data.<br /><br />This is where you configure the data the tool will use to run its analysis.",
+                },
+            },
+            {
+                element: '[data-tour="import-input"]',
+                popover: {
+                    title: "Importing Data",
+                    description: "You could also use this icon to import your files.",
+                },
+            },
+            {
+                element: '[data-tour="example-input"]',
+                popover: {
+                    title: "Example Input",
+                    description: "Based on the selected tool's input format, you can choose to use an example input.<br /><br />This helps you get started quickly with predefined data that matches the expected format.<br /><br />Now choose an example input or upload a file and the tour will continue from there.",
+                    // onNextClick: () => {
+                    //     handleInputFormatChange("FASTA");
+                    //     tourMoveNext();
+                    // },
+                },
+            },
+        ]);
+    }, []);
 
     // Define acceptable file extensions
     const acceptableExtensions = ['.fasta', '.fa', '.fastq', '.fq', '.pos', '.svg', '.txt', '.num'];
@@ -73,6 +105,7 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
     };
 
     const handleFileUpload = (event) => {
+        if (tourIsActive) tourMoveNext();
         const file = event.target.files[0];
         if (file) {
             const extension = `.${file.name.split('.').pop().toLowerCase()}`;
@@ -155,11 +188,12 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
     const numberOfLines = inputData.split('\n').length;
 
     return (
-        <Paper elevation={3} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <Paper elevation={3} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }} data-tour="input-section">
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 2 }}>
                 <Typography variant="h6">Input</Typography>
                 <Box sx={{ minWidth: 200 }}>
                     <Select
+                        data-tour="example-input"
                         value={selectedInputFormat}
                         onChange={(e) => handleInputFormatChange(e.target.value)}
                         displayEmpty
@@ -229,6 +263,7 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
                             color: 'white',
                         }}
                         disabled={!isAcceptable}
+                        data-tour="import-input"
                     >
                         <UploadIcon fontSize="small" />
                         <input

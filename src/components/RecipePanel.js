@@ -54,6 +54,7 @@ import { getExtensionForType } from '../utils/getExtensionDataType';
 import { importRecipeCommand } from '../utils/importRecipeCommand';
 import { importRecipeConfigFile } from '../utils/importRecipeConfigFile';
 import SortableItem from './SortableItem';
+import { TourContext } from '../contexts/TourContext';
 
 export function classifyStderrLines(stderr) {
   const result = { info: [], error: [] };
@@ -104,6 +105,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
   }); // Track which output type is selected for multi-type output tools
   const { validateData } = useContext(DataTypeContext);
   const showNotification = useContext(NotificationContext);
+  const { tourRegisterSteps, tourIsActive, tourMoveNext } = useContext(TourContext)
 
   // Update outputs initialization to handle both modes
   const outputs = React.useMemo(() => {
@@ -123,6 +125,47 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
     useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
   );
+
+  useEffect(() => {
+    tourRegisterSteps("w-workflows", [
+      {
+        element: '[data-tour="data-type"]',
+        popover: {
+          title: "Current Data Type",
+          description: "The current data type determines the format of the data you'll be working with.<br /><br />It is automatically updated as you add tools to your workflow, ensuring compatibility between different steps.",
+        },
+      },
+      {
+        element: '[data-tour="workflow-steps"]',
+        popover: {
+          title: "Workflow Steps",
+          description: "Each tool you add will appear as a distinct step in the workflow.<br /><br />These steps are executed sequentially to process your data, allowing you to visualize and adjust your workflow as needed.",
+        },
+      },
+      {
+        element: '[data-tour="workflow-output"]',
+        popover: {
+          title: "Workflow Output",
+          description: "After completing the workflow, the output will be displayed here.",
+        },
+      },
+      {
+        element: '[data-tour="import-export"]',
+        popover: {
+          title: "Importing and Exporting Workflows",
+          description: "You can save your workflows for later use by exporting them.<br /><br />Additionally, you can import previously saved workflows, allowing for easy reuse and sharing across different projects.",
+        },
+      },
+      {
+        element: '[data-tour="import-example"]',
+        popover: {
+          title: "Import Example Recipe",
+          description: "Click here to quickly load an example recipe. This is a great way to get started and understand the structure of workflows within the tool, especially if you're new to the platform.",
+          showButtons: ["previous", "exit"],
+        },
+      },
+    ]);
+  }, []);
 
   // Save only ManualInput outputMap in localStorage
   useEffect(() => {
@@ -441,6 +484,28 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
       setSelectedInput('');
     }
   }, [workflowInput, tabIndex]);
+
+  const fetchAndSetExampleRecipe = async () => {
+    const response = await fetch('/example_recipe.json');
+    const fileBlob = await response.blob();
+
+    const file = new File([fileBlob], 'example_recipe.json', { type: 'application/json' });
+
+    importRecipeConfigFile(
+      file,
+      setWorkflow,
+      setInputData,
+      setInputDataType,
+      showNotification,
+      setOpenImportDialog,
+      setTabIndex,
+      tree,
+      setTree,
+      setSelectedFiles,
+    );
+
+    if (tourIsActive) tourMoveNext();
+  };
 
   // Load help message for a tool
   const loadHelpMessage = async (toolName) => {
@@ -1657,6 +1722,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
           Workflow
         </Typography>
         <Typography
+          data-tour="data-type"
           variant="body2"
           color="textSecondary"
           sx={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }}
@@ -1696,7 +1762,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
           </Select>
         )}
       </Box>
-      <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
+      <Box sx={{ flexGrow: 1, overflowY: 'auto' }} data-tour="workflow-steps">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -1903,7 +1969,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
       <Divider />
 
       {workflow.length > 0 && (
-        <Box sx={{ marginTop: 1 }}>
+        <Box sx={{ marginTop: 1 }} data-tour="workflow-output">
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
             <Typography variant="h6" sx={{ paddingBottom: 2 }}>{typeof outputs?.[workflow[workflow.length - 1]?.id] === 'object' ? 'Outputs' : 'Output'}</Typography>
             <Box
@@ -1999,7 +2065,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
 
       <Divider sx={{ marginY: 2 }} />
 
-      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, position: 'relative' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, position: 'relative' }} data-tour="import-export">
         {/* Overlay to block interaction */}
         {(Object.values(validationErrors).some(error => Object.keys(error).length > 0)) || (tabIndex === 1 && selectedFiles.size === 0) && (
           <Box
@@ -2041,6 +2107,15 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
           startIcon={<FileUpload />}
         >
           Import Recipe
+        </Button>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => fetchAndSetExampleRecipe()}
+          startIcon={<FileUpload />}
+          data-tour="import-example"
+        >
+          Import Example
         </Button>
       </Box>
 
@@ -2184,7 +2259,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
       <Dialog open={openImportDialog} onClose={() => setOpenImportDialog(false)} maxWidth="md" fullWidth>
         <DialogTitle>Import Recipe</DialogTitle>
         <DialogContent>
-          <Typography variant="body1" gutterBottom>
+          <Typography variant="body1" gutterBottom data-tour="import-recipe">
             Please choose an option to import your workflow:
           </Typography>
 

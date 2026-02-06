@@ -24,6 +24,7 @@ import { NotificationContext } from '../contexts/NotificationContext';
 import { loadWasmModule } from '../gtoWasm';
 import { detectDataType } from '../utils/detectDataType';
 import { processFile } from '../utils/fileProcessor';
+import { TourContext } from '../contexts/TourContext';
 
 const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
     const [validationErrors, setValidationErrors] = useState({}); // To store validation errors
@@ -31,6 +32,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
     const [helpMessages, setHelpMessages] = useState({}); // To store help messages
     const [toolParameterFiles, setToolParameterFiles] = useState({}); // To store tool parameter files
     const { validateData } = useContext(DataTypeContext);
+    const { tourRegisterSteps, tourStart, tourMoveNext, tourIsActive } = useContext(TourContext);
 
     // Find tool configuration and supported input formats
     const toolConfig = description.tools.find((t) => t.name === `gto_${tool.name}`);
@@ -43,6 +45,41 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
     );
 
     const showNotification = useContext(NotificationContext);
+
+    useEffect(() => {
+        if (!inputData) return;
+        if (localStorage.getItem("toolsPageSecondTourCompleted")) return;
+        if (tourIsActive) return;
+
+        tourRegisterSteps("t-testing", [
+            {
+                element: '[data-tour="testing-section"]',
+                popover: {
+                    title: "Testing the Tool",
+                    description: "In this section, you can configure the tool's parameters and run the analysis.<br /><br />Let's walk through the setup process.",
+                },
+            },
+            {
+                element: '[data-tour="parameters"]',
+                popover: {
+                    title: "Choosing Parameters",
+                    description: "You can set both required and optional parameters for the tool.<br /><br />You may activate them and provide the necessary values before running the tool.",
+                },
+            },
+            {
+                element: '[data-tour="run-tool"]',
+                popover: {
+                    title: "Run Tool",
+                    description: "Once you've set the parameters, click here to run the tool and start the analysis.",
+                    showButtons: ["previous", "exit"]
+                },
+            },
+        ]);
+
+        tourStart(["t-testing", "t-output"]);
+        localStorage.setItem("toolsPageSecondTourCompleted", "true");
+    }, [inputData, tourIsActive]);
+
 
     useEffect(() => {
         if (tool && tool.name) {
@@ -179,6 +216,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
     };
 
     const handleExecuteTool = async (tool) => {
+        tourMoveNext();
         try {
             // Validate parameters before executing the tool
             const isValid = validateParameters(tool);
@@ -295,7 +333,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
         const toolParameters = toolConfig.parameters;
 
         return (
-            <Box sx={{ marginTop: 1 }}>
+            <Box sx={{ marginTop: 1 }} data-tour="parameters">
                 {/* Required Flags */}
                 {requiredFlags.length > 0 && (
                     <Box>
@@ -547,6 +585,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
         <Paper
             elevation={3}
             sx={{ padding: 2, height: '100%', display: 'flex', flexDirection: 'column' }}
+            data-tour="testing-section"
         >
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
                 <Typography variant="h6" gutterBottom>
@@ -622,6 +661,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
                         onClick={() => handleExecuteTool(tool)}
                         startIcon={<PlayArrow />}
                         sx={{ marginTop: 2 }} // Adiciona espaçamento no topo
+                        data-tour="run-tool"
                     >
                         Run Tool
                     </Button>

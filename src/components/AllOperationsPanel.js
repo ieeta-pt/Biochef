@@ -13,17 +13,59 @@ import {
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import debounce from 'lodash.debounce';
-import React, { useContext, useMemo, useState } from 'react';
+import React, { useContext, useMemo, useState, useEffect } from 'react';
 import { DataTypeContext } from '../contexts/DataTypeContext';
 import { NotificationContext } from '../contexts/NotificationContext';
 import operationCategories from '../utils/operationCategories';
-
+import { TourContext } from '../contexts/TourContext';
 
 const AllOperationsPanel = ({ onToolClick }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [expandedCategories, setExpandedCategories] = useState({});
     const { dataType } = useContext(DataTypeContext);
     const showNotification = useContext(NotificationContext);
+    const { tourRegisterSteps, tourIsActive } = useContext(TourContext);
+
+    useEffect(() => {
+        tourRegisterSteps("t-tools", [
+            {
+                element: '[data-tour="tool-section"]',
+                popover: {
+                    title: "Selecting Tools",
+                    description: "This panel lists all available tools.<br /><br />Hover a tool to see a brief description, collapse categories to simplify the view, and use the search box to quickly find a specific tool.",
+                },
+            },
+            {
+                element: '[data-tour="selected-tool"]',
+                popover: {
+                    title: "Select a Tool",
+                    description: "For this tour, let's select this tool.",
+                    showButtons: ["previous", "exit"]
+                },
+            },
+        ]);
+    }, []);
+
+    useEffect(() => {
+        if (tourIsActive) {
+            const targetOperationName = 'fasta_extract';
+
+            const categoryWithTarget = Object.entries(operationCategories)
+                .find(([_, operations]) =>
+                    operations.some(op => op.name === targetOperationName)
+                );
+
+            if (categoryWithTarget) {
+                const [categoryName] = categoryWithTarget;
+
+                setExpandedCategories(prev => ({
+                    ...prev,
+                    [categoryName]: true,
+                }));
+            }
+        }
+    }, [tourIsActive]);
+
 
     // Debounced search handler
     const handleSearch = useMemo(
@@ -52,7 +94,7 @@ const AllOperationsPanel = ({ onToolClick }) => {
     };
 
     return (
-        <Paper elevation={3} sx={{ padding: 2, height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+        <Paper elevation={3} sx={{ padding: 2, height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }} data-tour="tool-section">
             <Typography variant="h6" align="center" gutterBottom>
                 All Tools
             </Typography>
@@ -91,6 +133,7 @@ const AllOperationsPanel = ({ onToolClick }) => {
                                             }
                                             placement="right">
                                             <ListItemButton
+                                                data-tour={operation.name === "fasta_extract" ? "selected-tool" : undefined}
                                                 sx={{
                                                     pl: 4,
                                                     bgcolor: (theme) => alpha(theme.palette.primary.main, 0.2), // Use primary color with 10% opacity

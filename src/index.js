@@ -6,6 +6,7 @@ import App from './App';
 import { DataTypeProvider } from './contexts/DataTypeContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ValidationErrorsProvider } from './contexts/ValidationErrorsContext';
+import { TourProvider } from './contexts/TourContext';
 
 const theme = createTheme({
   palette: {
@@ -32,8 +33,10 @@ root.render(
       <NotificationProvider>
         <DataTypeProvider>
           <ValidationErrorsProvider>
-            <CssBaseline />
-            <App />
+            <TourProvider>
+              <CssBaseline />
+              <App />
+            </TourProvider>
           </ValidationErrorsProvider>
         </DataTypeProvider>
       </NotificationProvider>
