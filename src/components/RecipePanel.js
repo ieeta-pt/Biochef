@@ -484,7 +484,10 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
   }, [workflowInput, tabIndex]);
 
   const fetchAndSetExampleRecipe = async () => {
-    const response = await fetch('/example_recipe.json');
+    const basePath = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+      ? '/' 
+      : '/Biochef/';
+    const response = await fetch(basePath + 'examples/example_recipe.json');
     const fileBlob = await response.blob();
 
     const file = new File([fileBlob], 'example_recipe.json', { type: 'application/json' });
