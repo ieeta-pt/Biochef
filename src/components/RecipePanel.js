@@ -222,7 +222,6 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
       return newMap;
     });
 
-    console.log("outputMap: " + JSON.stringify(outputMap));
   }, [selectedFiles]);
 
   // Update data type and outputs mapping
@@ -449,7 +448,6 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
       }
     });
 
-    // console.log('helpMessages ON RECIPEPANEL:', helpMessages);
   }, [workflow]);
 
   // Export
@@ -2090,7 +2088,6 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
           color="primary"
           onClick={() => {
             if (workflow.length > 0) {
-              console.log('Exporting workflow:', workflow);
               setOpenExportDialog(true);
             } else {
               showNotification('Workflow is empty. Cannot export.', 'error');

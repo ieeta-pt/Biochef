@@ -61,7 +61,6 @@ const operationCategories = {
         { name: 'fastq_info', description: 'Analyses the basic information of FASTQ file format. \nInput: FASTQ \nOutput: TEXT' },
         { name: 'info', description: 'Gives the basic properties of the file. \nInput: Any \nOutput: TEXT' },
         { name: 'fasta_find_n_pos', description: 'Reports the \'N\' regions in a sequence or FASTA (seq) file. \nInput: FASTA \nOutput: TEXT' },
-        { name: 'comparative_map', description: 'Creates a visualization for comparative maps. \nInput: POS \nOutput: SVG' },
     ],
     "Mathematical Operations": [
         { name: 'lower_bound', description: 'Sets an lower bound in a file with a value per line. \nInput: NUM \nOutput: NUM' },

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
+import { Route, HashRouter as Router, Routes } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import ToolsPage from './pages/ToolsPage';
 import WorkflowPage from './pages/WorkflowPage';
