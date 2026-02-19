@@ -216,15 +216,16 @@ export async function runTool(toolName, inputs, args, files = {}) {
 
     // let cli_result = { stdout: tool.stdout, stderr: tool.stderr };
     const cli_result = await CLI.exec(toolProgram, args);
+    const error = cli_result.stderr
     console.log("[runTool] args:", args)
     console.log("[runTool] result:", cli_result)
 
     // read output files if tool outputs to a file
     const ignoreList = [".", ".."];
-    const result = {};
+    const outputs = {};
     for (const output of toolConfig.io.outputs) {
       if (output.mode === "stdout") {
-        result[output.name] = cli_result.stdout; // TODO: stderr
+        outputs[output.name] = cli_result.stdout; // TODO: stderr
       }
       // TODO: maybe dont force the filename to have to be the same as the output name
       // we could add a new thing to the recipe that says file name?
@@ -238,14 +239,14 @@ export async function runTool(toolName, inputs, args, files = {}) {
 
           if (baseName === expectedName) {
             const fileData = await CLI.cat(fileName);
-            result[output.name] = fileData;
+            outputs[output.name] = fileData;
             break;
           }
         }
       }
     }
 
-    return result;
+    return {"outputs": outputs, "error": error};
 
   } catch (error) {
     console.error(`Error running tool ${toolName}:`, error);

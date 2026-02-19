@@ -140,7 +140,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
 
             // Verify if the input data is compatible with the tool
             const inputDataType = detectDataType("input.txt", inputData);
-            if (!inputFormats.includes(inputDataType) && toolConfig.input.type !== '' && toolConfig.input.type !== 'file') {
+            if (!inputFormats.includes(inputDataType)){ // && toolConfig.input.type !== '' && toolConfig.input.type !== 'file') {
                 showNotification(
                     `Input data type ${inputDataType} is not supported by tool ${tool.name}.`,
                     'error'
@@ -157,11 +157,16 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
             }
 
             // Execute the tool
-            let outputData = await runTool(tool.name, inputData, args, toolParameterFiles);
+            const result = await runTool(tool.name, inputData, args, toolParameterFiles);
+            const {outputs, error} = result;
+            setOutputData(outputs)
 
-            // Handle messages in stderr
-            if (outputData.stderr) {
-                const stderrLines = outputData.stderr.split('\n');
+            // TODO: code below is very much hardcoded for how GTO works with the ERROR: at the start
+            // maybe this should be removed or altere to always show as an error since it wont work on other tools
+
+            // Handle messages in stderr 
+            if (error) {
+                const stderrLines = error.split('\n');
                 let infoMessages = []; // Accumulate all informational messages
 
                 stderrLines.forEach((line) => {
@@ -178,16 +183,6 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
                 }
             }
 
-            if (toolConfig.is_multi_output) {
-                // outputData has a outputData.outputs that is an object with keys as output names and values as the output data
-                const output = {};
-                for (const [key, value] of Object.entries(outputData.outputs)) {
-                    output[key] = value;
-                }
-                return setOutputData(output);
-            } else {
-                return setOutputData(outputData.stdout);
-            }
         } catch (error) {
             console.error(`Failed to execute tool ${tool.name}:`, error);
             throw error;

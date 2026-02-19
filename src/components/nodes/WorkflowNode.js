@@ -65,8 +65,7 @@ export const WorkflowNode = memo(({ id, data }) => {
         }
       });
 
-      const outputs = await runTool(toolData.name, inputs, args, {});
-      console.log(outputs)
+      const {outputs, error} = await runTool(toolData.name, inputs, args, {});
       updateNodeData(id, { outputs });
     }
 

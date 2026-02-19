@@ -76,7 +76,7 @@ const ToolOutputPanel = ({ outputData, setOutputData, workflow = null, tool = nu
         <Paper elevation={3} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 2, flexShrink: 0 }}>
                 <Typography variant="h6">Output</Typography>
-                {typeof outputData === 'object' && !Array.isArray(outputData) && Object.keys(outputData).length > 0 && (
+                {typeof outputData === 'object' && !Array.isArray(outputData) && Object.keys(outputData).length > 1 && (
                     <FormControl size="small" sx={{ minWidth: 150 }}>
                         <Select
                             value={selectedFile}

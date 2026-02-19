@@ -52,8 +52,9 @@ export function validateParameters(toolName, parameters) {
 
 export async function getToolHelpMessage(toolName) {
   try {
-    const result = await runTool(toolName, "", ['-h']);
-    const helpLines = result.stdout.split('\n');
+    const {outputs, error} = await runTool(toolName, {}, ['-h']);
+    const result = Object.values(outputs)[0]; // TODO: deal with multiple outputs
+    const helpLines = result.split('\n');
     const flagsHelp = {};
     let generalHelp = '';
 
