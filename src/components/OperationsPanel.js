@@ -155,7 +155,7 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
         </Box>
       )}
 
-      {isLoading && (
+      {/* {isLoading && (
         <Box
           sx={{
             position: 'absolute',
@@ -172,7 +172,7 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
         >
           <CircularProgress />
         </Box>
-      )}
+      )} */}
 
       {/* Overlay to block interaction */}
       {shouldDisableInteraction && (
@@ -219,12 +219,13 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
       />
       <List sx={{ overflowY: 'auto', flexGrow: 1 }}>
         {Object.entries(getToolsByCategory()).map(([category, operations]) => {
-          const filteredOps = insertAtIndex !== null
-            ? operations.filter((op) =>
-              filteredTools.some((tool) => tool.name === op.name)
-            )
-            : filterOperations(operations).filter((op) => compatibleTools.has(op.name));
-          if (filteredOps.length === 0 && searchTerm !== '') return null;
+          const filteredOps = filterOperations(operations)
+          // const filteredOps = insertAtIndex !== null
+          //   ? operations.filter((op) =>
+          //     filteredTools.some((tool) => tool.name === op.name)
+          //   )
+          //   : filterOperations(operations).filter((op) => compatibleTools.has(op.name));
+          // if (filteredOps.length === 0 && searchTerm !== '') return null;
 
           return (
             <React.Fragment key={category}>

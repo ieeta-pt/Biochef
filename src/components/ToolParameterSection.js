@@ -61,7 +61,7 @@ const ToolParameterSection = ({ toolConfig, parameters, validationErrors, helpMe
                 },
               }}
             >
-              <span>
+              <span style={{ whiteSpace: 'nowrap' }}>
                 {paramName} {!isOptional && <span style={{ color: 'red' }}>*</span>}
               </span>
             </Tooltip>

@@ -83,7 +83,7 @@ async function getAuthorizationAndBaseUrl(repo) {
   }
 }
 
-async function fetchManifest(base_url, repo, tag, authorization, ) {
+async function fetchManifest(base_url, repo, tag, authorization) {
   const res = await fetch(`${base_url}/${repo}/manifests/${tag}`, {
     headers: {
       Accept: "application/vnd.oci.image.manifest.v1+json",
@@ -170,8 +170,7 @@ async function generateBlob(url, type, authorization) {
   }
 }
 
-export async function runTool(toolName, input, args, files = {}) {
-  console.log(`Running tool ${toolName} with arguments:`, args);
+export async function runTool(toolName, inputs, args, files = {}) {
   const toolConfig = getTool(toolName)
   const toolProgram = toolConfig.program || toolName
 
@@ -198,29 +197,51 @@ export async function runTool(toolName, input, args, files = {}) {
     // create necessary files
     if (files && Object.keys(files).length > 0) {
       await CLI.mount(Object.values(files));
-    } 
+    }
 
-    if (toolConfig.io.inputs[0].mode == "file") {
-      // TODO: find a way for the user to not upload a file with this name
-      // and maybe create a file with the correct format instead of txt
-      await CLI.mount({ name: "input.txt", data: input })
-      args.push("input.txt")
-    }
-    else {
-      CLI.stdin = input;
-    }
-    
-    // let result = { stdout: tool.stdout, stderr: tool.stderr };
-    const result = await CLI.exec(toolProgram, args);
+    for (const [inputName, inputValue] of Object.entries(inputs)) {
+      const inputConfig = toolConfig.io.inputs.find(i => i.name === inputName);
+      const fileName = `${inputName}.txt`
+
+      if (inputConfig.mode == "file") {
+        await CLI.mount({ name: fileName, data: inputValue })
+        if (inputConfig.flag) args.push(inputConfig.flag);
+        args.push(fileName)
+      }
+      else if (inputConfig.mode == "stdin") {
+        // TODO: check if only one has stdin? or maybe add them?
+        CLI.stdin = inputValue;
+      }
+    };
+
+    // let cli_result = { stdout: tool.stdout, stderr: tool.stderr };
+    const cli_result = await CLI.exec(toolProgram, args);
+    console.log("[runTool] args:", args)
+    console.log("[runTool] result:", cli_result)
 
     // read output files if tool outputs to a file
     const ignoreList = [".", ".."];
-    if (toolConfig.is_multi_output && (toolConfig.output.type == "file" || toolConfig.output.type == "files")) {
-      result.outputs = {}
-      for (const fileName of await CLI.ls(".")) {
-        if (ignoreList.includes(fileName)) continue
-        const fileData = await CLI.cat(fileName);
-        result.outputs[fileName] = fileData;
+    const result = {};
+    for (const output of toolConfig.io.outputs) {
+      if (output.mode === "stdout") {
+        result[output.name] = cli_result.stdout; // TODO: stderr
+      }
+      // TODO: maybe dont force the filename to have to be the same as the output name
+      // we could add a new thing to the recipe that says file name?
+      else if (output.mode === "file") {
+        const files = await CLI.ls(".");
+        const expectedName = output.name.toLowerCase();
+
+        for (const fileName of files) {
+          if (ignoreList.includes(fileName)) continue;
+          const baseName = fileName.split(".").slice(0, -1).join(".").toLowerCase();
+
+          if (baseName === expectedName) {
+            const fileData = await CLI.cat(fileName);
+            result[output.name] = fileData;
+            break;
+          }
+        }
       }
     }
 

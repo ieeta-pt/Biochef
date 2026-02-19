@@ -4,7 +4,7 @@ import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
 import React, { useEffect, useState } from 'react';
 
-const ToolOutputPanel = ({ outputData, setOutputData, workflow = null, tool = null, inputData, page }) => {
+const ToolOutputPanel = ({ outputData, setOutputData, workflow = null, tool = null, inputData, page, rows=8 }) => {
     const [selectedFile, setSelectedFile] = useState('');
     const [displayedOutput, setDisplayedOutput] = useState('');
 
@@ -103,7 +103,7 @@ const ToolOutputPanel = ({ outputData, setOutputData, workflow = null, tool = nu
                         inputComponent: 'textarea',
                         readOnly: true,
                     }}
-                    rows={8}
+                    rows={rows}
                     sx={{
                         flexGrow: 1,
                         flexShrink: 1,
