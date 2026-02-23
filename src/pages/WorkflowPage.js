@@ -22,9 +22,12 @@ import {
   useNodesState,
   useEdgesState,
 } from '@xyflow/react';
+import { sanitizeWorkflowNodes } from '../utils/workflowUtils';
 
 const WorkflowPage = () => {
   const [toolIndexLoaded, setToolIndexLoaded] = useState(false);
+  const [workflowLoaded, setWorkflowLoaded] = useState(false);
+
   const [inputTabIndex, setInputTabIndex] = useState({})
   const [selectedFileManagerFiles, setSelectedFileManagerFiles] = useState({});
   const [inputFileManagerTree, setInputFileManagerTree] = useState({});
@@ -38,19 +41,57 @@ const WorkflowPage = () => {
 
   const [nodes, setNodes] = useNodesState([]);
   const [edges, setEdges] = useEdgesState([]);
-  const { updateNodeData } = useReactFlow();
+  const { updateNodeData, setViewport, toObject } = useReactFlow();
 
   const [selectedNode, setSelectedNode] = useState(null);
 
   // load tool index on opening the page
   useEffect(() => {
-    const fetchTools = async () => {
-      await loadToolIndex();
-      setToolIndexLoaded(true);
+    const fetchWorkflow = async () => {
+      const flow = JSON.parse(localStorage.getItem("workflow"));
+
+      if (flow) {
+        const { nodes: savedNodes = [], edges: savedEdges = [], viewport = {} } = flow;
+
+        for (const node of savedNodes) {
+          if (node.type === 'workflowNode') {
+            await loadTool(node.data.label);
+          }
+        }
+
+        setNodes(savedNodes);
+        setEdges(savedEdges);
+
+        const { x = 0, y = 0, zoom = 1 } = viewport;
+        setViewport({ x, y, zoom });
+      }
+
+      setWorkflowLoaded(true);
     };
 
-    fetchTools();
+    const fetchToolIndex = async () => {
+      await loadToolIndex();
+      setToolIndexLoaded(true);
+      fetchWorkflow()
+    };
+
+    fetchToolIndex()
   }, []);
+
+  // TODO(andrade)
+  // Make this more reasonable then just storing at every change.
+  // Running this every change is doomed to give performance issues.
+  useEffect(() => {
+    if (!workflowLoaded) return;
+    handleSaveWorkflow();
+  }, [nodes, edges]);
+
+  const handleSaveWorkflow = () => {
+    const flow = toObject();
+    flow.nodes = sanitizeWorkflowNodes(flow.nodes)
+
+    localStorage.setItem('workflow', JSON.stringify(flow));
+  };
 
   const handleNodeClicked = useCallback((id) => {
     const node = nodes.find(n => n.id === id);
@@ -122,7 +163,7 @@ const WorkflowPage = () => {
     updateSelectedNodeData({ paramValues: newParamValues });
   }
 
-  if (!toolIndexLoaded) {
+  if (!toolIndexLoaded || !workflowLoaded) {
     return (
       <Box
         sx={{
@@ -228,7 +269,7 @@ const WorkflowPage = () => {
             >
               {!selectedNode && (
                 // <h1>nothing to do</h1>
-                <></>
+                <Paper elevation={3} sx={{ padding: 2, height: '100%', display: 'flex', flexDirection: 'column' }}></Paper>
               )}
 
               {/* NOTE(andrade) 
@@ -276,36 +317,27 @@ const WorkflowPage = () => {
               )}
 
               {selectedNode && selectedNode.type === 'workflowNode' && (
-                <Paper
-                  elevation={3}
-                  sx={{ padding: 2, height: '100%', display: 'flex', flexDirection: 'column' }}
-                >
+                <Paper elevation={3} sx={{ padding: 2, height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
-                    <Typography variant="h6" gutterBottom>
-                      {selectedNode.data.label}
-                    </Typography>
+                    <Typography variant="h6" gutterBottom>{selectedNode.data.label}</Typography>
                   </Box>
-                  <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
-                    <Paper
-                      elevation={0}
-                      sx={{
-                        transition: 'transform 150ms ease, background-color 300ms ease, border-color 300ms ease',
-                        marginBottom: '8px',
-                        padding: '8px',
-                        borderRadius: '4px',
-                        cursor: 'grab',
-                        backgroundColor: 'white',
-                      }}
-                    >
-                      <ToolParameterSection
-                        toolConfig={getTool(selectedNode.data.label)}
-                        parameters={selectedNode.data.paramValues}
-                        validationErrors={{}}
-                        // helpMessages={helpMessages?.flags}
-                        handleParameterChange={handleChangeParam}
-                        toggleParameter={handleToggleParam}
-                      />
-                    </Paper>
+                  <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                    <Box sx={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+                      <Paper elevation={0} sx={{ 
+                        transition: 'transform 150ms ease, background-color 300ms ease, border-color 300ms ease', 
+                        marginBottom: 1, padding: 1, borderRadius: 1, cursor: 'grab', backgroundColor: 'white' }}>
+                        <ToolParameterSection
+                          toolConfig={getTool(selectedNode.data.label)}
+                          parameters={selectedNode.data.paramValues}
+                          validationErrors={{}}
+                          handleParameterChange={handleChangeParam}
+                          toggleParameter={handleToggleParam}
+                        />
+                      </Paper>
+                    </Box>
+                    <Box sx={{ borderTop: '1px solid #e0e0e0' }}>
+                      <ToolOutputPanel outputData={selectedNode.data.outputs} rows={5} />
+                    </Box>
                   </Box>
                 </Paper>
               )}
