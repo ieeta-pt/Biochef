@@ -25,6 +25,16 @@ import {
 
 const WorkflowPage = () => {
   const [toolIndexLoaded, setToolIndexLoaded] = useState(false);
+  const [inputTabIndex, setInputTabIndex] = useState({})
+  const [selectedFileManagerFiles, setSelectedFileManagerFiles] = useState({});
+  const [inputFileManagerTree, setInputFileManagerTree] = useState({});
+
+  const getInitialTree = () => ({
+    id: 'root',
+    name: 'Root',
+    type: 'folder',
+    children: [],
+  });
 
   const [nodes, setNodes] = useNodesState([]);
   const [edges, setEdges] = useEdgesState([]);
@@ -41,7 +51,7 @@ const WorkflowPage = () => {
 
     fetchTools();
   }, []);
-  
+
   const handleNodeClicked = useCallback((id) => {
     const node = nodes.find(n => n.id === id);
     setSelectedNode(node);
@@ -172,10 +182,10 @@ const WorkflowPage = () => {
                 // addingATool={addingATool}
                 // setAddingATool={setAddingATool}
                 filteredTools={[]}
-                // setFilteredTools={setFilteredTools}
-                // selectedFiles={selectedFiles}
-                // tabIndex={0}
-                // workflow={workflow}
+              // setFilteredTools={setFilteredTools}
+              // selectedFiles={selectedFiles}
+              // tabIndex={0}
+              // workflow={workflow}
               />
             </Grid>
 
@@ -221,16 +231,47 @@ const WorkflowPage = () => {
                 <></>
               )}
 
+              {/* NOTE(andrade) 
+                  I'm reusing the old panels instead of creating new ones
+                  that is the reason for these horrendous looking wrappers.
+                  These panels expect tree and selectedFiles to be useStates
+                  but now we need different ones for each node.
+                  It would probably be a good idea either to adapt the panels or
+                  just make new ones altogether so this doesn't have to exist.
+              */}
               {selectedNode && selectedNode.type === 'input' && (
                 <InputPanel
-                  tabIndex={0}
-                  // setTabIndex={setTabIndex}
-                  // selectedFiles={selectedFiles}
-                  // setSelectedFiles={setSelectedFiles}
+                  tabIndex={inputTabIndex?.[selectedNode.id] ?? 0}
+                  setTabIndex={(value) =>
+                    setInputTabIndex(prev => ({
+                      ...prev,
+                      [selectedNode.id]: value
+                    }))
+                  }
+                  selectedFiles={selectedFileManagerFiles?.[selectedNode.id] ?? new Set()}
+                  setSelectedFiles={(updater) =>
+                    setSelectedFileManagerFiles(prev => {
+                      const currentFiles = prev[selectedNode.id] || new Set()
+                      const newFiles = typeof updater === "function" ? updater(currentFiles) : updater;
+                      return {
+                        ...prev,
+                        [selectedNode.id]: newFiles,
+                      };
+                    })
+                  }
                   inputData={selectedNode.data.output}
                   setInputData={handleUpdateSelectedInputNode}
-                  // tree={tree}
-                  // setTree={setTree}
+                  tree={inputFileManagerTree?.[selectedNode.id] ?? getInitialTree()}
+                  setTree={(updater) =>
+                    setInputFileManagerTree(prev => {
+                      const currentTree = prev[selectedNode.id] || {}
+                      const newTree = typeof updater === "function" ? updater(currentTree) : updater;
+                      return {
+                        ...prev,
+                        [selectedNode.id]: newTree,
+                      };
+                    })
+                  }
                 />
               )}
 
@@ -276,7 +317,7 @@ const WorkflowPage = () => {
                   // tool={selectedTool} 
                   // inputData={inputData} 
                   // page={'ToolPage'} 
-                  rows={30}
+                  rows={25}
                 />
               )}
 
@@ -285,7 +326,7 @@ const WorkflowPage = () => {
         </Container>
       </Box>
     </ErrorBoundary>
-  ); ``
+  );
 };
 
 export default WorkflowPage;

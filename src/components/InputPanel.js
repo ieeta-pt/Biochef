@@ -19,28 +19,35 @@ const InputPanel = ({ tabIndex, setTabIndex, selectedFiles, setSelectedFiles, in
     const { setInputDataType, validateData, inputDataType } = useContext(DataTypeContext);
     const [isValid, setIsValid] = useState(true);
     const [debounceTimer, setDebounceTimer] = useState(null);
-
     const numberOfLines = inputData.split('\n').length;
 
     useEffect(() => {
-        if (tabIndex === 1) {
-            // File Manager Mode: derive type from selected files.
-            // Compute the set of file types from selected files.
-            const fileTypes = new Set(
-                Array.from(selectedFiles).map(file => file.fileType)
-            );
-            console.log(selectedFiles);
-            // If there's exactly one type, update inputDataType.
-            if (fileTypes.size === 1) {
-                setInputDataType([...fileTypes][0]);
-            } else {
-                // Otherwise, either leave it unchanged or set it to a fallback value.
-                setInputDataType('UNKNOWN');
-            }
-        } else {
-            setInputDataType(detectDataType("input.txt", inputData))
+        if (tabIndex != 1) return
+        
+        if (selectedFiles.size == 0) {
+            setInputDataType('UNKNOWN');
+            if (inputData != '') setInputData('')
+            return
         }
-    }, [tabIndex, selectedFiles, setInputDataType]);
+
+        // File Manager Mode: derive type from selected files.
+        // Compute the set of file types from selected files.
+        const fileTypes = new Set(
+            Array.from(selectedFiles).map(file => file.fileType)
+        );
+        // If there's exactly one type, update inputDataType.
+        if (fileTypes.size === 1) {
+            setInputDataType([...fileTypes][0]);
+        } else {
+            // Otherwise, either leave it unchanged or set it to a fallback value.
+            setInputDataType('UNKNOWN');
+        }
+        
+        // NOTE(andrade)
+        // Not sure if concatenating the files is the correct thing to do
+        // Maybe we want to limit to one selected file at a time
+        setInputData(Array.from(selectedFiles).map(f => f.content).join('\n'));
+    }, [selectedFiles]);
 
     const handleTabChange = (event, newIndex) => {
         setTabIndex(newIndex);
@@ -101,78 +108,81 @@ const InputPanel = ({ tabIndex, setTabIndex, selectedFiles, setSelectedFiles, in
             </Box>
 
             <Divider />
+            <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, overflow: 'hidden' }}>
+                <Tabs
+                    value={tabIndex}
+                    onChange={handleTabChange}
+                    variant="fullWidth"
+                    sx={{
+                        borderBottom: 1,
+                        borderColor: 'divider',
+                        flexShrink: 0,      
+                        '& .MuiTab-root': {
+                            minHeight: 64,
+                            fontWeight: 'bold',
+                        },
+                    }}
+                >
+                    <Tab
+                        icon={<Terminal />}
+                        label="CLI Mode"
+                        iconPosition="start"
+                    />
+                    <Tab
+                        icon={<Upload />}
+                        label="File Manager"
+                        iconPosition="start"
+                    />
+                </Tabs>
 
-            <Tabs
-                value={tabIndex}
-                onChange={handleTabChange}
-                variant="fullWidth"
-                sx={{
-                    borderBottom: 1,
-                    borderColor: 'divider',
-                    '& .MuiTab-root': {
-                        minHeight: 64,
-                        fontWeight: 'bold',
-                    },
-                }}
-            >
-                <Tab
-                    icon={<Terminal />}
-                    label="CLI Mode"
-                    iconPosition="start"
-                />
-                <Tab
-                    icon={<Upload />}
-                    label="File Manager"
-                    iconPosition="start"
-                />
-            </Tabs>
+                <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+                    {tabIndex === 0 && (
+                        <Box>
+                            < Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: 2 }}>
+                                <TextField
+                                    variant="outlined"
+                                    value={inputData}
+                                    onChange={handleTextChange}
+                                    placeholder="e.g., >Sequence1\nACGT..."
+                                    InputProps={{
+                                        multiline: true,
+                                        inputComponent: 'textarea',
+                                    }}
+                                    inputProps={{ maxLength: 100000 }}
+                                    rows={18}
+                                    sx={{
+                                        flexGrow: 1,
+                                        flexShrink: 1,
+                                        overflow: 'auto',
+                                        minHeight: '100px',
+                                        whiteSpace: 'pre-wrap',
+                                        wordBreak: 'break-word',
+                                        fontSize: '0.875rem',
+                                    }}
+                                    error={!isValid && inputDataType !== 'UNKNOWN'}
+                                    helperText={!isValid && inputDataType !== 'UNKNOWN' ? `The entered data does not conform to the expected ${inputDataType} format.` : ''}
+                                />
+                            </Box>
 
-
-            {tabIndex === 0 && (
-                <Box>
-                    < Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: 2 }}>
-                        <TextField
-                            variant="outlined"
-                            value={inputData}
-                            onChange={handleTextChange}
-                            placeholder="e.g., >Sequence1\nACGT..."
-                            InputProps={{
-                                multiline: true,
-                                inputComponent: 'textarea',
-                            }}
-                            inputProps={{ maxLength: 100000 }}
-                            rows={18}
-                            sx={{
-                                flexGrow: 1,
-                                flexShrink: 1,
-                                overflow: 'auto',
-                                minHeight: '100px',
-                                whiteSpace: 'pre-wrap',
-                                wordBreak: 'break-word',
-                                fontSize: '0.875rem',
-                            }}
-                            error={!isValid && inputDataType !== 'UNKNOWN'}
-                            helperText={!isValid && inputDataType !== 'UNKNOWN' ? `The entered data does not conform to the expected ${inputDataType} format.` : ''}
-                        />
-                    </Box>
-
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            padding: 1,
-                            flexShrink: 0,
-                            paddingX: 2,
-                        }}
-                    >
-                        <Typography variant="caption" color="textSecondary" sx={{ marginRight: 'auto' }}>
-                            {inputData.length}/100000 characters, {numberOfLines} lines
-                        </Typography>
-                    </Box>
+                            <Box
+                                sx={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    padding: 1,
+                                    flexShrink: 0,
+                                    paddingX: 2,
+                                }}
+                            >
+                                <Typography variant="caption" color="textSecondary" sx={{ marginRight: 'auto' }}>
+                                    {inputData.length}/100000 characters, {numberOfLines} lines
+                                </Typography>
+                            </Box>
+                        </Box>
+                    )}
+                    {tabIndex === 1 && <FileExplorer selectedFiles={selectedFiles} setSelectedFiles={setSelectedFiles} tree={tree} setTree={setTree} />}
                 </Box>
-            )}
-            {tabIndex === 1 && <FileExplorer selectedFiles={selectedFiles} setSelectedFiles={setSelectedFiles} tree={tree} setTree={setTree} />}
+            </Box>
         </Paper >
     );
 };
