@@ -25,12 +25,12 @@ export const DataTypeProvider = ({ children }) => {
         const isFASTAValid =
           trimmedData.startsWith('>') &&
           fastaLines.length > 0 &&
-          fastaLines.every(line => /^[ACGTacgtNn]+$/.test(line.trim())); // Allowing 'N' and 'n'
+          fastaLines.every(line => /^[ACDEFGHIKLMNPQRSTVWYacdefghiklmnpqrstvwy]+$/.test(line.trim())); // Allowing 'N' and 'n'
         if (!isFASTAValid) {
           console.error('FASTA validation failed:', {
             startsWithGreaterThan: trimmedData.startsWith('>'),
             hasSequenceLines: fastaLines.length > 0,
-            allSequencesValid: fastaLines.every(line => /^[ACGTacgtNn]+$/.test(line.trim())),
+            allSequencesValid: fastaLines.every(line => /^[ACDEFGHIKLMNPQRSTVWYacdefghiklmnpqrstvwy]+$/.test(line.trim())),
           });
         }
         return isFASTAValid;
@@ -44,7 +44,7 @@ export const DataTypeProvider = ({ children }) => {
             const lines = block.split(/\r?\n/).filter(line => line.trim() !== '');
             if (lines.length < 2) return false; // At least one header and one sequence line
             const sequence = lines.slice(1).join('');
-            return /^[ACGTacgtNn]+$/.test(sequence.trim()); // Allowing 'N' and 'n'
+            return /^[ACDEFGHIKLMNPQRSTVWYacdefghiklmnpqrstvwy]+$/.test(sequence.trim()); // Allowing 'N' and 'n'
           });
           if (!isMultiFastaValid) {
             console.error('Multi-FASTA validation failed.');
@@ -80,7 +80,7 @@ export const DataTypeProvider = ({ children }) => {
             if (index % 4 === 0) return line.startsWith('@');
             if (index % 4 === 2) return line.startsWith('+');
             // Lines 1 and 3 should contain sequence and quality scores respectively
-            return /^[ACGTacgtNn]+$/.test(line.trim()) || /^[!-~]+$/.test(line.trim());
+            return /^[ACDEFGHIKLMNPQRSTVWYacdefghiklmnpqrstvwy]+$/.test(line.trim()) || /^[!-~]+$/.test(line.trim());
           });
         if (!isFASTQValid) {
           console.error('FASTQ validation failed.');

@@ -4,7 +4,9 @@ import {
     Grid,
     useMediaQuery,
     useTheme,
-    Button
+    Button,
+    Drawer,
+    Typography
 } from '@mui/material';
 import React, { useContext, useEffect, useState } from 'react';
 import description from '../../description.json';
@@ -26,6 +28,7 @@ const WorkflowPage = () => {
     const [selectedFiles, setSelectedFiles] = useState(new Set()); // Track selected files
     const [tabIndex, setTabIndex] = useState(0);    // Track the selected tab index for input mode
     const { tourStart, tourRegisterSteps } = useContext(TourContext);
+    const [openHelp, setOpenHelp] = useState(false);
 
     const initialTree = {
         id: 'root',
@@ -178,19 +181,52 @@ const WorkflowPage = () => {
                         overflow: 'hidden', // Prevents overflow beyond the container
                     }}
                 >
+
                     <Button
                         variant="outlined"
                         size="small"
-                        onClick={handleRerunTour}
+                        onClick={() => setOpenHelp(true)}
                         sx={{
                             position: 'fixed',
-                            top: 80,      // below app bar
+                            top: 80,
                             right: 16,
                             zIndex: 1200,
                         }}
                     >
-                        Re-run tour
+                        Re-run Tour
                     </Button>
+
+                    <Drawer
+                        anchor="right"
+                        open={openHelp}
+                        onClose={() => setOpenHelp(false)}
+                    >
+                        <Box sx={{ width: 320, p: 3 }}>
+                            <Typography variant="h6" gutterBottom>
+                                Guided Tour
+                            </Typography>
+
+                            <Typography variant="body2" sx={{ mb: 2 }}>
+                                The guided tour will show you how to:<br />
+                                • Load input data and select tools<br />
+                                • Configure workflow steps<br />
+                                • Run and export your workflow<br /><br />
+                                Note: Starting the tour will clear your current workflow and input data.<br /><br />
+                                You can access this panel anytime to restart the tour.
+                            </Typography>
+
+                            <Button
+                                variant="contained"
+                                fullWidth
+                                onClick={() => {
+                                    setOpenHelp(false);
+                                    handleRerunTour();
+                                }}
+                            >
+                                Start Tour
+                            </Button>
+                        </Box>
+                    </Drawer>
                     <Grid container spacing={2} sx={{ flex: 1, height: '100%', overflow: 'hidden' }}>
                         {/* Operations Panel */}
                         <Grid

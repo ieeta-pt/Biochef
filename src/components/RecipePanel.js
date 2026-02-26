@@ -2074,7 +2074,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
               position: 'absolute',
               top: 0,
               left: 0,
-              width: tabIndex === 1 && selectedFiles.size === 0 ? '50%' : '100%',
+              width: tabIndex === 1 && selectedFiles.size === 0 ? '33%' : '100%',
               height: '100%',
               backgroundColor: 'rgba(255, 255, 255, 0.7)',
               zIndex: 10,

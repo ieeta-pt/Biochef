@@ -1,4 +1,4 @@
-import { Box, Container, Grid, Typography, Button } from '@mui/material';
+import { Box, Container, Grid, Typography, Button, Drawer } from '@mui/material';
 import React, { useState, useContext, useEffect } from 'react';
 import { loadWasmModule } from '../gtoWasm';
 import AllOperationsPanel from '/src/components/AllOperationsPanel';
@@ -13,6 +13,7 @@ const ToolsPage = () => {
     const [inputData, setInputData] = useState('');
     const [outputData, setOutputData] = useState('');
     const { tourStart, tourRegisterSteps, tourMoveNext, tourIsActive } = useContext(TourContext);
+    const [openHelp, setOpenHelp] = useState(false);
 
     const runToolsTour = () => {
         tourStart(["t-intro", "t-tools", "t-input", "t-testing"]);
@@ -41,7 +42,7 @@ const ToolsPage = () => {
 
     const handleToolClick = async (tool) => {
         setSelectedTool(tool); // Update the selected tool
-        if(tourIsActive) tourMoveNext();
+        if (tourIsActive) tourMoveNext();
 
         try {
             const startTime = performance.now();
@@ -83,16 +84,48 @@ const ToolsPage = () => {
                 <Button
                     variant="outlined"
                     size="small"
-                    onClick={handleRerunTour}
+                    onClick={() => setOpenHelp(true)}
                     sx={{
                         position: 'fixed',
-                        top: 80,      // below app bar
+                        top: 80,
                         right: 16,
                         zIndex: 1200,
                     }}
                 >
-                    Re-run tour
+                    Re-run Tour
                 </Button>
+                <Drawer
+                    anchor="right"
+                    open={openHelp}
+                    onClose={() => setOpenHelp(false)}
+                >
+                    <Box sx={{ width: 320, p: 3 }}>
+                        <Typography variant="h6" gutterBottom>
+                            Guided Tour
+                        </Typography>
+
+                        <Typography variant="body2" sx={{ mb: 2 }}>
+                            This tour will show you how to:<br />
+                            • Browse and select available tools<br />
+                            • Configure tool inputs<br />
+                            • Execute and test tools in the browser<br />
+                            • Inspect outputs and results<br /><br />
+                            Starting the tour will guide you through the main interface and highlight key components.<br /><br />
+                            You can re-run this tour anytime using the button below.
+                        </Typography>
+
+                        <Button
+                            variant="contained"
+                            fullWidth
+                            onClick={() => {
+                                setOpenHelp(false);
+                                handleRerunTour();
+                            }}
+                        >
+                            Start Tour
+                        </Button>
+                    </Box>
+                </Drawer>
 
                 <Grid container spacing={2} sx={{ flex: 1, overflow: 'hidden' }}>
                     {/* Tool Selection Panel */}

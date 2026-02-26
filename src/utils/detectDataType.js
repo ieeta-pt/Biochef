@@ -85,7 +85,7 @@ export const detectDataType = (fileName, content) => {
                 const lines = block.split(/\r?\n/).filter(line => line.trim() !== '');
                 const sequence = lines.slice(1).join('');
                 // Allow sequences with A, C, G, T, N (case-insensitive)
-                return lines.length > 1 && /^[ACGTacgtNn]+$/.test(sequence.trim());
+                return lines.length > 1 && /^[ACDEFGHIKLMNPQRSTVWYacdefghiklmnpqrstvwy]+$/.test(sequence.trim());
               });
               if (isValid) {
                 return 'Multi-FASTA';
@@ -99,7 +99,7 @@ export const detectDataType = (fileName, content) => {
             const headers = countHeaders(trimmedContent);
             if (headers === 1) {
               const lines = trimmedContent.split(/\r?\n/).filter(line => !line.startsWith('>'));
-              const isValid = lines.length > 0 && lines.every(line => /^[ACGTacgtNn]+$/.test(line.trim()));
+              const isValid = lines.length > 0 && lines.every(line => /^[ACDEFGHIKLMNPQRSTVWYacdefghiklmnpqrstvwy]+$/.test(line.trim()));
               if (isValid) {
                 return 'FASTA';
               }
