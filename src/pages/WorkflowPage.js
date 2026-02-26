@@ -335,7 +335,7 @@ const WorkflowPage = () => {
                         />
                       </Paper>
                     </Box>
-                    <Box sx={{ borderTop: '1px solid #e0e0e0' }}>
+                    <Box>
                       <ToolOutputPanel outputData={selectedNode.data.outputs} rows={5} />
                     </Box>
                   </Box>

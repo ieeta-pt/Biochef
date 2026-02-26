@@ -130,19 +130,19 @@ const RecipePanel = ({ nodes, setNodes, edges, setEdges, handleNodeClicked }) =>
         <Background bgColor="#FFFFFF" color='#009688' variant={BackgroundVariant.Dots} />
 
         <Panel>
-          <button className="xy-theme__button" onClick={() => addSpecialNode('input')}>
+          <button onClick={() => addSpecialNode('input')}>
             Add Input Node
           </button>
-          <button className="xy-theme__button" onClick={() => addSpecialNode('output')}>
+          <button onClick={() => addSpecialNode('output')}>
             Add Output Node
           </button>
-          <button className="xy-theme__button" onClick={() => clearWorkflow()}>
+          <button onClick={() => clearWorkflow()}>
             Clear Workflow
           </button>
-          <button className="xy-theme__button" onClick={() => importWorkflow()}>
+          <button onClick={() => importWorkflow()}>
             Import Workflow
           </button>
-          <button className="xy-theme__button" onClick={() => exportWorkflow()}>
+          <button onClick={() => exportWorkflow()}>
             Export Workflow
           </button>
         </Panel>
