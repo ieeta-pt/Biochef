@@ -5,10 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "webpack serve --mode development --open",
-    "build": "NODE_ENV=production webpack --mode production",
-    "copy-wasm": "mkdir -p public/wasm && cp src/wasm/*.wasm public/wasm/",
-    "prebuild": "bash compile-all-gto.sh",
-    "build-wasm": "bash compile-all-gto.sh"
+    "build": "NODE_ENV=production webpack --mode production"
   },
   "keywords": [],
   "author": "",

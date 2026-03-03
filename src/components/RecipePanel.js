@@ -2,16 +2,18 @@ import React, { useCallback } from 'react'
 
 import { ReactFlow, useReactFlow, applyNodeChanges, applyEdgeChanges, addEdge, Background, BackgroundVariant, MarkerType, Panel } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { Paper } from '@mui/material'
+import { Paper, Button } from '@mui/material'
 
 import { WorkflowNode } from './nodes/WorkflowNode'
 import { OutputWorkflowNode } from './nodes/OutputWorkflowNode'
+import { InputWorkflowNode } from './nodes/InputWorkflowNode'
+import { WorkflowEdge } from './nodes/WorkflowEdge'
 import { loadTool } from '../utils/toolUtils'
 import { sanitizeWorkflowNodes } from '../utils/workflowUtils'
 
 const RecipePanel = ({ nodes, setNodes, edges, setEdges, handleNodeClicked }) => {
   const { toObject, setViewport } = useReactFlow();
-  
+
   const onNodesChange = useCallback((changes) => {
     setNodes((prev) => applyNodeChanges(changes, prev))
   })
@@ -27,8 +29,17 @@ const RecipePanel = ({ nodes, setNodes, edges, setEdges, handleNodeClicked }) =>
   }
 
   const onConnect = useCallback((params) => {
-    setEdges((prev) => addEdge({ ...params, ...edgeOptions }, prev))
-  })
+    setEdges((prev) =>
+      addEdge(
+        {
+          ...params,
+          type: 'workflowEdge',
+          ...edgeOptions,
+        },
+        prev
+      )
+    );
+  }, [setEdges]);
 
   const onNodeClick = useCallback((event, node) => {
     handleNodeClicked(node.id);
@@ -38,7 +49,7 @@ const RecipePanel = ({ nodes, setNodes, edges, setEdges, handleNodeClicked }) =>
     const id = `${type}-${Date.now()}`; // unique ID
     const newNode = {
       id,
-      type: type === 'input' ? 'input' : 'outputWorkflowNode', // match your nodeTypes
+      type: type === 'input' ? 'inputWorkflowNode' : 'outputWorkflowNode', // match your nodeTypes
       data: {
         label: type === 'input' ? `Input` : `Output`,
         output: ''
@@ -48,7 +59,7 @@ const RecipePanel = ({ nodes, setNodes, edges, setEdges, handleNodeClicked }) =>
 
     setNodes((prevNodes) => [...prevNodes, newNode]);
   });
-  
+
   const clearWorkflow = useCallback(() => {
     setNodes([])
     setEdges([])
@@ -113,7 +124,33 @@ const RecipePanel = ({ nodes, setNodes, edges, setEdges, handleNodeClicked }) =>
   const nodeTypes = {
     workflowNode: WorkflowNode,
     outputWorkflowNode: OutputWorkflowNode,
+    inputWorkflowNode: InputWorkflowNode
   };
+
+  const edgeTypes = {
+    workflowEdge: WorkflowEdge,
+  };
+
+  const WorkflowButton = ({ children, ...props }) => (
+    <Button
+      variant='outlined'
+      sx={{
+        borderColor: 'lightgray',
+        color: 'darkslategrey',
+        background: 'rgba(255, 255, 255, 1)',
+        '&:hover': {
+          borderColor: 'lightgray',
+          background: 'rgba(240, 240, 240, 1)',
+        },
+        margin: 0.5
+      }}
+      disableElevation
+
+      {...props}
+    >
+      {children}
+    </Button>
+  );
 
   return (
     <Paper elevation={3} sx={{ width: '100%', height: '100%' }}>
@@ -125,26 +162,27 @@ const RecipePanel = ({ nodes, setNodes, edges, setEdges, handleNodeClicked }) =>
         onConnect={onConnect}
         onNodeClick={onNodeClick}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         fitView
       >
         <Background bgColor="#FFFFFF" color='#009688' variant={BackgroundVariant.Dots} />
 
         <Panel>
-          <button onClick={() => addSpecialNode('input')}>
+          <WorkflowButton onClick={() => addSpecialNode('input')}>
             Add Input Node
-          </button>
-          <button onClick={() => addSpecialNode('output')}>
+          </WorkflowButton>
+          <WorkflowButton onClick={() => addSpecialNode('output')}>
             Add Output Node
-          </button>
-          <button onClick={() => clearWorkflow()}>
+          </WorkflowButton>
+          <WorkflowButton onClick={() => clearWorkflow()}>
             Clear Workflow
-          </button>
-          <button onClick={() => importWorkflow()}>
+          </WorkflowButton>
+          <WorkflowButton onClick={() => importWorkflow()}>
             Import Workflow
-          </button>
-          <button onClick={() => exportWorkflow()}>
+          </WorkflowButton>
+          <WorkflowButton onClick={() => exportWorkflow()}>
             Export Workflow
-          </button>
+          </WorkflowButton>
         </Panel>
 
       </ReactFlow>

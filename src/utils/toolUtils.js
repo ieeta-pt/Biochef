@@ -200,6 +200,8 @@ export async function runTool(toolName, inputs, args, files = {}) {
     }
 
     for (const [inputName, inputValue] of Object.entries(inputs)) {
+      if (!inputValue) continue
+
       const inputConfig = toolConfig.io.inputs.find(i => i.name === inputName);
       const fileName = `${inputName}.txt`
 

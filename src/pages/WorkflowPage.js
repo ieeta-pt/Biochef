@@ -4,7 +4,9 @@ import {
   Grid,
   CircularProgress,
   Typography,
-  Paper
+  Paper,
+  Button,
+  Stack
 } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
 import { getTool } from '../utils/toolUtils';
@@ -280,7 +282,7 @@ const WorkflowPage = () => {
                   It would probably be a good idea either to adapt the panels or
                   just make new ones altogether so this doesn't have to exist.
               */}
-              {selectedNode && selectedNode.type === 'input' && (
+              {selectedNode && selectedNode.type === 'inputWorkflowNode' && (
                 <InputPanel
                   tabIndex={inputTabIndex?.[selectedNode.id] ?? 0}
                   setTabIndex={(value) =>
@@ -323,9 +325,10 @@ const WorkflowPage = () => {
                   </Box>
                   <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
                     <Box sx={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
-                      <Paper elevation={0} sx={{ 
-                        transition: 'transform 150ms ease, background-color 300ms ease, border-color 300ms ease', 
-                        marginBottom: 1, padding: 1, borderRadius: 1, cursor: 'grab', backgroundColor: 'white' }}>
+                      <Paper elevation={0} sx={{
+                        transition: 'transform 150ms ease, background-color 300ms ease, border-color 300ms ease',
+                        marginBottom: 1, padding: 1, borderRadius: 1, cursor: 'grab', backgroundColor: 'white'
+                      }}>
                         <ToolParameterSection
                           toolConfig={getTool(selectedNode.data.label)}
                           parameters={selectedNode.data.paramValues}

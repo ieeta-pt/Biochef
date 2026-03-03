@@ -1,8 +1,7 @@
-import React, { memo, useEffect, useState } from 'react';
-import { Position, useNodeConnections, useNodesData, useReactFlow } from '@xyflow/react';
-import { OneConnectionHandle } from './OneConnectionHandle';
+import React, { memo, useState } from 'react';
+import { Position, Handle, useReactFlow } from '@xyflow/react';
 
-export const OutputWorkflowNode = memo(({ id, data }) => {
+export const InputWorkflowNode = memo(({ id, data }) => {
   const { updateNodeData } = useReactFlow();
 
   const [isEditing, setIsEditing] = useState(false); // Track whether the label is being edited
@@ -12,26 +11,6 @@ export const OutputWorkflowNode = memo(({ id, data }) => {
     setIsEditing(false);
     updateNodeData(id, { label });
   };
-
-  const connections = useNodeConnections({ handleType: 'target' });
-  const sourceHandle = connections?.[0]?.sourceHandle;
-  const connectionData = useNodesData(connections?.[0]?.source);
-
-  useEffect(() => {
-    var output = ""
-    if (sourceHandle) {
-      output = connectionData?.data?.outputs?.[sourceHandle];
-    }
-    else {
-      output = connectionData?.data?.output;
-    }
-    if (output) {
-      updateNodeData(id, { output });
-    }
-    else {
-      updateNodeData(id, { output: "" });
-    }
-  }, [connectionData]);
 
   return (
     <div className="react-flow__node-default">
@@ -59,7 +38,8 @@ export const OutputWorkflowNode = memo(({ id, data }) => {
           {label}
         </label>
       )}
-      <OneConnectionHandle type="target" position={Position.Top} style={{ left: '50%' }} />
-    </div>
+
+      <Handle type="source" position={Position.Bottom} style={{ left: '50%' }} />
+    </div >
   );
-})
+});
