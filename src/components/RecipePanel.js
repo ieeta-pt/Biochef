@@ -13,12 +13,13 @@ import {
   arrayMove,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { AddCircle, ContentCopy, ExpandLess, ExpandMore, FileUpload, GetApp, HelpOutline, Save, Visibility, VisibilityOff } from '@mui/icons-material';
+import { Delete, AddCircle, ContentCopy, ExpandLess, ExpandMore, FileUpload, GetApp, HelpOutline, Save, Visibility, VisibilityOff } from '@mui/icons-material';
 import {
   Box,
   Button,
   Collapse,
   Dialog,
+  DialogContentText,
   DialogActions,
   DialogContent,
   DialogTitle,
@@ -35,7 +36,7 @@ import {
   Tabs,
   TextField,
   Tooltip,
-  Typography
+  Typography,
 } from '@mui/material';
 import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
@@ -106,6 +107,7 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
   const { validateData } = useContext(DataTypeContext);
   const showNotification = useContext(NotificationContext);
   const { tourRegisterSteps, tourIsActive, tourMoveNext } = useContext(TourContext)
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   // Update outputs initialization to handle both modes
   const outputs = React.useMemo(() => {
@@ -484,8 +486,8 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
   }, [workflowInput, tabIndex]);
 
   const fetchAndSetExampleRecipe = async () => {
-    const basePath = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-      ? '/' 
+    const basePath = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? '/'
       : '/Biochef/';
     const response = await fetch(basePath + 'examples/example_recipe.json');
     const fileBlob = await response.blob();
@@ -1718,9 +1720,33 @@ const RecipePanel = ({ workflow, setWorkflow, inputData, setInputData, isLoading
           </Typography>
         </Box>
       )}
+
+      {/* Confirmation Dialog */}
+      <Dialog open={confirmOpen} onClose={() => {setConfirmOpen(false)}}>
+        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to clear the entire workflow? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => {setConfirmOpen(false)}} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={() => {handleDeleteFromHere(workflow[0]?.id); setConfirmOpen(false)}} color="secondary" autoFocus>
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
+  
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
         <Typography variant="h6" gutterBottom>
           Workflow
+          <Tooltip title="Clear Workflow">
+            <IconButton onClick={() => {setConfirmOpen(true)}} size="small">
+              <Delete fontSize="small" />
+            </IconButton>
+          </Tooltip>
         </Typography>
         <Typography
           data-tour="data-type"
