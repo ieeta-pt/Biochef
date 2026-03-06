@@ -8,7 +8,7 @@ import {
   Button,
   Stack
 } from '@mui/material';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import { getTool } from '../utils/toolUtils';
 import InputPanel from '../components/InputPanel';
 import ErrorBoundary from '/src/components/ErrorBoundary'; // Ensure this component exists
@@ -19,16 +19,10 @@ import { loadToolIndex, loadTool } from '../utils/toolUtils';
 import ToolParameterSection from '../components/ToolParameterSection';
 import ToolOutputPanel from '../components/ToolOutputPanel'
 
-import {
-  useReactFlow,
-  useNodesState,
-  useEdgesState,
-} from '@xyflow/react';
-import { sanitizeWorkflowNodes } from '../utils/workflowUtils';
-
 const WorkflowPage = () => {
+  const recipePanelRef = useRef();
+
   const [toolIndexLoaded, setToolIndexLoaded] = useState(false);
-  const [workflowLoaded, setWorkflowLoaded] = useState(false);
 
   const [inputTabIndex, setInputTabIndex] = useState({})
   const [selectedFileManagerFiles, setSelectedFileManagerFiles] = useState({});
@@ -41,85 +35,40 @@ const WorkflowPage = () => {
     children: [],
   });
 
-  const [nodes, setNodes] = useNodesState([]);
-  const [edges, setEdges] = useEdgesState([]);
-  const { updateNodeData, setViewport, toObject } = useReactFlow();
-
   const [selectedNode, setSelectedNode] = useState(null);
+  const selectedNodeData = useMemo(() => {
+    return selectedNode ? selectedNode.data : null;
+  }, [selectedNode]);
+
+  const selectedNodeConfig = useMemo(() => {
+    if (selectedNode && selectedNode.type === "workflowNode" && selectedNodeData) {
+      return getTool(selectedNodeData.label);
+    }
+    return null;
+  }, [selectedNode]);
 
   // load tool index on opening the page
   useEffect(() => {
-    const fetchWorkflow = async () => {
-      const flow = JSON.parse(localStorage.getItem("workflow"));
-
-      if (flow) {
-        const { nodes: savedNodes = [], edges: savedEdges = [], viewport = {} } = flow;
-
-        for (const node of savedNodes) {
-          if (node.type === 'workflowNode') {
-            await loadTool(node.data.label);
-          }
-        }
-
-        setNodes(savedNodes);
-        setEdges(savedEdges);
-
-        const { x = 0, y = 0, zoom = 1 } = viewport;
-        setViewport({ x, y, zoom });
-      }
-
-      setWorkflowLoaded(true);
-    };
-
     const fetchToolIndex = async () => {
       await loadToolIndex();
       setToolIndexLoaded(true);
-      fetchWorkflow()
     };
 
     fetchToolIndex()
   }, []);
 
-  // TODO(andrade)
-  // Make this more reasonable then just storing at every change.
-  // Running this every change is doomed to give performance issues.
-  useEffect(() => {
-    if (!workflowLoaded) return;
-    handleSaveWorkflow();
-  }, [nodes, edges]);
-
-  const handleSaveWorkflow = () => {
-    const flow = toObject();
-    flow.nodes = sanitizeWorkflowNodes(flow.nodes)
-
-    localStorage.setItem('workflow', JSON.stringify(flow));
-  };
-
-  const handleNodeClicked = useCallback((id) => {
-    const node = nodes.find(n => n.id === id);
-    setSelectedNode(node);
-  }, [nodes]);
+  const handleNodeClicked = (node) => {
+    setSelectedNode(node)
+  }
 
   const handleAddOperation = async (toolName) => {
+    console.log(toolName)
     await loadTool(toolName)
     const tool = getTool(toolName)
-
-    const uniqueId = `${tool.id}-${Date.now()}`;
-    setNodes(prevNodes => {
-      const newNode = {
-        id: uniqueId,
-        type: 'workflowNode',
-        data: { label: toolName, output: "", outputs: {} },
-        position: { x: 0, y: 0 },
-      };
-
-      return [...prevNodes, newNode];
-    });
+    recipePanelRef.current.addWorkflowNode(tool);
   };
 
   const updateSelectedNodeData = (newData) => {
-    updateNodeData(selectedNode.id, newData)
-
     setSelectedNode((prevNode) => ({
       ...prevNode,
       data: {
@@ -136,10 +85,10 @@ const WorkflowPage = () => {
   function handleToggleParam(name) {
     if (!selectedNode) return;
 
-    const oldParam = selectedNode.data.paramValues?.[name] || {};
+    const oldParam = selectedNodeData.paramValues?.[name] || {};
 
     const newParamValues = {
-      ...selectedNode.data.paramValues,
+      ...selectedNodeData.paramValues,
       [name]: {
         ...oldParam,
         enabled: !oldParam.enabled,
@@ -152,10 +101,10 @@ const WorkflowPage = () => {
   function handleChangeParam(name, value) {
     if (!selectedNode) return;
 
-    const oldParam = selectedNode.data.paramValues?.[name] || {};
+    const oldParam = selectedNodeData.paramValues?.[name] || {};
 
     const newParamValues = {
-      ...selectedNode.data.paramValues,
+      ...selectedNodeData.paramValues,
       [name]: {
         enabled: oldParam.enabled ?? true,
         value: value,
@@ -165,7 +114,7 @@ const WorkflowPage = () => {
     updateSelectedNodeData({ paramValues: newParamValues });
   }
 
-  if (!toolIndexLoaded || !workflowLoaded) {
+  if (!toolIndexLoaded) {
     return (
       <Box
         sx={{
@@ -248,10 +197,8 @@ const WorkflowPage = () => {
               {/* TODO: this is a temporary thing, make it better in the future */}
 
               <RecipePanel
-                nodes={nodes}
-                setNodes={setNodes}
-                edges={edges}
-                setEdges={setEdges}
+                ref={recipePanelRef}
+                selectedNode={selectedNode}
                 handleNodeClicked={handleNodeClicked}
               />
             </Grid>
@@ -302,7 +249,7 @@ const WorkflowPage = () => {
                       };
                     })
                   }
-                  inputData={selectedNode.data.output}
+                  inputData={selectedNodeData.output}
                   setInputData={handleUpdateSelectedInputNode}
                   tree={inputFileManagerTree?.[selectedNode.id] ?? getInitialTree()}
                   setTree={(updater) =>
@@ -321,17 +268,53 @@ const WorkflowPage = () => {
               {selectedNode && selectedNode.type === 'workflowNode' && (
                 <Paper elevation={3} sx={{ padding: 2, height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
-                    <Typography variant="h6" gutterBottom>{selectedNode.data.label}</Typography>
+                    <Typography variant="h6" gutterBottom>{selectedNodeData.label}</Typography>
                   </Box>
                   <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                    <Box sx={{ marginBottom: 3 }}>
+                      <Typography variant="body1" gutterBottom>
+                        Supported Formats
+                      </Typography>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        {/* Inputs */}
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="body2" sx={{ color: 'text.secondary' }}>Input:</Typography>
+                          {selectedNodeConfig.io?.inputs?.length > 0 ? (
+                            selectedNodeConfig.io.inputs.map((input, index, arr) => (
+                              <Typography key={input.name} variant="body2">
+                                {arr.length > 1 ? `${input.name}: ` : ''}
+                                {input.types.join(', ')}
+                              </Typography>
+                            ))
+                          ) : (
+                            <Typography variant="body2">None available</Typography>
+                          )}
+                        </Box>
+
+                        {/* Outputs */}
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="body2" sx={{ color: 'text.secondary' }}>Output:</Typography>
+                          {selectedNodeConfig.io?.outputs?.length > 0 ? (
+                            selectedNodeConfig.io.outputs.map((output, index, arr) => (
+                              <Typography key={output.name} variant="body2">
+                                {arr.length > 1 ? `${output.name}: ` : ''}
+                                {output.types.join(', ')}
+                              </Typography>
+                            ))
+                          ) : (
+                            <Typography variant="body2">None available</Typography>
+                          )}
+                        </Box>
+                      </Box>
+                    </Box>
                     <Box sx={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
                       <Paper elevation={0} sx={{
                         transition: 'transform 150ms ease, background-color 300ms ease, border-color 300ms ease',
                         marginBottom: 1, padding: 1, borderRadius: 1, cursor: 'grab', backgroundColor: 'white'
                       }}>
                         <ToolParameterSection
-                          toolConfig={getTool(selectedNode.data.label)}
-                          parameters={selectedNode.data.paramValues}
+                          toolConfig={selectedNodeConfig}
+                          parameters={selectedNodeData.paramValues}
                           validationErrors={{}}
                           handleParameterChange={handleChangeParam}
                           toggleParameter={handleToggleParam}
@@ -339,7 +322,7 @@ const WorkflowPage = () => {
                       </Paper>
                     </Box>
                     <Box>
-                      <ToolOutputPanel outputData={selectedNode.data.outputs} rows={5} />
+                      <ToolOutputPanel outputData={selectedNodeData.outputs} rows={5} />
                     </Box>
                   </Box>
                 </Paper>
@@ -347,7 +330,7 @@ const WorkflowPage = () => {
 
               {selectedNode && selectedNode.type === 'outputWorkflowNode' && (
                 <ToolOutputPanel
-                  outputData={selectedNode.data.output}
+                  outputData={selectedNodeData.output}
                   // setOutputData={setOutputData} 
                   // tool={selectedTool} 
                   // inputData={inputData} 

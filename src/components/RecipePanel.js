@@ -1,32 +1,79 @@
-import React, { useCallback } from 'react'
+import React, { useEffect, useCallback, useImperativeHandle, forwardRef, useState } from 'react';
+import { ReactFlow, useStoreApi, useReactFlow, useNodesState, useEdgesState, applyNodeChanges, applyEdgeChanges, addEdge, Background, BackgroundVariant, MarkerType, Panel } from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
+import { Paper, Button, Box, CircularProgress } from '@mui/material';
+import { WorkflowNode } from './nodes/WorkflowNode';
+import { OutputWorkflowNode } from './nodes/OutputWorkflowNode';
+import { InputWorkflowNode } from './nodes/InputWorkflowNode';
+import { WorkflowEdge } from './nodes/WorkflowEdge';
+import { loadTool } from '../utils/toolUtils';
+import { sanitizeWorkflowNodes } from '../utils/workflowUtils';
 
-import { ReactFlow, useReactFlow, applyNodeChanges, applyEdgeChanges, addEdge, Background, BackgroundVariant, MarkerType, Panel } from '@xyflow/react'
-import '@xyflow/react/dist/style.css'
-import { Paper, Button } from '@mui/material'
+const RecipePanel = forwardRef(({ selectedNode, handleNodeClicked }, ref) => {
+  const [nodes, setNodes] = useNodesState([]);
+  const [edges, setEdges] = useEdgesState([]);
 
-import { WorkflowNode } from './nodes/WorkflowNode'
-import { OutputWorkflowNode } from './nodes/OutputWorkflowNode'
-import { InputWorkflowNode } from './nodes/InputWorkflowNode'
-import { WorkflowEdge } from './nodes/WorkflowEdge'
-import { loadTool } from '../utils/toolUtils'
-import { sanitizeWorkflowNodes } from '../utils/workflowUtils'
+  const nodeWidth = 150
+  const nodeHeight = 40
 
-const RecipePanel = ({ nodes, setNodes, edges, setEdges, handleNodeClicked }) => {
-  const { toObject, setViewport } = useReactFlow();
+  const store = useStoreApi()
+  const { updateNodeData, screenToFlowPosition, getViewport, setViewport, toObject } = useReactFlow();
+
+  const [workflowLoaded, setWorkflowLoaded] = useState(false);
+
+  useEffect(() => {
+    const fetchWorkflow = async () => {
+      const flow = JSON.parse(localStorage.getItem("workflow"));
+
+      if (flow) {
+        const { nodes: savedNodes = [], edges: savedEdges = [], viewport = {} } = flow;
+
+        for (const node of savedNodes) {
+          if (node.type === 'workflowNode') {
+            await loadTool(node.data.label);
+          }
+        }
+
+        setNodes(savedNodes);
+        setEdges(savedEdges);
+
+        const { x = 0, y = 0, zoom = 1 } = viewport;
+        setViewport({ x, y, zoom });
+      }
+
+      setWorkflowLoaded(true);
+    };
+
+    fetchWorkflow()
+  }, [])
+
+  // TODO(andrade)
+  // Make this more reasonable then just storing at every change.
+  // Running this every change is doomed to give performance issues.
+  useEffect(() => {
+    if (!workflowLoaded) return;
+
+    const flow = toObject();
+    flow.nodes = sanitizeWorkflowNodes(flow.nodes)
+
+    localStorage.setItem('workflow', JSON.stringify(flow));
+  }, [nodes, edges]);
+
+  useEffect(() => {
+    if (!selectedNode) return;
+    const node = nodes.find((n) => n.id === selectedNode.id);
+    if (JSON.stringify(node.data) !== JSON.stringify(selectedNode.data)) {
+      updateNodeData(selectedNode.id, selectedNode.data);
+    }
+  }, [selectedNode?.data]);
 
   const onNodesChange = useCallback((changes) => {
-    setNodes((prev) => applyNodeChanges(changes, prev))
-  })
+    setNodes((prev) => applyNodeChanges(changes, prev));
+  }, []);
 
   const onEdgesChange = useCallback((changes) => {
-    setEdges((prev) => applyEdgeChanges(changes, prev))
-  })
-
-  const edgeOptions = {
-    markerEnd: {
-      type: MarkerType.ArrowClosed,
-    },
-  }
+    setEdges((prev) => applyEdgeChanges(changes, prev));
+  }, []);
 
   const onConnect = useCallback((params) => {
     setEdges((prev) =>
@@ -34,7 +81,6 @@ const RecipePanel = ({ nodes, setNodes, edges, setEdges, handleNodeClicked }) =>
         {
           ...params,
           type: 'workflowEdge',
-          ...edgeOptions,
         },
         prev
       )
@@ -42,34 +88,81 @@ const RecipePanel = ({ nodes, setNodes, edges, setEdges, handleNodeClicked }) =>
   }, [setEdges]);
 
   const onNodeClick = useCallback((event, node) => {
-    handleNodeClicked(node.id);
+    handleNodeClicked(node);
   });
 
-  const addSpecialNode = useCallback((type) => {
-    const id = `${type}-${Date.now()}`; // unique ID
-    const newNode = {
-      id,
-      type: type === 'input' ? 'inputWorkflowNode' : 'outputWorkflowNode', // match your nodeTypes
-      data: {
-        label: type === 'input' ? `Input` : `Output`,
-        output: ''
-      },
-      position: { x: 0, y: 0 }, // put input above, output below
-    };
+  const getCenterPosition = () => {
+    const { domNode } = store.getState()
+    const boundingRect = domNode?.getBoundingClientRect()
 
-    setNodes((prevNodes) => [...prevNodes, newNode]);
-  });
+    return screenToFlowPosition({
+      x: boundingRect.x + boundingRect.width / 2,
+      y: boundingRect.y + boundingRect.height / 2,
+    })
+  }
 
-  const clearWorkflow = useCallback(() => {
-    setNodes([])
-    setEdges([])
-  })
+  const addWorkflowNode = (tool) => {
+    const uniqueId = `${tool.id}-${Date.now()}`;
+    const center = getCenterPosition()
+    setNodes(prevNodes => {
+      const newNode = {
+        id: uniqueId,
+        type: 'workflowNode',
+        data: { label: tool.name, output: "", outputs: {} },
+        position: {
+          x: center.x - nodeWidth / 2,
+          y: center.y - nodeHeight / 2,
+        },
+      };
+
+      return [...prevNodes, newNode];
+    });
+  }
+
+  const addInputNode = () => {
+    const center = getCenterPosition()
+    setNodes(prevNodes => {
+      const newNode = {
+        id: `input-${Date.now()}`,
+        type: 'inputWorkflowNode',
+        data: { label: "Input", output: "" },
+        position: {
+          x: center.x - nodeWidth / 2,
+          y: center.y - nodeHeight / 2,
+        },
+      };
+
+      return [...prevNodes, newNode];
+    });
+  };
+
+  const addOutputNode = () => {
+    const center = getCenterPosition()
+    setNodes(prevNodes => {
+      const newNode = {
+        id: `output-${Date.now()}`,
+        type: 'outputWorkflowNode',
+        data: { label: "Output", output: "" },
+        position: {
+          x: center.x - nodeWidth / 2,
+          y: center.y - nodeHeight / 2,
+        },
+      };
+
+      return [...prevNodes, newNode];
+    });
+  };
+
+  const clearWorkflow = () => {
+    setNodes([]);
+    setEdges([]);
+  };
 
   const exportWorkflow = useCallback(() => {
-    if (nodes.length == 0) return;
+    if (nodes.length === 0) return;
 
-    const flow = toObject()
-    flow.nodes = sanitizeWorkflowNodes(flow.nodes)
+    const flow = toObject();
+    flow.nodes = sanitizeWorkflowNodes(flow.nodes);
     const fileContent = JSON.stringify(flow, null, 2);
 
     const blob = new Blob([fileContent], { type: 'application/json' });
@@ -81,8 +174,9 @@ const RecipePanel = ({ nodes, setNodes, edges, setEdges, handleNodeClicked }) =>
     a.click();
 
     URL.revokeObjectURL(url);
-  })
+  }, [nodes, toObject]);
 
+  // Import Workflow function
   const importWorkflow = useCallback(() => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -119,17 +213,15 @@ const RecipePanel = ({ nodes, setNodes, edges, setEdges, handleNodeClicked }) =>
     };
 
     input.click();
-  }, []);
+  }, [setNodes, setEdges, setViewport]);
 
-  const nodeTypes = {
-    workflowNode: WorkflowNode,
-    outputWorkflowNode: OutputWorkflowNode,
-    inputWorkflowNode: InputWorkflowNode
-  };
+  useImperativeHandle(ref, () => ({
+    addWorkflowNode,
+  }));
 
-  const edgeTypes = {
-    workflowEdge: WorkflowEdge,
-  };
+  const resetViewportPosition = () => {
+    setViewport({ x: 0, y: 0, zoom: 1 });
+  }
 
   const WorkflowButton = ({ children, ...props }) => (
     <Button
@@ -145,12 +237,27 @@ const RecipePanel = ({ nodes, setNodes, edges, setEdges, handleNodeClicked }) =>
         margin: 0.5
       }}
       disableElevation
-
       {...props}
     >
       {children}
     </Button>
   );
+
+
+  if (!workflowLoaded) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: 'calc(100vh - 64px)',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Paper elevation={3} sx={{ width: '100%', height: '100%' }}>
@@ -161,34 +268,42 @@ const RecipePanel = ({ nodes, setNodes, edges, setEdges, handleNodeClicked }) =>
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={onNodeClick}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
+        nodeTypes={{
+          workflowNode: WorkflowNode,
+          outputWorkflowNode: OutputWorkflowNode,
+          inputWorkflowNode: InputWorkflowNode
+        }}
+        edgeTypes={{
+          workflowEdge: WorkflowEdge,
+        }}
         fitView
       >
         <Background bgColor="#FFFFFF" color='#009688' variant={BackgroundVariant.Dots} />
 
         <Panel>
-          <WorkflowButton onClick={() => addSpecialNode('input')}>
+          <WorkflowButton onClick={addInputNode}>
             Add Input Node
           </WorkflowButton>
-          <WorkflowButton onClick={() => addSpecialNode('output')}>
+          <WorkflowButton onClick={addOutputNode}>
             Add Output Node
           </WorkflowButton>
-          <WorkflowButton onClick={() => clearWorkflow()}>
-            Clear Workflow
-          </WorkflowButton>
-          <WorkflowButton onClick={() => importWorkflow()}>
+          <WorkflowButton onClick={importWorkflow}>
             Import Workflow
           </WorkflowButton>
-          <WorkflowButton onClick={() => exportWorkflow()}>
+          <WorkflowButton onClick={exportWorkflow}>
             Export Workflow
+          </WorkflowButton>
+          <WorkflowButton onClick={clearWorkflow}>
+            Clear Workflow
+          </WorkflowButton>
+          <WorkflowButton onClick={resetViewportPosition}>
+            Recenter
           </WorkflowButton>
         </Panel>
 
       </ReactFlow>
-
     </Paper>
-  )
-};
+  );
+});
 
 export default RecipePanel;
