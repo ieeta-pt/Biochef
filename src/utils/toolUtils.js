@@ -218,6 +218,11 @@ export async function runTool(toolName, inputs, args, files = {}) {
 
     // let cli_result = { stdout: tool.stdout, stderr: tool.stderr };
     const cli_result = await CLI.exec(toolProgram, args);
+
+    // Artificial delay for testing purposes
+    // const delay = 10000;
+    // await new Promise(resolve => setTimeout(resolve, delay));
+
     const error = cli_result.stderr
     console.log("[runTool] args:", args)
     console.log("[runTool] result:", cli_result)

@@ -50,6 +50,12 @@ export const WorkflowNode = memo(({ id, data }) => {
         }
       });
 
+      const allInputsEmpty = Object.values(inputs).every(value =>
+        value === "" || value === undefined || value === null
+      );
+
+      if (allInputsEmpty) return;
+
       const args = [];
       toolData.parameters.forEach(param => {
         const enabled = paramValues[param.name].enabled;
@@ -65,8 +71,9 @@ export const WorkflowNode = memo(({ id, data }) => {
         }
       });
 
-      const {outputs, error} = await runTool(toolData.name, inputs, args, {});
-      updateNodeData(id, { outputs });
+      updateNodeData(id, { is_running: true });
+      const { outputs, error } = await runTool(toolData.name, inputs, args, {});
+      updateNodeData(id, { outputs, is_running: false });
     }
 
     handleRunTool();
