@@ -18,6 +18,7 @@ import { DataTypeContext } from '/src/contexts/DataTypeContext';
 import { loadToolIndex, loadTool } from '../utils/toolUtils';
 import ToolParameterSection from '../components/ToolParameterSection';
 import ToolOutputPanel from '../components/ToolOutputPanel'
+import { detectDataType } from '../utils/detectDataType';
 
 const WorkflowPage = () => {
   const recipePanelRef = useRef();
@@ -79,7 +80,7 @@ const WorkflowPage = () => {
   };
 
   const handleUpdateSelectedInputNode = (text) => {
-    updateSelectedNodeData({ output: text })
+    updateSelectedNodeData({ outputs: {"out": text}, outputTypes: {"out": detectDataType('input.txt', text)} })
   };
 
   function handleToggleParam(name) {
@@ -249,7 +250,7 @@ const WorkflowPage = () => {
                       };
                     })
                   }
-                  inputData={selectedNodeData.output}
+                  inputData={selectedNodeData.outputs?.["out"] ?? ""}
                   setInputData={handleUpdateSelectedInputNode}
                   tree={inputFileManagerTree?.[selectedNode.id] ?? getInitialTree()}
                   setTree={(updater) =>
@@ -321,9 +322,9 @@ const WorkflowPage = () => {
                         />
                       </Paper>
                     </Box>
-                    <Box>
+                    {/* <Box>
                       <ToolOutputPanel outputData={selectedNodeData.outputs} rows={5} />
-                    </Box>
+                    </Box> */}
                   </Box>
                 </Paper>
               )}

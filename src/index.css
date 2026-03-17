@@ -7,3 +7,11 @@ Maybe we should create it from scratch in the future.
 .react-flow__node-default {
   border: 1px solid lightgray;
 }
+
+.react-flow__handle.connectingto {
+  background: #ff6060;
+}
+ 
+.react-flow__handle.valid {
+  background: #55dd99;
+}

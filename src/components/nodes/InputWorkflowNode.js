@@ -39,7 +39,7 @@ export const InputWorkflowNode = memo(({ id, data }) => {
         </label>
       )}
 
-      <Handle type="source" position={Position.Bottom} style={{ left: '50%' }} />
+      <Handle id="out" type="source" position={Position.Bottom} style={{ left: '50%' }} />
     </div >
   );
 });

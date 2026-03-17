@@ -1,40 +1,20 @@
-import React from 'react';
-import { BaseEdge, getBezierPath, useNodesData } from '@xyflow/react';
-import { getTool } from '../../utils/toolUtils';
-import { detectDataType } from '../../utils/detectDataType';
-import { output } from 'framer-motion/client';
-export function WorkflowEdge(props) {
+import React, { useEffect, useState } from 'react';
+import { BaseEdge, getBezierPath, useNodesData, useReactFlow } from '@xyflow/react';
+import { isValidWorkflowConnection } from '../../utils/workflowUtils';
 
+export function WorkflowEdge(props) {
   const {
-    animated,
-    data,
-    deletable,
     id,
-    interactionWidth,
     label,
-    labelBgBorderRadius,
-    labelBgPadding,
-    labelBgStyle,
-    labelShowBg,
-    labelStyle,
-    markerEnd,
-    markerStart,
-    pathOptions,
-    selectable,
-    selected,
-    source,
-    sourceHandleId,
-    sourcePosition,
-    sourceX,
-    sourceY,
-    style,
-    target,
-    targetHandleId,
-    targetPosition,
-    targetX,
-    targetY,
-    type,
-  } = props
+    source, sourceHandleId, sourcePosition, sourceX, sourceY,
+    target, targetHandleId, targetPosition, targetX, targetY
+  } = props;
+
+  const { getNode, updateNodeData } = useReactFlow();
+  const sourceHandleData = useNodesData(source);
+
+  const [edgeColor, setEdgeColor] = useState("#999");
+  const [edgeLabel, setEdgeLabel] = useState(label);
 
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
@@ -45,39 +25,57 @@ export function WorkflowEdge(props) {
     targetPosition,
   });
 
-  const sourceHandleData = useNodesData(source);
-  var handleType = null;
-
-  const isWorkflowNode = sourceHandleData?.type == 'workflowNode'
-  if (sourceHandleData?.type == 'workflowNode' && sourceHandleData?.data.outputs[sourceHandleId]) {
-    const toolName = sourceHandleData?.data.label
-    const toolConfig = toolName && isWorkflowNode ? getTool(toolName) : null;
-    const outputTypes = toolConfig ? toolConfig.io.outputs.find((output) => output.name === sourceHandleId).types : [];
-
-    if (outputTypes.length > 1) {
-      const detectedType = detectDataType('input.txt', sourceHandleData?.data.outputs[sourceHandleId]);
-      handleType = detectedType;
-    }
-    else if (outputTypes.length == 1) {
-      handleType = outputTypes[0];
-    }
-  }
-  else if (sourceHandleData?.type == 'inputWorkflowNode' && sourceHandleData?.data.output) {
-    const detectedType = detectDataType('input.txt', sourceHandleData?.data.output);
-    handleType = detectedType;
-  }
-
   const typeColors = {
-    "FASTA": "#e74c3c",  // bright red
-    "NUM": "#3498db",    // blue
-    "TEXT": "#2ecc71",   // green
-    "DNA": "#9b59b6"     // purple
+    FASTA: "#e74c3c",
+    NUM: "#3498db",
+    TEXT: "#2ecc71",
+    DNA: "#9b59b6",
+    BIN: "#123456"
   };
-  const selectedColor = handleType && typeColors.hasOwnProperty(handleType)
-    ? typeColors[handleType]
-    : null;
+
+  useEffect(() => {
+    const sourceNode = getNode(source);
+    const targetNode = getNode(target);
+
+    if (!sourceNode || !targetNode) return;
+
+    const handleType = sourceHandleData.data.outputTypes?.[sourceHandleId];
+
+    const isValidConnection = isValidWorkflowConnection(
+      sourceNode,
+      sourceHandleId,
+      targetNode,
+      targetHandleId
+    );
+
+    const inputValidity = { ...(targetNode.data.inputValidity || {}) };
+
+    if (inputValidity[targetHandleId] !== isValidConnection) {
+      inputValidity[targetHandleId] = isValidConnection;
+      updateNodeData(target, { inputValidity });
+    }
+
+    // compute colors here
+    const selectedColor =
+      handleType && typeColors.hasOwnProperty(handleType)
+        ? typeColors[handleType]
+        : "#999";
+
+    const nextColor = isValidConnection ? selectedColor : "#ff0000";
+    const nextLabel = isValidConnection
+      ? (handleType && handleType !== "UNKNOWN" ? handleType : label)
+      : "❌";
+
+    setEdgeColor(nextColor);
+    setEdgeLabel(nextLabel);
+
+  }, [
+    target, 
+    sourceHandleData.data.outputTypes,
+  ]);
 
   const markerId = `marker-${id}`;
+
   return (
     <>
       <svg style={{ position: 'absolute', top: 0, left: 0 }}>
@@ -97,8 +95,8 @@ export function WorkflowEdge(props) {
               className="arrowclosed"
               style={{
                 strokeWidth: 1,
-                stroke: selectedColor,
-                fill: selectedColor,
+                stroke: edgeColor,
+                fill: edgeColor,
               }}
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -112,17 +110,21 @@ export function WorkflowEdge(props) {
         id={id}
         path={edgePath}
         markerEnd={`url(#${markerId})`}
-        style={{ stroke: selectedColor, strokeDasharray: '4,2' }}
-        label={handleType && handleType != "UNKNOWN" ? handleType : label}
+        style={{
+          stroke: edgeColor,
+          strokeDasharray: edgeLabel === "❌" ? '0' : '4,2',
+          strokeWidth: edgeLabel === "❌" ? 2 : 1
+        }}
+        label={edgeLabel}
         labelX={labelX}
         labelY={labelY}
-        labelStyle={{ fill: selectedColor, fontSize: 9 }}
+        labelStyle={{ fill: edgeColor, fontSize: 9 }}
       />
 
       <circle
         r="2.5"
-        fill={selectedColor}
-        style={{ opacity: sourceHandleData?.data.is_running ? 1 : 0 }}
+        fill={edgeColor}
+        style={{ opacity: sourceHandleData?.data?.is_running ? 1 : 0 }}
       >
         <animateMotion dur="1s" repeatCount="indefinite" path={edgePath} />
       </circle>

@@ -6,8 +6,8 @@ import { WorkflowNode } from './nodes/WorkflowNode';
 import { OutputWorkflowNode } from './nodes/OutputWorkflowNode';
 import { InputWorkflowNode } from './nodes/InputWorkflowNode';
 import { WorkflowEdge } from './nodes/WorkflowEdge';
-import { loadTool } from '../utils/toolUtils';
-import { sanitizeWorkflowNodes } from '../utils/workflowUtils';
+import { loadTool, getTool } from '../utils/toolUtils';
+import { isValidWorkflowConnection, sanitizeWorkflowNodes } from '../utils/workflowUtils';
 
 const RecipePanel = forwardRef(({ selectedNode, handleNodeClicked }, ref) => {
   const [nodes, setNodes] = useNodesState([]);
@@ -17,7 +17,7 @@ const RecipePanel = forwardRef(({ selectedNode, handleNodeClicked }, ref) => {
   const nodeHeight = 40
 
   const store = useStoreApi()
-  const { updateNodeData, screenToFlowPosition, getViewport, setViewport, toObject } = useReactFlow();
+  const { updateNodeData, screenToFlowPosition, getNode, setViewport, toObject } = useReactFlow();
 
   const [workflowLoaded, setWorkflowLoaded] = useState(false);
 
@@ -125,7 +125,7 @@ const RecipePanel = forwardRef(({ selectedNode, handleNodeClicked }, ref) => {
       const newNode = {
         id: `input-${Date.now()}`,
         type: 'inputWorkflowNode',
-        data: { label: "Input", output: "" },
+        data: { label: "Input" },
         position: {
           x: center.x - nodeWidth / 2,
           y: center.y - nodeHeight / 2,
@@ -142,7 +142,7 @@ const RecipePanel = forwardRef(({ selectedNode, handleNodeClicked }, ref) => {
       const newNode = {
         id: `output-${Date.now()}`,
         type: 'outputWorkflowNode',
-        data: { label: "Output", output: "" },
+        data: { label: "Output" },
         position: {
           x: center.x - nodeWidth / 2,
           y: center.y - nodeHeight / 2,
@@ -243,6 +243,10 @@ const RecipePanel = forwardRef(({ selectedNode, handleNodeClicked }, ref) => {
     </Button>
   );
 
+  const isValidConnection = (connection) => {
+    const { source, sourceHandle, target, targetHandle } = connection;
+    return isValidWorkflowConnection(getNode(source), sourceHandle, getNode(target), targetHandle)
+  };
 
   if (!workflowLoaded) {
     return (
@@ -276,6 +280,7 @@ const RecipePanel = forwardRef(({ selectedNode, handleNodeClicked }, ref) => {
         edgeTypes={{
           workflowEdge: WorkflowEdge,
         }}
+        isValidConnection={isValidConnection}
         fitView
       >
         <Background bgColor="#FFFFFF" color='#009688' variant={BackgroundVariant.Dots} />

@@ -1,9 +1,10 @@
-import React, { memo, useEffect } from 'react';
+import React, { memo, useEffect, useState } from 'react';
 
 import { Handle, Position, useNodeConnections, useNodesData, useReactFlow } from '@xyflow/react';
 import { OneConnectionHandle } from './OneConnectionHandle';
 
 import { runTool, getTool } from '../../utils/toolUtils';
+import { detectDataType } from '../../utils/detectDataType';
 
 export const WorkflowNode = memo(({ id, data }) => {
   const { label, paramValues } = data;
@@ -14,6 +15,9 @@ export const WorkflowNode = memo(({ id, data }) => {
 
   const inputConnections = useNodeConnections({ handleType: 'target' });
   const inputConnectionsData = useNodesData(inputConnections.map(conn => conn.source));
+
+  const [invalidOutputType, setInvalidOutputType] = useState(false);
+  const [invalidParameters, setInvalidParameters] = useState(false)
 
   useEffect(() => {
     if (!paramValues) {
@@ -32,6 +36,13 @@ export const WorkflowNode = memo(({ id, data }) => {
 
   useEffect(() => {
     async function handleRunTool() {
+      const inputValidity = data.inputValidity || {};
+      const hasInvalidInputs = Object.values(inputValidity).some(v => v === false);
+      if (hasInvalidInputs) {
+        updateNodeData(id, { outputs: {}, outputTypes: {} })
+        return;
+      }
+
       // Merge each input connection with its corresponding source node
       const connections = inputConnections.map(conn => ({
         ...conn,
@@ -42,19 +53,25 @@ export const WorkflowNode = memo(({ id, data }) => {
 
       const inputs = {};
       connections.forEach(({ sourceNode, sourceHandle, targetHandle }) => {
-        if (sourceHandle) {
-          inputs[targetHandle] = sourceNode.data.outputs[sourceHandle];
-        }
-        else {
-          inputs[targetHandle] = sourceNode.data.output
-        }
+        inputs[targetHandle] = sourceNode.data.outputs[sourceHandle];
       });
 
       const allInputsEmpty = Object.values(inputs).every(value =>
         value === "" || value === undefined || value === null
       );
 
-      if (allInputsEmpty) return;
+      // this is to prevent the tools from running right after loading from localstorage
+      if (allInputsEmpty && Object.keys(data.outputs).length === 0) return;
+
+      const missingRequiredParameters = toolData.parameters?.some(param =>
+        param.required && (paramValues[param.name]?.value === "" || paramValues[param.name]?.value === undefined || paramValues[param.name]?.value === null)
+      );
+
+      setInvalidParameters(missingRequiredParameters)
+      if (missingRequiredParameters) {
+        updateNodeData(id, { outputs: {}, outputTypes: {} })
+        return
+      };
 
       const args = [];
       toolData.parameters.forEach(param => {
@@ -71,13 +88,26 @@ export const WorkflowNode = memo(({ id, data }) => {
         }
       });
 
-      updateNodeData(id, { is_running: true });
+      updateNodeData(id, { is_running: true, outputTypes: {} });
       const { outputs, error } = await runTool(toolData.name, inputs, args, {});
-      updateNodeData(id, { outputs, is_running: false });
+
+      const outputTypes = {};
+      for (const key in outputs) {
+        const detectedType = detectDataType('input.txt', outputs[key])
+        const definedTypes = toolData.outputTypes
+        setInvalidOutputType(!definedTypes.includes(detectedType))
+
+        outputTypes[key] = detectedType;
+      }
+
+      updateNodeData(id, { outputs, outputTypes, is_running: false });
     }
 
     handleRunTool();
-  }, [inputConnectionsData, paramValues]);
+  }, [
+    data.inputValidity,
+    paramValues
+  ]);
 
   function renderInputHandles() {
     return toolInputs.map((input, idx) => (
@@ -118,6 +148,22 @@ export const WorkflowNode = memo(({ id, data }) => {
   return (
     <div className="react-flow__node-default">
       <label>{label}</label>
+
+      {invalidParameters && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 5,
+            right: 5,
+            width: '10px',
+            height: '10px',
+            borderRadius: '50%',
+            backgroundColor: 'red',
+            border: '2px solid #fff',
+          }}
+        />
+      )}
+
       {renderInputHandles()}
       {renderOutputHandles()}
     </div>

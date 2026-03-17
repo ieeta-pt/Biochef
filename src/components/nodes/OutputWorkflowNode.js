@@ -1,6 +1,7 @@
 import React, { memo, useEffect, useState } from 'react';
 import { Position, useNodeConnections, useNodesData, useReactFlow } from '@xyflow/react';
 import { OneConnectionHandle } from './OneConnectionHandle';
+import { detectDataType } from '../../utils/detectDataType';
 
 export const OutputWorkflowNode = memo(({ id, data }) => {
   const { updateNodeData } = useReactFlow();
@@ -18,19 +19,10 @@ export const OutputWorkflowNode = memo(({ id, data }) => {
   const connectionData = useNodesData(connections?.[0]?.source);
 
   useEffect(() => {
-    var output = ""
-    if (sourceHandle) {
-      output = connectionData?.data?.outputs?.[sourceHandle];
-    }
-    else {
-      output = connectionData?.data?.output;
-    }
-    if (output) {
-      updateNodeData(id, { output });
-    }
-    else {
-      updateNodeData(id, { output: "" });
-    }
+    if (!connectionData) return;
+    updateNodeData(id, { 
+      output: connectionData.data.outputs?.[sourceHandle] ?? ""
+    });
   }, [connectionData]);
 
   return (
