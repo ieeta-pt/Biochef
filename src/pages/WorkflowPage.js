@@ -80,7 +80,7 @@ const WorkflowPage = () => {
   };
 
   const handleUpdateSelectedInputNode = (text) => {
-    updateSelectedNodeData({ outputs: {"out": text}, outputTypes: {"out": detectDataType('input.txt', text)} })
+    updateSelectedNodeData({ outputs: {"out": text}, outputTypes: {"out": detectDataType(text)} })
   };
 
   function handleToggleParam(name) {

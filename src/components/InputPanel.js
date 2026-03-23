@@ -71,7 +71,7 @@ const InputPanel = ({ tabIndex, setTabIndex, selectedFiles, setSelectedFiles, in
                 return;
             }
 
-            const detectedType = detectDataType('input.txt', content);
+            const detectedType = detectDataType(content);
             setInputDataType(detectedType);
             const valid = validateData(content, detectedType);
 

@@ -139,16 +139,19 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
             });
 
             // Verify if the input data is compatible with the tool
-            const inputDataType = detectDataType("input.txt", inputData);
-            if (!inputFormats.includes(inputDataType)){ // && toolConfig.input.type !== '' && toolConfig.input.type !== 'file') {
-                showNotification(
-                    `Input data type ${inputDataType} is not supported by tool ${tool.name}.`,
-                    'error'
-                );
-                console.error(
-                    `Input data type ${inputDataType} is not supported by tool ${tool.name}.`
-                );
-                return;
+            for (const [key, value] of Object.entries(inputData)) {
+                const inputDataType = detectDataType(value);
+
+                if (!inputFormats.includes(inputDataType)) {
+                    showNotification(
+                        `Input data type ${inputDataType} for field "${key}" is not supported by tool ${tool.name}.`,
+                        'error'
+                    );
+                    console.error(
+                        `Input data type ${inputDataType} for field "${key}" is not supported by tool ${tool.name}.`
+                    );
+                    return;
+                }
             }
 
             // Ensure input is defined
@@ -158,7 +161,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
 
             // Execute the tool
             const result = await runTool(tool.name, inputData, args, toolParameterFiles);
-            const {outputs, error} = result;
+            const { outputs, error } = result;
             setOutputData(outputs)
 
             // TODO: code below is very much hardcoded for how GTO works with the ERROR: at the start

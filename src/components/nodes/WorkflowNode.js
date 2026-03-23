@@ -1,5 +1,7 @@
 import React, { memo, useEffect, useState } from 'react';
 
+import { Tooltip } from '@mui/material';
+
 import { Handle, Position, useNodeConnections, useNodesData, useReactFlow } from '@xyflow/react';
 import { OneConnectionHandle } from './OneConnectionHandle';
 
@@ -93,8 +95,8 @@ export const WorkflowNode = memo(({ id, data }) => {
 
       const outputTypes = {};
       for (const key in outputs) {
-        const detectedType = detectDataType('input.txt', outputs[key])
-        const definedTypes = toolData.outputTypes
+        const definedTypes = toolData.io.outputs.find(o => o.name === key).types
+        const detectedType = detectDataType(outputs[key], definedTypes)
         setInvalidOutputType(!definedTypes.includes(detectedType))
 
         outputTypes[key] = detectedType;
@@ -146,26 +148,35 @@ export const WorkflowNode = memo(({ id, data }) => {
   }
 
   return (
-    <div className="react-flow__node-default">
+
+    <div className="react-flow__node-default" style={{ position: 'relative' }}>
       <label>{label}</label>
 
-      {invalidParameters && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 5,
-            right: 5,
-            width: '10px',
-            height: '10px',
-            borderRadius: '50%',
-            backgroundColor: 'red',
-            border: '2px solid #fff',
-          }}
-        />
+      {(invalidParameters || invalidOutputType) && (
+        <Tooltip
+          title={invalidParameters ? 'Invalid Parameters' : 'Invalid Output Type'}
+          placement="top-end"
+          arrow
+        >
+          <div
+            style={{
+              position: 'absolute',
+              top: 2,
+              right: 2,
+              width: '10px',
+              height: '10px',
+              borderRadius: '50%',
+              backgroundColor: invalidParameters ? 'red' : 'yellow',
+              border: '2px solid #fff',
+            }}
+          />
+        </Tooltip>
+
       )}
 
+      {/* Render input and output handles */}
       {renderInputHandles()}
       {renderOutputHandles()}
     </div>
-  );
+  )
 })

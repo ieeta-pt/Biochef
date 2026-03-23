@@ -158,7 +158,7 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
                 return;
             }
 
-            const detectedType = detectDataType('input.txt', content);
+            const detectedType = detectDataType(content);
             setInputDataType(detectedType);
             const valid = validateData(content, detectedType);
 

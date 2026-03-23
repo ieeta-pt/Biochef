@@ -49,11 +49,8 @@ export function WorkflowEdge(props) {
     );
 
     const inputValidity = { ...(targetNode.data.inputValidity || {}) };
-
-    if (inputValidity[targetHandleId] !== isValidConnection) {
-      inputValidity[targetHandleId] = isValidConnection;
-      updateNodeData(target, { inputValidity });
-    }
+    inputValidity[targetHandleId] = isValidConnection;
+    updateNodeData(target, { inputValidity });
 
     // compute colors here
     const selectedColor =
@@ -70,7 +67,7 @@ export function WorkflowEdge(props) {
     setEdgeLabel(nextLabel);
 
   }, [
-    target, 
+    target,
     sourceHandleData.data.outputTypes,
   ]);
 
