@@ -1,7 +1,8 @@
 import React, { useEffect, useCallback, useImperativeHandle, forwardRef, useState } from 'react';
 import { ReactFlow, useStoreApi, useReactFlow, useNodesState, useEdgesState, applyNodeChanges, applyEdgeChanges, addEdge, Background, BackgroundVariant, MarkerType, Panel } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Paper, Button, Box, CircularProgress } from '@mui/material';
+import { Paper, Button, Box, CircularProgress, } from '@mui/material';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { WorkflowNode } from './nodes/WorkflowNode';
 import { OutputWorkflowNode } from './nodes/OutputWorkflowNode';
 import { InputWorkflowNode } from './nodes/InputWorkflowNode';
@@ -223,6 +224,14 @@ const RecipePanel = forwardRef(({ selectedNode, handleNodeClicked }, ref) => {
     setViewport({ x: 0, y: 0, zoom: 1 });
   }
 
+  function runWorkflow() {
+    for (const node of nodes) {
+      if (node.type == "workflowNode"){
+        updateNodeData(node.id, {runCalled: true, outputs: {}, outputTypes: {}})
+      }
+    }
+  }
+
   const WorkflowButton = ({ children, ...props }) => (
     <Button
       variant='outlined'
@@ -303,6 +312,9 @@ const RecipePanel = forwardRef(({ selectedNode, handleNodeClicked }, ref) => {
           </WorkflowButton>
           <WorkflowButton onClick={resetViewportPosition}>
             Recenter
+          </WorkflowButton>
+          <WorkflowButton onClick={runWorkflow} >
+            Run Workflow
           </WorkflowButton>
         </Panel>
 

@@ -7,6 +7,8 @@ function validateFasta(content) {
 }
 
 function validateMultiFasta(content) {
+  if (!content) return false
+  
   const headerCount = (content.match(/>/g) || []).length;
   const entries = content.split('>').filter(entry => entry.trim());
   if (headerCount !== entries.length) {
@@ -51,7 +53,7 @@ function validateRNA(content) {
 }
 
 function validateAminoAcids(content) {
-  return /^[ACDEFGHIKLMNPQRSTUVWY]+$/i.test(content.trim());
+  return /^[ACDEFGHIKLMNPQRSTUVWY-]+$/i.test(content.trim());
 }
 
 function validatePackagedFastq(content) {

@@ -6,10 +6,10 @@ export function sanitizeWorkflowNodes(nodes)
     ...node,
     data: {
       ...node.data,
-      output: "",
       outputs: {},
       outputTypes: {},
-      is_running: false
+      is_running: false,
+      runCalled: false
     },
   }));
 }
@@ -20,7 +20,15 @@ export function isValidWorkflowConnection(sourceNode, sourceHandle, targetNode, 
   
   if (targetNode.type == "outputWorkflowNode") return true;
 
-  var sourceTypes = [sourceNode.data.outputTypes?.[sourceHandle]];
+  let sourceTypes = null;
+  if (sourceNode.type == "inputWorkflowNode"){
+    sourceTypes = [sourceNode.data.outputTypes?.[sourceHandle]];
+  }
+  else if (sourceNode.type === "workflowNode") {
+    const toolConfig = getTool(sourceNode.data.label);
+    console.log(toolConfig)
+    sourceTypes = toolConfig.io.outputs.find((n) => n.name === sourceHandle).types;
+  }
   if (!sourceTypes) return false
 
   let targetTypes = null;
