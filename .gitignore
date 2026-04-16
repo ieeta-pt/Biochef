@@ -53,3 +53,4 @@ Thumbs.db
 # ignore for when testing locally
 biowasm
 .env
+/dist
