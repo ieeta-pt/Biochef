@@ -1,7 +1,7 @@
 import React, { useEffect, useCallback, useImperativeHandle, forwardRef, useState } from 'react';
 import { ReactFlow, useStoreApi, useReactFlow, useNodesState, useEdgesState, applyNodeChanges, applyEdgeChanges, addEdge, Background, BackgroundVariant, MarkerType, Panel } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Paper, Button, Box, CircularProgress, } from '@mui/material';
+import { Paper, Button, Box, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { WorkflowNode } from './nodes/WorkflowNode';
 import { OutputWorkflowNode } from './nodes/OutputWorkflowNode';
@@ -20,6 +20,8 @@ const RecipePanel = forwardRef(({ selectedNode, handleNodeClicked }, ref) => {
   const store = useStoreApi()
   const { updateNodeData, screenToFlowPosition, getNode, setViewport, toObject } = useReactFlow();
 
+  const [agentUrl, setAgentUrl] = useState("http://localhost:8000/convert");
+  const [openDialog, setOpenDialog] = useState(false);
   const [workflowLoaded, setWorkflowLoaded] = useState(false);
 
   useEffect(() => {
@@ -224,11 +226,46 @@ const RecipePanel = forwardRef(({ selectedNode, handleNodeClicked }, ref) => {
     setViewport({ x: 0, y: 0, zoom: 1 });
   }
 
-  function runWorkflow() {
+  async function runWorkflow() {
     for (const node of nodes) {
-      if (node.type == "workflowNode"){
-        updateNodeData(node.id, {runCalled: true, outputs: {}, outputTypes: {}})
+      if (node.type == "workflowNode") {
+        updateNodeData(node.id, { runCalled: true, outputs: {}, outputTypes: {} })
       }
+    }
+  }
+
+  async function runWorkflowAgent(url) {
+    let fileData = {}
+    for (const node of nodes) {
+      if (node.type == "inputWorkflowNode") {
+        fileData[node.id + "-out" + ".txt"] = node.data.outputs["out"]
+      }
+    }
+
+    const formData = new FormData();
+
+    const flow = toObject();
+    flow.nodes = sanitizeWorkflowNodes(flow.nodes);
+    formData.append("biochef_workflow", JSON.stringify(flow));
+
+    for (const [filename, content] of Object.entries(fileData)) {
+      const file = new File([content], filename, { type: "text/plain" });
+      formData.append("files", file);
+    }
+
+    const response = await fetch(url, {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await response.json();
+    console.log(data)
+
+    for (const [node_id, outputs] of Object.entries(data)) {
+      // console.log(`${key}: ${value}`);
+      // console.log(JSON.stringify(value, null, 2));
+      // console.log(getNode(key))      
+      updateNodeData(node_id, { outputs })
     }
   }
 
@@ -316,9 +353,36 @@ const RecipePanel = forwardRef(({ selectedNode, handleNodeClicked }, ref) => {
           <WorkflowButton onClick={runWorkflow} >
             Run Workflow
           </WorkflowButton>
+          <WorkflowButton onClick={() => setOpenDialog(true)}>
+            Run Workflow with Agent
+          </WorkflowButton>
         </Panel>
 
       </ReactFlow>
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+        <DialogTitle>Enter Agent URL</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            fullWidth
+            label="URL"
+            value={agentUrl}
+            onChange={(e) => setAgentUrl(e.target.value)}
+            margin="dense"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
+          <Button
+            onClick={async () => {
+              setOpenDialog(false);
+              await runWorkflowAgent(agentUrl);
+            }}
+          >
+            Run
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Paper>
   );
 });

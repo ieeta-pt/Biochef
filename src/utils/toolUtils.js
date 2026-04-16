@@ -142,7 +142,7 @@ export async function loadTool(toolName) {
 
   var bundle = await fetchBlob(base_url, repo, bundleLayer.digest, authorization, "application/vnd.oci.image.manifest.v1+json");
   bundle = { ...toolMap.get(bundle.name), ...bundle }
-  
+
   bundle.repo = repo;
   toolMap.set(bundle.name, bundle);
 }
@@ -170,7 +170,13 @@ async function generateBlob(url, type, authorization) {
   }
 }
 
-export async function runTool(toolName, inputs, args, files = {}) {
+export async function runTool(
+    toolName,  
+    inputs, 
+    args, 
+    outputsToConsider=[], // names of outputs to consider 
+    files = {}
+  ) {
   const toolConfig = getTool(toolName)
   const toolProgram = toolConfig.program || toolName
 
@@ -216,6 +222,20 @@ export async function runTool(toolName, inputs, args, files = {}) {
       }
     };
 
+    for (const output of toolConfig.io.outputs) {
+      if (!outputsToConsider.includes(output.name)) {
+        console.log(output.name)
+        continue;
+      }
+      if (output.mode == "file") {
+        const fileName = `${output.name}.txt`
+        // await CLI.mount({ name: fileName, data: "" })
+
+        if (output.flag) args.push(output.flag);
+        args.push(fileName)
+      }
+    };
+
     // let cli_result = { stdout: tool.stdout, stderr: tool.stderr };
     const cli_result = await CLI.exec(toolProgram, args);
 
@@ -234,26 +254,19 @@ export async function runTool(toolName, inputs, args, files = {}) {
       if (output.mode === "stdout") {
         outputs[output.name] = cli_result.stdout; // TODO: stderr
       }
-      // TODO: maybe dont force the filename to have to be the same as the output name
-      // we could add a new thing to the recipe that says file name?
       else if (output.mode === "file") {
-        const files = await CLI.ls(".");
-        const expectedName = output.name.toLowerCase();
-
-        for (const fileName of files) {
-          if (ignoreList.includes(fileName)) continue;
-          const baseName = fileName.split(".").slice(0, -1).join(".").toLowerCase();
-
-          if (baseName === expectedName) {
-            const fileData = await CLI.cat(fileName);
-            outputs[output.name] = fileData;
-            break;
-          }
+        let fileData = "";
+        if (output.filename) {
+          fileData = await CLI.cat(output.filename + ".txt");
         }
+        else {
+          fileData = await CLI.cat(output.name + ".txt");
+        }
+        outputs[output.name] = fileData;
       }
     }
 
-    return {"outputs": outputs, "error": error};
+    return { "outputs": outputs, "error": error };
 
   } catch (error) {
     console.error(`Error running tool ${toolName}:`, error);

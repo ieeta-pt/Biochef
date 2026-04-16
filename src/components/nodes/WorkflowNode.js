@@ -9,14 +9,24 @@ import { runTool, getTool } from '../../utils/toolUtils';
 import { detectDataType } from '../../utils/detectDataType';
 
 export const WorkflowNode = memo(({ id, data }) => {
-  const { label, paramValues } = data;
-  const { updateNodeData, getNode } = useReactFlow();
+  const { label, paramValues, repo } = data;
 
+  
+  const { updateNodeData, getNode } = useReactFlow();
+  
   const toolData = getTool(label) // TODO: use ID instead of tool name
   const { inputs: toolInputs = [], outputs: toolOutputs = [] } = toolData.io ?? {};
-
+  
+  if (!repo) {
+    updateNodeData(id, { repo: toolData.repo })
+  }
+  
   const inputConnections = useNodeConnections({ handleType: 'target' });
   const inputConnectionsData = useNodesData(inputConnections.map(conn => conn.source));
+  
+  const outputConnections = useNodeConnections({ handleType: 'source' });
+  const outputsConnected = outputConnections.map(output => output.sourceHandle);
+
 
   const [invalidOutputType, setInvalidOutputType] = useState(false);
   const [invalidParameters, setInvalidParameters] = useState(false)
@@ -65,7 +75,7 @@ export const WorkflowNode = memo(({ id, data }) => {
     if (allInputsEmpty && Object.keys(data.outputs).length === 0) return;
 
     const missingRequiredParameters = toolData.parameters?.some(param =>
-      param.required && (paramValues[param.name]?.value === "" || paramValues[param.name]?.value === undefined || paramValues[param.name]?.value === null)
+      param.required && param.type != "flag" && (paramValues[param.name]?.value === "" || paramValues[param.name]?.value === undefined || paramValues[param.name]?.value === null)
     );
 
     setInvalidParameters(missingRequiredParameters)
@@ -90,18 +100,9 @@ export const WorkflowNode = memo(({ id, data }) => {
     });
 
     updateNodeData(id, { is_running: true, outputTypes: {} });
-    const { outputs, error } = await runTool(toolData.name, inputs, args, {});
+    const { outputs, error } = await runTool(toolData.name, inputs, args, outputsConnected);
 
-    const outputTypes = {};
-    for (const key in outputs) {
-      const definedTypes = toolData.io.outputs.find(o => o.name === key).types
-      const detectedType = detectDataType(outputs[key], definedTypes)
-      setInvalidOutputType(!definedTypes.includes(detectedType))
-
-      outputTypes[key] = detectedType;
-    }
-
-    updateNodeData(id, { outputs, outputTypes, is_running: false, runCalled: false });
+    updateNodeData(id, { outputs, is_running: false, runCalled: false });
   }
 
   useEffect(() => {
@@ -116,6 +117,19 @@ export const WorkflowNode = memo(({ id, data }) => {
       handleRunTool();
     }
   }, [data.inputValidity, paramValues, inputConnections]);
+
+  useEffect(() => {
+    const outputTypes = {};
+    for (const key in data.outputs) {
+      if (!outputsConnected.includes(key)) continue;
+      const definedTypes = toolData.io.outputs.find(o => o.name === key).types
+      const detectedType = detectDataType(data.outputs[key], definedTypes)
+      setInvalidOutputType(!definedTypes.includes(detectedType))
+
+      outputTypes[key] = detectedType;
+    }
+    updateNodeData(id, {outputTypes})
+  }, [data.outputs]);
 
   function renderInputHandles() {
     return toolInputs.map((input, idx) => (
