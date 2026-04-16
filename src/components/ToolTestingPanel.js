@@ -26,6 +26,7 @@ import { detectDataType } from '../utils/detectDataType';
 import { processFile } from '../utils/fileProcessor';
 import { validateParameters, getToolHelpMessage } from '../utils/parameterUtils';
 import ToolParameterSection from './ToolParameterSection';
+import { TourContext } from '../contexts/TourContext';
 
 const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
     const [validationErrors, setValidationErrors] = useState({}); // To store validation errors
@@ -33,6 +34,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
     const [helpMessages, setHelpMessages] = useState({}); // To store help messages
     const [toolParameterFiles, setToolParameterFiles] = useState({}); // To store tool parameter files
     const { validateData } = useContext(DataTypeContext);
+    const { tourRegisterSteps, tourStart, tourMoveNext, tourIsActive } = useContext(TourContext);
 
     // Find tool configuration and supported input formats
     const toolConfig = getTool(tool.name)
@@ -196,6 +198,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
         <Paper
             elevation={3}
             sx={{ padding: 2, height: '100%', display: 'flex', flexDirection: 'column' }}
+            data-tour="testing-section"
         >
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
                 <Typography variant="h6" gutterBottom>
@@ -278,6 +281,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
                         onClick={() => handleExecuteTool(tool)}
                         startIcon={<PlayArrow />}
                         sx={{ marginTop: 2 }} // Adiciona espaçamento no topo
+                        data-tour="run-tool"
                     >
                         Run Tool
                     </Button>

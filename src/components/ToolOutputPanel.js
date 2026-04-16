@@ -2,11 +2,33 @@ import SaveIcon from '@mui/icons-material/Save';
 import { Box, FormControl, IconButton, MenuItem, Paper, Select, TextField, Tooltip, Typography } from '@mui/material';
 import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
+import { TourContext } from '../contexts/TourContext';
 
 const ToolOutputPanel = ({ outputData, setOutputData, workflow = null, tool = null, inputData, page, rows=8 }) => {
     const [selectedFile, setSelectedFile] = useState('');
     const [displayedOutput, setDisplayedOutput] = useState('');
+    const { tourRegisterSteps } = useContext(TourContext);
+
+    useEffect(() => {
+        tourRegisterSteps("t-output", [
+            {
+                element: '[data-tour="output"]',
+                popover: {
+                    title: "Viewing Output",
+                    description: "This section displays the results of the tool after it has finished running.",
+                },
+            },
+            {
+                element: '[data-tour="export-output"]',
+                popover: {
+                    title: "Exporting Output",
+                    description: "If you want to save your results, you can export the output to a file using this icon.",
+                },
+            },
+        ]);
+    }, []);
+
 
     // Update displayed output when outputData or selectedFile changes
     useEffect(() => {
@@ -127,7 +149,7 @@ const ToolOutputPanel = ({ outputData, setOutputData, workflow = null, tool = nu
                 }}
             >
                 <Tooltip title="Save Output">
-                    <IconButton color={'primary'} onClick={handleSaveOutput}>
+                    <IconButton color={'primary'} onClick={handleSaveOutput} data-tour="export-output">
                         <SaveIcon />
                     </IconButton>
                 </Tooltip>

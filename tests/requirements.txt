@@ -1,0 +1,8 @@
+psutil
+pandas
+matplotlib
+seaborn
+pathlib
+selenium
+jupyter
+nbconvert

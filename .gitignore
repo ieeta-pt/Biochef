@@ -49,6 +49,7 @@ Thumbs.db
 # python env
 /env
 /venv
+/.venv
 
 # ignore for when testing locally
 biowasm

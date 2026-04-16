@@ -1,9 +1,10 @@
 import React from 'react';
-import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import { ReactFlowProvider } from '@xyflow/react';
+import { Route, HashRouter as Router, Routes } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import ToolsPage from './pages/ToolsPage';
 import WorkflowPage from './pages/WorkflowPage';
+import AboutPage from './pages/AboutPage';
 
 const App = () => {
   return (
@@ -20,6 +21,7 @@ const App = () => {
             </ReactFlowProvider>
           }
         />
+        <Route path="/about" element={<AboutPage />} />
       </Routes>
     </Router>
   );

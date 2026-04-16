@@ -5,6 +5,7 @@ import { getTool } from '../utils/toolUtils';
 import { DataTypeContext } from '../contexts/DataTypeContext';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { detectDataType } from '../utils/detectDataType';
+import { TourContext } from '../contexts/TourContext';
 
 const ToolInputPanel = ({ tool, inputData, setInputData }) => {
     const [fileName, setFileName] = useState('');
@@ -291,6 +292,7 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
                             color: 'white',
                         }}
                         disabled={!isAcceptable}
+                        data-tour="import-input"
                     >
                         <UploadIcon fontSize="small" />
                         <input

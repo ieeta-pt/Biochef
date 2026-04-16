@@ -100,7 +100,7 @@ export const WorkflowNode = memo(({ id, data }) => {
     });
 
     updateNodeData(id, { is_running: true, outputTypes: {} });
-    const { outputs, error } = await runTool(toolData.name, inputs, args, outputsConnected);
+    const { outputs, error } = await runTool(toolData.name, inputs, args, {}, outputsConnected);
 
     updateNodeData(id, { outputs, is_running: false, runCalled: false });
   }

@@ -6,16 +6,19 @@ import {
     Tab,
     Tabs,
     TextField,
-    Typography
+    Typography,
+    Button
 } from '@mui/material';
 import React, { useContext, useEffect, useState } from 'react';
 import { DataTypeContext } from '../contexts/DataTypeContext';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { detectDataType } from '../utils/detectDataType';
 import FileExplorer from './FileExplorer';
+import { TourContext } from '../contexts/TourContext';
 
 const InputPanel = ({ tabIndex, setTabIndex, selectedFiles, setSelectedFiles, inputData, setInputData, tree, setTree }) => {
     const showNotification = useContext(NotificationContext);
+    const { tourRegisterSteps, tourMoveNext } = useContext(TourContext);
     const { setInputDataType, validateData, inputDataType } = useContext(DataTypeContext);
     const [isValid, setIsValid] = useState(true);
     const [debounceTimer, setDebounceTimer] = useState(null);
@@ -85,6 +88,62 @@ const InputPanel = ({ tabIndex, setTabIndex, selectedFiles, setSelectedFiles, in
         setDebounceTimer(timer);
     };
 
+    const handleAddExampleData = (e) => {
+        const exampleData = ">seq\nTTGCACTGACCTGAAGTCTTGGAGTATGACCGCGGCTCGGCTCTATCGAACGCTCGATCTAGCGCTATAGGTGGTGCCGAAGGCGGTCTGTCGTCGTA"
+
+        // First, set the example data
+        setInputData(exampleData);
+
+        // Simulate the text change logic by calling handleTextChange directly
+        // This is like what handleTextChange does after setting inputData
+        handleTextChange({
+            target: { value: exampleData }
+        });
+
+        tourMoveNext();
+    };
+
+    useEffect(() => {
+        tourRegisterSteps("w-input", [
+            {
+                element: '[data-tour="input-panel"]',
+                popover: {
+                    title: "Input",
+                    description: "This panel allows you to select the input source for your workflow.",
+                },
+            },
+            {
+                element: '[data-tour="input-modes"]',
+                popover: {
+                    title: "Input Modes",
+                    description: "You can choose to input your data either manually or by uploading a file or folder.",
+                },
+            },
+            {
+                element: '[data-tour="input-box"]',
+                popover: {
+                    title: "Input Box",
+                    description: "Here, you can type or paste your input data directly into the box.",
+                },
+            },
+            {
+                element: '[data-tour="add-example-data"]',
+                popover: {
+                    title: "Add Example Data",
+                    description: "For this tour, let's use some example data to demonstrate the process.",
+                    showButtons: ["previous", "exit"],
+                },
+            },
+            {
+                element: '[data-tour="input-type"]',
+                popover: {
+                    title: "Dynamic Input Type",
+                    description: "As you enter or select the input data, the input type will automatically adjust to match the format.",
+                },
+            },
+        ]);
+    }, []);
+
     // Cleanup the debounce timer on unmount
     useEffect(() => {
         return () => {
@@ -95,11 +154,11 @@ const InputPanel = ({ tabIndex, setTabIndex, selectedFiles, setSelectedFiles, in
     }, [debounceTimer]);
 
     return (
-        <Paper elevation={3} sx={{
+        <Paper data-tour="input-panel" elevation={3} sx={{
             height: '100%', display: 'flex', flexDirection: 'column'
         }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 2, flexShrink: 0 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Box data-tour="input-type" sx={{ display: 'flex', alignItems: 'center' }}>
                     <Typography variant="h6">Input:</Typography>
                     <Typography variant="body1" color="textSecondary" sx={{ marginLeft: 1 }}>
                         {inputDataType}

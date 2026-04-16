@@ -7,6 +7,7 @@ import { DataTypeProvider } from './contexts/DataTypeContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ValidationErrorsProvider } from './contexts/ValidationErrorsContext';
 import "./index.css"
+import { TourProvider } from './contexts/TourContext';
 
 const theme = createTheme({
   palette: {
@@ -27,14 +28,17 @@ const theme = createTheme({
 });
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
+
 root.render(
   <React.StrictMode>
     <ThemeProvider theme={theme}>
       <NotificationProvider>
         <DataTypeProvider>
           <ValidationErrorsProvider>
-            <CssBaseline />
-            <App />
+            <TourProvider>
+              <CssBaseline />
+              <App />
+            </TourProvider>
           </ValidationErrorsProvider>
         </DataTypeProvider>
       </NotificationProvider>

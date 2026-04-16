@@ -14,8 +14,8 @@ Before you begin, ensure you have the following installed:
 
 1. Clone the repository:
    ```
-   git clone https://github.com/jorgeMFS/gto-wasm-app.git
-   cd gto-wasm-app
+   git clone https://github.com/ieeta-pt/Biochef.git
+   cd Biochef
    ```
 
 2. Install dependencies:

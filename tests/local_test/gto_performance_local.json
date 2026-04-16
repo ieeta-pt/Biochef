@@ -1,0 +1,58 @@
+{
+  "metadata": {
+    "timestamp": "2025-09-17T11:32:24.305417",
+    "platform": "local_machine",
+    "description": "GTO workflow performance test using GNU time, 3 iterations per file",
+    "workflow_steps": [
+      "gto_fasta_complement",
+      "gto_fasta_mutate -e 0.5",
+      "gto_fasta_to_seq",
+      "gto_genomic_extract -i 0 -e 1000",
+      "gto_fasta_from_seq",
+      "gto_fasta_reverse"
+    ],
+    "measurement_method": "gnu_time"
+  },
+  "results": {
+    "AllMis_2400_parcial.fasta": {
+      "mean_runtime": 0.03333333333333333,
+      "std_runtime": 0.005773502691896259,
+      "min_runtime": 0.03,
+      "max_runtime": 0.04,
+      "mean_memory": 1.8997395833333333,
+      "std_memory": 0.04510548978043951,
+      "min_memory": 1.84765625,
+      "max_memory": 1.92578125
+    },
+    "BraLanc_464_parcial.fasta": {
+      "mean_runtime": 0.03666666666666667,
+      "std_runtime": 0.005773502691896259,
+      "min_runtime": 0.03,
+      "max_runtime": 0.04,
+      "mean_memory": 1.8515625,
+      "std_memory": 0.04894517221149089,
+      "min_memory": 1.8046875,
+      "max_memory": 1.90234375
+    },
+    "HydCol_1000_parcial.fasta": {
+      "mean_runtime": 0.03,
+      "std_runtime": 0.0,
+      "min_runtime": 0.03,
+      "max_runtime": 0.03,
+      "mean_memory": 1.8619791666666667,
+      "std_memory": 0.04285021529141754,
+      "min_memory": 1.828125,
+      "max_memory": 1.91015625
+    },
+    "HomoSapiens_3300_parcial.fasta": {
+      "mean_runtime": 0.026666666666666665,
+      "std_runtime": 0.005773502691896257,
+      "min_runtime": 0.02,
+      "max_runtime": 0.03,
+      "mean_memory": 1.9231770833333333,
+      "std_memory": 0.01626301562082916,
+      "min_memory": 1.91015625,
+      "max_memory": 1.94140625
+    }
+  }
+}

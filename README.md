@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/github/license/ieeta-pt/Biochef)](LICENSE)
 [![Version](https://img.shields.io/github/v/tag/ieeta-pt/Biochef)](https://github.com/ieeta-pt/Biochef/releases)
 
-BioChef is a powerful web-based application for genomic sequence analysis and manipulation. It provides a user-friendly interface to execute various genomic tools from the GTO (Genomic Toolkit Operations) suite directly in your browser using WebAssembly technology.
+BioChef is a powerful web-based application for genomic sequence analysis and manipulation. It provides a user-friendly interface to execute various genomic tools from the GTO (Genomics-Proteomics Toolkit) suite directly in your browser using WebAssembly technology.
 
 ## Table of Contents
 
@@ -65,8 +65,8 @@ BioChef includes a wide array of genomic tools, categorized for easy access:
 
 1. Clone the repository:
    ```
-   git clone https://github.com/jorgeMFS/gto-wasm-app.git
-   cd gto-wasm-app
+   git clone https://github.com/ieeta-pt/Biochef.git
+   cd Biochef
    ```
 
 2. Install dependencies:

@@ -174,8 +174,8 @@ export async function runTool(
     toolName,  
     inputs, 
     args, 
+    files = {},
     outputsToConsider=[], // names of outputs to consider 
-    files = {}
   ) {
   const toolConfig = getTool(toolName)
   const toolProgram = toolConfig.program || toolName
@@ -223,11 +223,10 @@ export async function runTool(
     };
 
     for (const output of toolConfig.io.outputs) {
-      if (!outputsToConsider.includes(output.name)) {
-        console.log(output.name)
+      if (outputsToConsider != [] && !outputsToConsider.includes(output.name)) {
         continue;
       }
-      if (output.mode == "file") {
+      if (output.mode == "file" && !output.filename) {
         const fileName = `${output.name}.txt`
         // await CLI.mount({ name: fileName, data: "" })
 
@@ -257,7 +256,7 @@ export async function runTool(
       else if (output.mode === "file") {
         let fileData = "";
         if (output.filename) {
-          fileData = await CLI.cat(output.filename + ".txt");
+          fileData = await CLI.cat(output.filename);
         }
         else {
           fileData = await CLI.cat(output.name + ".txt");

@@ -1,7 +1,7 @@
 import { AccountTree, Science } from '@mui/icons-material';
 import { AppBar, Box, Button, Toolbar, Tooltip, useTheme } from '@mui/material';
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import BioChefLogo from '../../img/BioChefWhite.svg';
 
 const Navbar = () => {
@@ -9,6 +9,7 @@ const Navbar = () => {
     const location = useLocation();
     const [navColor, setNavColor] = useState(theme.palette.primary.main);
 
+    const navigate = useNavigate();
     const isActive = (path) => location.pathname === path;
 
     const buttonStyle = (active) => ({
@@ -46,7 +47,10 @@ const Navbar = () => {
         >
             <Toolbar>
                 {/* Logo */}
-                <BioChefLogo style={{ maxWidth: '75px', marginRight: '15px' }} />
+                <BioChefLogo
+                    style={{ maxWidth: '75px', marginRight: '15px', cursor: 'pointer' }}
+                    onClick={() => navigate('/about')}
+                />
 
                 {/* Links */}
                 <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
@@ -79,7 +83,7 @@ const Navbar = () => {
                             style={{ display: 'inline-block', marginRight: 26 }}
                         >
                             <img
-                                src='/img/logo-ieeta.webp'
+                                src={process.env.NODE_ENV === 'production' ? '/Biochef/img/logo-ieeta.webp' : '/img/logo-ieeta.webp'}
                                 alt="IEETA"
                                 style={{ height: 38 }}
                             />
@@ -95,7 +99,7 @@ const Navbar = () => {
                             style={{ display: 'inline-block' }}
                         >
                             <img
-                                src='/img/logo-ua.webp'
+                                src={process.env.NODE_ENV === 'production' ? '/Biochef/img/logo-ua.webp' : '/img/logo-ua.webp'}
                                 alt="Universidade de Aveiro"
                                 style={{ height: 38 }}
                             />
