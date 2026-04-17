@@ -11,24 +11,26 @@ import { detectDataType } from '../../utils/detectDataType';
 export const WorkflowNode = memo(({ id, data }) => {
   const { label, paramValues, repo } = data;
 
-  
+
   const { updateNodeData, getNode } = useReactFlow();
-  
+
   const toolData = getTool(label) // TODO: use ID instead of tool name
   const { inputs: toolInputs = [], outputs: toolOutputs = [] } = toolData.io ?? {};
-  
-  if (!repo) {
-    updateNodeData(id, { repo: toolData.repo })
-  }
-  
+
+  useEffect(() => {
+    if (!repo && toolData?.repo) {
+      updateNodeData(id, { repo: toolData.repo });
+    }
+  }, [repo, toolData?.repo, id, updateNodeData]);
+
   const inputConnections = useNodeConnections({ handleType: 'target' });
   const inputConnectionsData = useNodesData(inputConnections.map(conn => conn.source));
-  
+
   const outputConnections = useNodeConnections({ handleType: 'source' });
   const outputsConnected = outputConnections.map(output => output.sourceHandle);
 
-
   const [invalidOutputType, setInvalidOutputType] = useState(false);
+  // TODO: check parameters before running because of agent
   const [invalidParameters, setInvalidParameters] = useState(false)
 
   useEffect(() => {
@@ -128,7 +130,7 @@ export const WorkflowNode = memo(({ id, data }) => {
 
       outputTypes[key] = detectedType;
     }
-    updateNodeData(id, {outputTypes})
+    updateNodeData(id, { outputTypes })
   }, [data.outputs]);
 
   function renderInputHandles() {

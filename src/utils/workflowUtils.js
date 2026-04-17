@@ -6,6 +6,7 @@ export function sanitizeWorkflowNodes(nodes)
     ...node,
     data: {
       ...node.data,
+      output: {},
       outputs: node.type == "inputWorkflowNode" ? node.data.outputs : {} ,
       outputTypes: node.type == "inputWorkflowNode" ? node.data.outputTypes : {} ,
       is_running: false,

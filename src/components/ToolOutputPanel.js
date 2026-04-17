@@ -95,7 +95,7 @@ const ToolOutputPanel = ({ outputData, setOutputData, workflow = null, tool = nu
     };
 
     return (
-        <Paper elevation={1} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <Paper elevation={1} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }} data-tour="output">
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 2, flexShrink: 0 }}>
                 <Typography variant="h6">Output</Typography>
                 {typeof outputData === 'object' && !Array.isArray(outputData) && Object.keys(outputData).length > 1 && (

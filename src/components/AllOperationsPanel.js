@@ -16,7 +16,7 @@ import debounce from 'lodash.debounce';
 import React, { useContext, useMemo, useState, useEffect } from 'react';
 import { DataTypeContext } from '../contexts/DataTypeContext';
 import { NotificationContext } from '../contexts/NotificationContext';
-import { getToolsByCategory, loadTools } from '../utils/toolUtils';
+import { getToolsByCategory, getTool } from '../utils/toolUtils';
 
 import { TourContext } from '../contexts/TourContext';
 
@@ -26,6 +26,8 @@ const AllOperationsPanel = ({ onToolClick }) => {
     const { dataType } = useContext(DataTypeContext);
     const showNotification = useContext(NotificationContext);
     const { tourRegisterSteps, tourIsActive } = useContext(TourContext);
+
+    const tourOperationName = 'Fasta Extract (GTO)';
 
     useEffect(() => {
         tourRegisterSteps("t-tools", [
@@ -47,26 +49,16 @@ const AllOperationsPanel = ({ onToolClick }) => {
         ]);
     }, []);
 
-    // TODO: make this work
-    // useEffect(() => {
-    //     if (tourIsActive) {
-    //         const targetOperationName = 'fasta_extract';
+    useEffect(() => {
+        if (tourIsActive) {
+            const toolConfig = getTool(tourOperationName)
 
-    //         const categoryWithTarget = Object.entries(operationCategories)
-    //             .find(([_, operations]) =>
-    //                 operations.some(op => op.name === targetOperationName)
-    //             );
-
-    //         if (categoryWithTarget) {
-    //             const [categoryName] = categoryWithTarget;
-
-    //             setExpandedCategories(prev => ({
-    //                 ...prev,
-    //                 [categoryName]: true,
-    //             }));
-    //         }
-    //     }
-    // }, [tourIsActive]);
+            setExpandedCategories(prev => ({
+                ...prev,
+                [toolConfig.category]: true,
+            }));
+        }
+    }, [tourIsActive]);
 
 
     // Debounced search handler
@@ -135,7 +127,7 @@ const AllOperationsPanel = ({ onToolClick }) => {
                                             }
                                             placement="right">
                                             <ListItemButton
-                                                data-tour={operation.name === "fasta_extract" ? "selected-tool" : undefined}
+                                                data-tour={operation.name === tourOperationName ? "selected-tool" : undefined}
                                                 sx={{
                                                     pl: 4,
                                                     bgcolor: (theme) => alpha(theme.palette.primary.main, 0.2), // Use primary color with 10% opacity

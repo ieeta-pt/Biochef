@@ -10,7 +10,7 @@ import { WorkflowEdge } from './nodes/WorkflowEdge';
 import { loadTool, getTool } from '../utils/toolUtils';
 import { isValidWorkflowConnection, sanitizeWorkflowNodes } from '../utils/workflowUtils';
 
-const RecipePanel = forwardRef(({ selectedNode, handleNodeClicked }, ref) => {
+const RecipePanel = forwardRef(({ selectedNode, handleNodeClicked, indexLoaded }, ref) => {
   const [nodes, setNodes] = useNodesState([]);
   const [edges, setEdges] = useEdgesState([]);
 
@@ -25,6 +25,8 @@ const RecipePanel = forwardRef(({ selectedNode, handleNodeClicked }, ref) => {
   const [workflowLoaded, setWorkflowLoaded] = useState(false);
 
   useEffect(() => {
+    if(!indexLoaded) return;
+
     const fetchWorkflow = async () => {
       const flow = JSON.parse(localStorage.getItem("workflow"));
 
@@ -33,7 +35,8 @@ const RecipePanel = forwardRef(({ selectedNode, handleNodeClicked }, ref) => {
 
         for (const node of savedNodes) {
           if (node.type === 'workflowNode') {
-            await loadTool(node.data.label);
+            const result = await loadTool(node.data.label);
+            if (!result) return
           }
         }
 
@@ -48,7 +51,7 @@ const RecipePanel = forwardRef(({ selectedNode, handleNodeClicked }, ref) => {
     };
 
     fetchWorkflow()
-  }, [])
+  }, [indexLoaded])
 
   // TODO(andrade)
   // Make this more reasonable then just storing at every change.

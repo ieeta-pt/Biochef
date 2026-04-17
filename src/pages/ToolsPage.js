@@ -1,10 +1,11 @@
-import { Box, Container, Grid, Typography, Tabs, Tab, CircularProgress, useTheme, useMediaQuery } from '@mui/material';
-import React, { useState, useEffect } from 'react';
+import { Box, Button, Container, Grid, Typography, Tabs, Tab, CircularProgress, useTheme, useMediaQuery } from '@mui/material';
+import React, { useState, useEffect, useContext } from 'react';
 import AllOperationsPanel from '/src/components/AllOperationsPanel';
 import ToolInputPanel from '/src/components/ToolInputPanel';
 import ToolOutputPanel from '/src/components/ToolOutputPanel';
 import ToolTestingPanel from '/src/components/ToolTestingPanel';
 import { loadToolIndex, loadTool } from '../utils/toolUtils';
+import { TourContext } from '../contexts/TourContext';
 
 const ToolsPage = () => {
     const [selectedTool, setSelectedTool] = useState(null);
@@ -14,6 +15,8 @@ const ToolsPage = () => {
     const [loadingTool, setLoadingTool] = useState(false);
     const [tab, setTab] = useState(0);
 
+    const { tourStart, tourRegisterSteps, tourMoveNext, tourIsActive } = useContext(TourContext);
+
     const handleTabChange = (event, newValue) => {
         setTab(newValue);
     };
@@ -21,10 +24,39 @@ const ToolsPage = () => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
+    const runToolsTour = () => {
+        tourStart(["t-intro", "t-tools", "t-input", "t-testing"]);
+        localStorage.setItem("toolsPageTourCompleted", "true");
+    };
+
+    useEffect(() => {
+        if(!toolIndexLoaded) return
+
+        tourRegisterSteps("t-intro", [
+            {
+                popover: {
+                    title: "Welcome to the Tools Page",
+                    description: "This page provides an interactive environment for exploring and running tools directly in the browser. Users can select a tool, configure inputs, execute it, and inspect outputs.<br /><br />The following tour briefly highlights the main components of the interface and how they are used together.<br /><br />You can re-run this tour at any time using the button on the top right.",
+                },
+            },
+        ]);
+
+        if (!localStorage.getItem("toolsPageTourCompleted")) {
+            runToolsTour();
+        }
+
+    }, [toolIndexLoaded]);
+
+    const handleRerunTour = () => {
+        localStorage.removeItem("toolsPageTourCompleted");
+        localStorage.removeItem("toolsPageSecondTourCompleted");
+        runToolsTour();
+    };
+
     useEffect(() => {
         const fetchTools = async () => {
-            await loadToolIndex();
-            setToolIndexLoaded(true);
+            const result = await loadToolIndex();
+            setToolIndexLoaded(!!result);
         };
 
         fetchTools();
@@ -35,6 +67,7 @@ const ToolsPage = () => {
         await loadTool(tool.name);
         setSelectedTool(tool);
         setLoadingTool(false);
+        if(tourIsActive) tourMoveNext();
 
         if (isMobile) {
             setTab(2)
@@ -43,7 +76,7 @@ const ToolsPage = () => {
 
     const handleSetOutputData = (outputData) => {
         setOutputData(outputData)
-        
+
         if (isMobile) {
             setTab(3)
         }
@@ -212,6 +245,19 @@ const ToolsPage = () => {
                                 <ToolOutputPanel outputData={outputData} setOutputData={setOutputData} tool={selectedTool} inputData={inputData} page={'ToolPage'} />
                             </Box>
                         </Grid>
+                        <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={handleRerunTour}
+                            sx={{
+                                position: 'fixed',
+                                top: 80,      // below app bar
+                                right: 16,
+                                zIndex: 1200,
+                            }}
+                        >
+                            Re-run tour
+                        </Button>
                     </Grid>
                 )}
             </Container>

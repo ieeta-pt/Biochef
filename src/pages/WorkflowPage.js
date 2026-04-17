@@ -201,6 +201,7 @@ const WorkflowPage = () => {
                 ref={recipePanelRef}
                 selectedNode={selectedNode}
                 handleNodeClicked={handleNodeClicked}
+                indexLoaded={toolIndexLoaded}
               />
             </Grid>
 

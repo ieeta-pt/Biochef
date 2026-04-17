@@ -1,4 +1,5 @@
 import Aioli from "./aioli-custom/aioli"
+import logger from "./logger";
 
 const toolMap = new Map();
 const blobMap = new Map();
@@ -50,22 +51,35 @@ export function getToolsByCategory() {
 }
 
 async function getGHCRToken(repo) {
-  const tokenRes = await fetch(
-    `${REGISTRY_URL}/token?scope=repository:${REPO_OWNER}/${repo}:pull`,
-    {
-      headers: {
-        Authorization: "Basic " + btoa(`${REGISTRY_USERNAME}:${REGISTRY_PASSWORD}`)
+  try {
+    const res = await fetch(
+      `${REGISTRY_URL}/token?scope=repository:${REPO_OWNER}/${repo}:pull`,
+      {
+        headers: {
+          Authorization: "Basic " + btoa(`${REGISTRY_USERNAME}:${REGISTRY_PASSWORD}`)
+        }
       }
+    );
+
+    if (!res.ok) {
+      const text = await res.text();
+      logger.error(`GHCR error ${res.status}: ${text}`);
+      return false
     }
-  );
 
-  if (!tokenRes.ok) {
-    const errText = await tokenRes.text();
-    throw new Error(`Failed to fetch GHCR token: ${tokenRes.status} ${tokenRes.statusText}\n${errText}`);
+    const data = await res.json();
+
+    if (!data.token) {
+      logger.error("getGHCRToken got no token in response");
+      return false
+    }
+
+    return data.token;
+
+  } catch (err) {
+    logger.error(`getGHCRToken failed: ${err.message}`);
+    return false
   }
-
-  const { token } = await tokenRes.json();
-  return token;
 }
 
 async function getAuthorizationAndBaseUrl(repo) {
@@ -84,31 +98,61 @@ async function getAuthorizationAndBaseUrl(repo) {
 }
 
 async function fetchManifest(base_url, repo, tag, authorization) {
-  const res = await fetch(`${base_url}/${repo}/manifests/${tag}`, {
-    headers: {
-      Accept: "application/vnd.oci.image.manifest.v1+json",
-      Authorization: authorization,
-    },
-  });
+  try {
+    const res = await fetch(`${base_url}/${repo}/manifests/${tag}`, {
+      headers: {
+        Accept: "application/vnd.oci.image.manifest.v1+json",
+        Authorization: authorization,
+      },
+    });
 
-  if (!res.ok) throw new Error(`Failed to fetch manifest for ${repo}`);
-  return await res.json();
+    if (!res.ok) {
+      const text = await res.text();
+      logger.error(`Failed to fetch manifest (${res.status}): ${repo}:${tag}\n${text}`);
+      return false
+    }
+
+    return await res.json();
+  } catch (err) {
+    logger.error(`fetchManifest failed: ${err.message}`);
+    return false
+  }
 }
 
 async function fetchBlob(base_url, repo, digest, authorization, accept) {
-  const res = await fetch(`${base_url}/${repo}/blobs/${digest}`, {
-    headers: {
-      Accept: accept,
-      Authorization: authorization,
-    },
-  });
-  if (!res.ok) throw new Error(`Failed to fetch blob ${digest}`);
-  return await res.json();
+  try {
+    const res = await fetch(`${base_url}/${repo}/blobs/${digest}`, {
+      headers: {
+        Accept: accept,
+        Authorization: authorization,
+      },
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+
+      logger.error(
+        `fetchBlob failed for ${repo}@${digest} (${res.status} ${res.statusText})`,
+        text
+      );
+
+      return false;
+    }
+    return await res.json();
+
+  } catch (err) {
+    logger.error(`fetchBlob network error for ${repo}@${digest}`, err);
+    return false;
+  }
 }
 
 export async function loadToolIndex() {
   const { authorization, base_url } = await getAuthorizationAndBaseUrl("biochef-plugins-index");
+  if (!authorization || !base_url) return false
+
   const manifest = await fetchManifest(base_url, "biochef-plugins-index", "index", authorization);
+  if (!manifest) return false
+
   const digest = manifest.layers[0].digest;
   const indexJson = await fetchBlob(base_url, "biochef-plugins-index", digest, authorization, "application/vnd.oci.image.manifest.v1+json");
 
@@ -119,15 +163,25 @@ export async function loadToolIndex() {
     };
     toolMap.set(bundle.name, bundle);
   }
+
+  return true
 }
 
 export async function loadTool(toolName) {
   const bundleEntry = toolMap.get(toolName);
-  if (bundleEntry.parameters) return;
+  if (!bundleEntry) {
+    logger.error(`Trying to load tool ${toolName} that is not in the index`)
+    return false
+  }
+
+  if (bundleEntry.parameters) return true; // already loaded
 
   const repo = bundleEntry.repo;
   const { authorization, base_url } = await getAuthorizationAndBaseUrl(repo);
+  if (!authorization || !base_url) return false;
+
   const manifest = await fetchManifest(base_url, repo, "latest", authorization);
+  if (!manifest) return false;
 
   const bundleLayer = manifest.layers.find(
     layer =>
@@ -141,10 +195,14 @@ export async function loadTool(toolName) {
   }
 
   var bundle = await fetchBlob(base_url, repo, bundleLayer.digest, authorization, "application/vnd.oci.image.manifest.v1+json");
+  if (!bundle) return false
+
   bundle = { ...toolMap.get(bundle.name), ...bundle }
 
   bundle.repo = repo;
   toolMap.set(bundle.name, bundle);
+
+  return true
 }
 
 async function generateBlob(url, type, authorization) {
@@ -171,12 +229,12 @@ async function generateBlob(url, type, authorization) {
 }
 
 export async function runTool(
-    toolName,  
-    inputs, 
-    args, 
-    files = {},
-    outputsToConsider=[], // names of outputs to consider 
-  ) {
+  toolName,
+  inputs,
+  args,
+  files = {},
+  outputsToConsider = [], // names of outputs to consider 
+) {
   const toolConfig = getTool(toolName)
   const toolProgram = toolConfig.program || toolName
 
@@ -237,14 +295,17 @@ export async function runTool(
 
     // let cli_result = { stdout: tool.stdout, stderr: tool.stderr };
     const cli_result = await CLI.exec(toolProgram, args);
+    const error = cli_result.stderr
 
     // Artificial delay for testing purposes
     // const delay = 10000;
     // await new Promise(resolve => setTimeout(resolve, delay));
 
-    const error = cli_result.stderr
-    console.log("[runTool] args:", args)
-    console.log("[runTool] result:", cli_result)
+    logger.log("[runTool]", toolName , {
+      toolName,
+      args,
+      cli_result,
+    });
 
     // read output files if tool outputs to a file
     const ignoreList = [".", ".."];

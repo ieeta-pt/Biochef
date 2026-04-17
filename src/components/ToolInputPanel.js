@@ -20,6 +20,38 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
     const toolConfig = tool ? getTool(tool.name) : null
     const toolInputs = toolConfig ? toolConfig.io.inputs : []
 
+    const { tourRegisterSteps, tourIsActive, tourMoveNext } = useContext(TourContext);
+
+    useEffect(() => {
+        tourRegisterSteps("t-input", [
+            {
+                element: '[data-tour="input-section"]',
+                popover: {
+                    title: "Choosing Input",
+                    description: "In this section, you can manually enter or paste your input data.<br /><br />This is where you configure the data the tool will use to run its analysis.",
+                },
+            },
+            {
+                element: '[data-tour="import-input"]',
+                popover: {
+                    title: "Importing Data",
+                    description: "You could also use this icon to import your files.",
+                },
+            },
+            {
+                element: '[data-tour="example-input"]',
+                popover: {
+                    title: "Example Input",
+                    description: "Based on the selected tool's input format, you can choose to use an example input.<br /><br />This helps you get started quickly with predefined data that matches the expected format.<br /><br />Now choose an example input or upload a file and the tour will continue from there.",
+                    // onNextClick: () => {
+                    //     handleInputFormatChange("FASTA");
+                    //     tourMoveNext();
+                    // },
+                },
+            },
+        ]);
+    }, []);
+
     // Define acceptable file extensions
     const acceptableExtensions = ['.fasta', '.fa', '.fastq', '.fq', '.pos', '.svg', '.txt', '.num'];
 
@@ -183,7 +215,7 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
     }, [debounceTimer]);
 
     return (
-        <Paper elevation={3} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <Paper elevation={3} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }} data-tour="input-section">
             <Box
                 sx={{
                     display: 'flex',
@@ -203,6 +235,7 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
                     }}
                 >
                     <Select
+                        data-tour="example-input"
                         value={selectedInputFormat[selectedInput.name] || ''}
                         onChange={(e) => handleInputFormatChange(e.target.value)}
                         displayEmpty

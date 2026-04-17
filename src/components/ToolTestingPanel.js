@@ -42,6 +42,40 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
     const outputFormats = toolConfig.outputTypes
     const showNotification = useContext(NotificationContext);
 
+    useEffect(() => {
+        if (Object.keys(inputData).length === 0) return;
+        if (localStorage.getItem("toolsPageSecondTourCompleted")) return;
+        if (tourIsActive) return;
+
+        tourRegisterSteps("t-testing", [
+            {
+                element: '[data-tour="testing-section"]',
+                popover: {
+                    title: "Testing the Tool",
+                    description: "In this section, you can configure the tool's parameters and run the analysis.<br /><br />Let's walk through the setup process.",
+                },
+            },
+            {
+                element: '[data-tour="parameters"]',
+                popover: {
+                    title: "Choosing Parameters",
+                    description: "You can set both required and optional parameters for the tool.<br /><br />You may activate them and provide the necessary values before running the tool.",
+                },
+            },
+            {
+                element: '[data-tour="run-tool"]',
+                popover: {
+                    title: "Run Tool",
+                    description: "Once you've set the parameters, click here to run the tool and start the analysis.",
+                    showButtons: ["previous", "exit"]
+                },
+            },
+        ]);
+
+        tourStart(["t-testing", "t-output"]);
+        localStorage.setItem("toolsPageSecondTourCompleted", "true");
+    }, [inputData, tourIsActive]);
+
     // load default values for each parameter
     // and set optionals to be disabled by default
     useEffect(() => {
@@ -60,16 +94,20 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
         });
     }, [toolConfig]);
 
-    useEffect(() => {
-        const fetchHelpMessages = async () => {
-            if (tool && tool.name) {
-                const help = await getToolHelpMessage(tool.name);
-                setHelpMessages(help);
-            }
-        };
-
-        fetchHelpMessages();
-    }, [tool]);
+    // NOTE(Andrade):
+    // This was here before when this was just for GTO
+    // but this approach is not scalable at all
+    // maybe in the future we should have the help messages in the recipe
+    //
+    // useEffect(() => {
+    //     const fetchHelpMessages = async () => {
+    //         if (tool && tool.name) {
+    //             const help = await getToolHelpMessage(tool.name);
+    //             setHelpMessages(help);
+    //         }
+    //     };
+    //     fetchHelpMessages();
+    // }, [tool]);
 
     const handleParameterChange = async (name, value) => {
         let paramValue = value;
@@ -113,6 +151,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
     };
 
     const handleExecuteTool = async (tool) => {
+        tourMoveNext();
         try {
             // Validate parameters before executing the tool
             const { isValid, errors } = validateParameters(tool.name, parameters);
@@ -208,6 +247,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
             <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
                 <Paper
                     elevation={1}
+                    data-tour="parameters"
                     sx={{
                         transition: 'transform 150ms ease, background-color 300ms ease, border-color 300ms ease', // Smooth transition for both color and transform
                         marginBottom: '8px',
@@ -261,7 +301,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
 
                     {/* Flags Section */}
                     {toolConfig.parameters.length > 1 && (
-                        <Typography variant="body1" gutterBottom>
+                        <Typography variant="body1" gutterBottom >
                             Flags and Parameters
                         </Typography>
                     )}
