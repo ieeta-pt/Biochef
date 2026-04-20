@@ -27,7 +27,6 @@ export function isValidWorkflowConnection(sourceNode, sourceHandle, targetNode, 
   }
   else if (sourceNode.type === "workflowNode") {
     const toolConfig = getTool(sourceNode.data.label);
-    console.log(toolConfig)
     sourceTypes = toolConfig.io.outputs.find((n) => n.name === sourceHandle).types;
   }
   if (!sourceTypes) return false
