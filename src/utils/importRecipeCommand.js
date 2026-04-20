@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import description from '../../description.json';
+import { getTool } from '../utils/toolUtils';
 
 export const importRecipeCommand = (command, setWorkflow, setImportError, setOpenImportDialog, inputDataType, showNotification, validateParameters, validateWorkflow) => {
     try {
@@ -15,8 +15,8 @@ export const importRecipeCommand = (command, setWorkflow, setImportError, setOpe
         steps.forEach((step) => {
             // Divides the step into tool and arguments
             const [toolWithPath, ...args] = step.split(/\s+/);
-            const toolName = toolWithPath.replace('./gto_', ''); // Extract the tool name
-            const toolConfig = description.tools.find((t) => t.name === `gto_${toolName}`);
+            const toolName = toolWithPath.replace('./', ''); // Extract the tool name
+            const toolConfig = getTool(toolName);
             if (!toolConfig) throw new Error(`Tool "${toolName}" is not recognized.`);
 
             // Initialize the parameters object
@@ -76,7 +76,7 @@ export const importRecipeCommand = (command, setWorkflow, setImportError, setOpe
         setOpenImportDialog(false);
 
         // Get the input data type of the first tool
-        const firstTool = description.tools.find((t) => `gto_${newWorkflow[0].toolName}` === t.name);
+        const firstTool = getTool(newWorkflow[0].toolName);
         const firstToolInputTypes = firstTool.input.format.split(',').map(f => f.trim());
         const firstToolInputType = firstToolInputTypes[0] || 'UNKNOWN';
 

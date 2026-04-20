@@ -1,6 +1,8 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const webpack = require('webpack');
+const webpack = require("webpack");
+const dotenv = require("dotenv");
+dotenv.config();
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
@@ -12,7 +14,6 @@ module.exports = {
     webassemblyModuleFilename: 'wasm/[hash].wasm',
   },
   module: {
-    noParse: /public\/wasm\/.*\.js$/, // Exclude Emscripten JS files from parsing
     rules: [
       {
         test: /\.js$/,
@@ -63,10 +64,6 @@ module.exports = {
     new CopyWebpackPlugin({
       patterns: [
         {
-          from: 'public/wasm',
-          to: 'wasm',
-        },
-        {
           from: 'public/img',
           to: 'img',
         },
@@ -74,11 +71,13 @@ module.exports = {
           from: 'public/favicon_io',
           to: 'favicon_io',
         },
-        {
-          from: 'gto',
-          to: 'gto',
-        },
       ],
+    }),
+    new webpack.DefinePlugin({
+      "process.env.REGISTRY_URL": JSON.stringify(process.env.REGISTRY_URL),
+      "process.env.REPO_OWNER": JSON.stringify(process.env.REPO_OWNER),
+      "process.env.REGISTRY_USERNAME": JSON.stringify(process.env.REGISTRY_USERNAME),
+      "process.env.REGISTRY_PASSWORD": JSON.stringify(process.env.REGISTRY_PASSWORD),
     }),
   ],
   resolve: {

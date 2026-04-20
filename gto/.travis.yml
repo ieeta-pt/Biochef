@@ -1,3 +1,0 @@
-language: c
-
-script: cd src && make progs

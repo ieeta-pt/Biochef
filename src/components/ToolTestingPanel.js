@@ -18,12 +18,14 @@ import {
     Typography
 } from '@mui/material';
 import React, { useContext, useEffect, useState } from 'react';
-import description from '../../description.json';
+import { getTool } from '../utils/toolUtils';
 import { DataTypeContext } from '../contexts/DataTypeContext';
 import { NotificationContext } from '../contexts/NotificationContext';
-import { loadWasmModule } from '../gtoWasm';
+import { runTool } from '../utils/toolUtils';
 import { detectDataType } from '../utils/detectDataType';
 import { processFile } from '../utils/fileProcessor';
+import { validateParameters, getToolHelpMessage } from '../utils/parameterUtils';
+import ToolParameterSection from './ToolParameterSection';
 import { TourContext } from '../contexts/TourContext';
 
 const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
@@ -35,19 +37,13 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
     const { tourRegisterSteps, tourStart, tourMoveNext, tourIsActive } = useContext(TourContext);
 
     // Find tool configuration and supported input formats
-    const toolConfig = description.tools.find((t) => t.name === `gto_${tool.name}`);
-    const inputFormats = toolConfig?.input.format.split(',').map((f) => f.trim()) || [];
-    const outputFormats = toolConfig?.output.format.split(',').map((f) => f.trim()) || [];
-
-    const sensors = useSensors(
-        useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
-        useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
-    );
-
+    const toolConfig = getTool(tool.name)
+    const inputFormats = toolConfig.inputTypes
+    const outputFormats = toolConfig.outputTypes
     const showNotification = useContext(NotificationContext);
 
     useEffect(() => {
-        if (!inputData) return;
+        if (Object.keys(inputData).length === 0) return;
         if (localStorage.getItem("toolsPageSecondTourCompleted")) return;
         if (tourIsActive) return;
 
@@ -80,128 +76,48 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
         localStorage.setItem("toolsPageSecondTourCompleted", "true");
     }, [inputData, tourIsActive]);
 
-
+    // load default values for each parameter
+    // and set optionals to be disabled by default
     useEffect(() => {
-        if (tool && tool.name) {
-            loadHelpMessage(tool.name);
-        }
-    }, [tool]);
+        setParameters((prevParams) => {
+            const updatedParams = { ...prevParams };
 
-    // Load help message for a tool
-    const loadHelpMessage = async (toolName) => {
-        try {
-            const runFunction = await loadWasmModule(toolName);
-            const outputData = await runFunction('', ['-h']); // Execute the tool with -h flag
+            toolConfig.parameters.forEach((param) => {
+                if (param.name in updatedParams && !param.hidden) return
+                updatedParams[param.name] = {
+                    value: param.default !== undefined ? param.default : '',
+                    enabled: false
+                };
+            });
 
-            if (outputData.stderr) {
-                console.error(`Error in ${toolName} help message: ${outputData.stderr}`);
-            } else {
-                const helpLines = outputData.stdout.split('\n'); // Divida o texto da ajuda em linhas
-                const flagsHelp = {};
-                let generalHelp = '';
-
-                // Process each line of the help message
-                helpLines.forEach((line) => {
-                    line = line.trim();
-
-                    // Separating flags and descriptions
-                    if (/^-/.test(line)) {
-                        const [flag, ...descriptionParts] = line.split(/\s+/); // Separating flag and description
-                        const normalizedFlag = flag.replace(/[, ]/g, '').trim(); // Removing commas and spaces
-                        flagsHelp[normalizedFlag] = descriptionParts.join(' '); // Store the description
-                    } else if (
-                        !line.includes('--help') &&
-                        !line.toLowerCase().includes('optional') &&
-                        !line.toLowerCase().includes('optional options')
-                    ) {
-                        generalHelp += `${line}\n`;
-                    }
-                });
-
-                // Store the help messages
-                setHelpMessages(
-                    {
-                        general: generalHelp.trim(),
-                        flags: flagsHelp, // Store the flags help
-                    },
-                );
-            }
-        } catch (error) {
-            console.error(`Failed to load help message for ${toolName}: ${error.message}`);
-        }
-    };
-
-    // Validate parameters based on expected type
-    const validateParameters = (tool) => {
-        const toolConfig = description.tools.find((t) => t.name === `gto_${tool.name}`);
-        const errors = {};
-
-        toolConfig.flags.forEach((flagObj) => {
-            const isFlagRequired = flagObj.required;
-            const flagValue = !!parameters[flagObj.flag]; // Check if the flag is active
-            const paramValue = parameters[flagObj.parameter];
-            const paramConfig = toolConfig.parameters.find((param) => param.name === flagObj.parameter);
-
-            if (paramConfig) {
-                if (isFlagRequired || flagValue) { // Check if the flag is required or active
-                    if (paramConfig.type === 'integer' && !/^-?\d+$/.test(paramValue)) {
-                        errors[flagObj.parameter] = 'Invalid integer value';
-                    } else if (paramConfig.type === 'float' && !/^-?\d+(\.\d+)?$/.test(paramValue)) {
-                        errors[flagObj.parameter] = 'Invalid float value';
-                    } else if (paramValue === undefined || paramValue === '') {
-                        errors[flagObj.parameter] = 'Parameter value cannot be empty';
-                    } else {
-                        const numericValue = parseFloat(paramValue);
-                        if (paramConfig.min !== undefined && numericValue < paramConfig.min) {
-                            errors[flagObj.parameter] = `Value must be at least ${paramConfig.min}`;
-                        }
-                        if (paramConfig.max !== undefined && numericValue > paramConfig.max) {
-                            errors[flagObj.parameter] = `Value must be at most ${paramConfig.max}`;
-                        }
-                        if (paramConfig.maxLength !== undefined && paramValue.length > paramConfig.maxLength) {
-                            errors[flagObj.parameter] = `Maximum input length is ${paramConfig.maxLength}`;
-                        }
-                    }
-                }
-            } else if (isFlagRequired && (paramValue === undefined || paramValue === '')) {
-                errors[flagObj.flag] = 'Required flag cannot be empty';
-            }
+            return updatedParams;
         });
+    }, [toolConfig]);
 
-        // brute_force_string need to be limited, otherwise it will crash the browser
-        if (tool.name === 'brute_force_string') {
-            const alphabet = parameters['alphabet'];
-            const size = parameters['size'];
-            const max = 250000;
-
-            if (alphabet && size && alphabet.length ** size > max) {
-                showNotification('The number of possible combinations is too high. Please reduce the alphabet or the size.', 'error');
-                toolConfig.flags.forEach((flagObj) => {
-                    errors[flagObj.parameter] = 'Number of combinations is too high';
-                });
-            }
-        }
-
-        setValidationErrors(errors);
-
-        if (Object.keys(errors).length > 0) {
-            showNotification('Please correct the parameters highlighted in red.', 'error');
-        }
-
-        return Object.keys(errors).length === 0;
-    };
+    // NOTE(Andrade):
+    // This was here before when this was just for GTO
+    // but this approach is not scalable at all
+    // maybe in the future we should have the help messages in the recipe
+    //
+    // useEffect(() => {
+    //     const fetchHelpMessages = async () => {
+    //         if (tool && tool.name) {
+    //             const help = await getToolHelpMessage(tool.name);
+    //             setHelpMessages(help);
+    //         }
+    //     };
+    //     fetchHelpMessages();
+    // }, [tool]);
 
     const handleParameterChange = async (name, value) => {
-        // If it's a File, process it using processFile
         let paramValue = value;
+
         if (value instanceof File) {
             const processedFile = await processFile(value, validateData, showNotification);
-            if (!processedFile) {
-                return; // Stop if file processing failed
-            }
+            if (!processedFile) return;
+
             paramValue = processedFile.name;
 
-            // Store the processed file in toolParameterFiles
             const fileObj = { name: processedFile.name, data: processedFile.content };
             setToolParameterFiles((prev) => ({
                 ...prev,
@@ -211,28 +127,42 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
 
         setParameters((prevParams) => ({
             ...prevParams,
-            [name]: paramValue,
+            [name]: {
+                value: paramValue,
+                enabled: prevParams[name]?.enabled ?? true, // preserve or default to true
+            },
         }));
+
+        // clear validation errors
+        setValidationErrors({})
+    };
+
+    const toggleParameter = (name) => {
+        setParameters((prevParams) => ({
+            ...prevParams,
+            [name]: {
+                ...prevParams[name],
+                enabled: !prevParams[name]?.enabled,
+            },
+        }));
+
+        // clear validation errors
+        setValidationErrors({})
     };
 
     const handleExecuteTool = async (tool) => {
         tourMoveNext();
         try {
             // Validate parameters before executing the tool
-            const isValid = validateParameters(tool);
+            const { isValid, errors } = validateParameters(tool.name, parameters);
             if (!isValid) {
                 // If validation fails, notify the user and cancel execution
                 showNotification('Please correct the parameters highlighted in red.', 'error');
+                setValidationErrors(errors);
                 return;
             }
 
-            // Load the wrapper function dynamically
-            const runFunction = await loadWasmModule(tool.name);
-
-            // Find tool configuration from description.json
-            const toolConfig = description.tools.find(
-                (t) => t.name === `gto_${tool.name}`
-            );
+            const toolConfig = getTool(tool.name)
             if (!toolConfig) {
                 showNotification(`Configuration for tool ${tool.name} not found.`, 'error');
                 throw new Error(`Configuration for tool ${tool.name} not found.`);
@@ -240,34 +170,29 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
 
             // Prepare arguments based on tool configuration and user-set parameters
             let args = [];
-            if (parameters && Object.keys(parameters).length > 0) {
-                // Handle flags
-                toolConfig.flags.forEach((flagObj) => {
-                    if (flagObj.required || parameters[flagObj.flag]) {
-                        args.push(flagObj.flag);
-                        // Check if the flag has an associated parameter
-                        if (
-                            flagObj.parameter &&
-                            parameters[flagObj.parameter] !== undefined &&
-                            parameters[flagObj.parameter] !== ''
-                        ) {
-                            args.push(`${parameters[flagObj.parameter]}`);
-                        }
+            toolConfig.parameters.forEach((param) => {
+                if (param.required || parameters[param.name].enabled) {
+                    if (param.flag) args.push(param.flag);
+                    if (param.type != "flag") {
+                        args.push(parameters[param.name].value);
                     }
-                });
-            }
+                }
+            });
 
             // Verify if the input data is compatible with the tool
-            const inputDataType = detectDataType("input.txt", inputData);
-            if (!inputFormats.includes(inputDataType) && toolConfig.input.type !== '' && toolConfig.input.type !== 'file') {
-                showNotification(
-                    `Input data type ${inputDataType} is not supported by tool ${tool.name}.`,
-                    'error'
-                );
-                console.error(
-                    `Input data type ${inputDataType} is not supported by tool ${tool.name}.`
-                );
-                return;
+            for (const [key, value] of Object.entries(inputData)) {
+                const inputDataType = detectDataType(value);
+
+                if (!inputFormats.includes(inputDataType)) {
+                    showNotification(
+                        `Input data type ${inputDataType} for field "${key}" is not supported by tool ${tool.name}.`,
+                        'error'
+                    );
+                    console.error(
+                        `Input data type ${inputDataType} for field "${key}" is not supported by tool ${tool.name}.`
+                    );
+                    return;
+                }
             }
 
             // Ensure input is defined
@@ -276,18 +201,16 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
             }
 
             // Execute the tool
-            let outputData;
-            if (inputData === '' && toolParameterFiles && Object.keys(toolParameterFiles).length > 0) {
-                // If input is empty and there are parameter files for the tool, use them
-                outputData = await runFunction(toolParameterFiles, args);
-            } else {
-                // Execute the tool
-                outputData = await runFunction(inputData, args);
-            }
+            const result = await runTool(tool.name, inputData, args, toolParameterFiles);
+            const { outputs, error } = result;
+            setOutputData(outputs)
 
-            // Handle messages in stderr
-            if (outputData.stderr) {
-                const stderrLines = outputData.stderr.split('\n');
+            // TODO: code below is very much hardcoded for how GTO works with the ERROR: at the start
+            // maybe this should be removed or altere to always show as an error since it wont work on other tools
+
+            // Handle messages in stderr 
+            if (error) {
+                const stderrLines = error.split('\n');
                 let infoMessages = []; // Accumulate all informational messages
 
                 stderrLines.forEach((line) => {
@@ -304,282 +227,11 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
                 }
             }
 
-            if (toolConfig.is_multi_output) {
-                // outputData has a outputData.outputs that is an object with keys as output names and values as the output data
-                const output = {};
-                for (const [key, value] of Object.entries(outputData.outputs)) {
-                    output[key] = value;
-                }
-                return setOutputData(output);
-            } else {
-                return setOutputData(outputData.stdout);
-            }
         } catch (error) {
             console.error(`Failed to execute tool ${tool.name}:`, error);
             throw error;
         }
     };
-
-    const renderParameters = (tool) => {
-        const toolConfig = description.tools.find((t) => t.name === `gto_${tool.name}`);
-        if (!toolConfig) return null;
-
-        const toolHelp = helpMessages || { general: 'Loading help...', flags: {} };
-        const flagHelpMessages = toolHelp.flags || {};
-
-        // Filter flags based on required and optionals
-        const requiredFlags = toolConfig.flags.filter((flagObj) => flagObj.required && flagObj.flag !== '-h');
-        const optionalFlags = toolConfig.flags.filter((flagObj) => !flagObj.required && flagObj.flag !== '-h');
-        const toolParameters = toolConfig.parameters;
-
-        return (
-            <Box sx={{ marginTop: 1 }} data-tour="parameters">
-                {/* Required Flags */}
-                {requiredFlags.length > 0 && (
-                    <Box>
-                        <Typography
-                            variant="subtitle2"
-                            sx={{
-                                marginBottom: 1,
-                                color: 'text.secondary',
-                            }}
-                        >
-                            Required Flags
-                        </Typography>
-                        {requiredFlags.map((flagObj) => {
-                            const flagValue = !!parameters[flagObj.flag];
-                            const paramConfig = toolParameters.find((p) => p.name === flagObj.parameter);
-                            const parameterValue = parameters[flagObj.parameter] || '';
-                            const error = validationErrors[flagObj.parameter] || '';
-
-                            return (
-                                <Box
-                                    key={flagObj.flag}
-                                    sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        marginBottom: 1,
-                                        gap: 2,
-                                    }}
-                                >
-                                    <FormControlLabel
-                                        control={<span />}
-                                        label={
-                                            <Tooltip
-                                                title={flagHelpMessages[flagObj.flag] || 'Loading help message...'}
-                                                arrow
-                                                componentsProps={{
-                                                    tooltip: {
-                                                        sx: {
-                                                            maxWidth: 300,
-                                                            whiteSpace: 'pre-wrap',
-                                                        },
-                                                    },
-                                                }}
-                                            >
-                                                <span>
-                                                    {flagObj.parameter} <span style={{ color: 'red' }}>*</span>
-                                                </span>
-                                            </Tooltip>
-                                        }
-                                        sx={{ alignItems: 'center', margin: 0 }}
-                                    />
-                                    {paramConfig && (
-                                        paramConfig.type === 'file' ? (
-                                            <>
-                                                <Button variant="outlined" component="label" size="small">
-                                                    {parameterValue ? 'Change File' : 'Upload File'}
-                                                    <input
-                                                        type="file"
-                                                        hidden
-                                                        onChange={(e) =>
-                                                            handleParameterChange(flagObj.parameter, e.target.files[0])
-                                                        }
-                                                    />
-                                                </Button>
-                                                {parameterValue && (
-                                                    <Typography variant="caption" sx={{ ml: 1 }}>
-                                                        {parameterValue.name || parameterValue}
-                                                    </Typography>
-                                                )}
-                                            </>
-                                        ) : (
-                                            <TextField
-                                                value={parameterValue}
-                                                onChange={(e) =>
-                                                    handleParameterChange(flagObj.parameter, e.target.value)
-                                                }
-                                                size="small"
-                                                label={paramConfig.type}
-                                                error={!!error}
-                                                helperText={error}
-                                                sx={{
-                                                    flexGrow: 1,
-                                                    '& .MuiOutlinedInput-root': {
-                                                        borderColor: error ? 'red' : 'default',
-                                                    },
-                                                    '& .MuiOutlinedInput-notchedOutline': error
-                                                        ? {
-                                                            borderColor: 'red',
-                                                            borderWidth: '1px',
-                                                        }
-                                                        : {},
-                                                }}
-                                                type={
-                                                    toolConfig.parameters.find((p) => p.name === flagObj.parameter)?.type ===
-                                                        'integer'
-                                                        ? 'number'
-                                                        : toolConfig.parameters.find((p) => p.name === flagObj.parameter)
-                                                            ?.type === 'float'
-                                                            ? 'number'
-                                                            : 'text'
-                                                }
-                                                inputProps={
-                                                    toolConfig.parameters.find((p) => p.name === flagObj.parameter)?.type ===
-                                                        'integer' ||
-                                                        toolConfig.parameters.find((p) => p.name === flagObj.parameter)?.type ===
-                                                        'float'
-                                                        ? { step: 'any' }
-                                                        : {}
-                                                }
-                                            />
-                                        )
-                                    )}
-                                </Box>
-                            );
-                        })}
-                    </Box>
-                )}
-
-                {/* Optional Flags */}
-                {optionalFlags.length > 0 && (
-                    <Box>
-                        <Typography
-                            variant="subtitle2"
-                            sx={{
-                                marginBottom: 1,
-                                flexGrow: 1,
-                                color: 'text.secondary',
-                            }}
-                        >
-                            Optional Flags
-                        </Typography>
-
-                        {optionalFlags.map((flagObj) => {
-                            const flagValue = !!parameters[flagObj.flag];
-                            const paramConfig = toolParameters.find((p) => p.name === flagObj.parameter);
-                            const parameterValue = parameters[flagObj.parameter] || '';
-                            const error = validationErrors[flagObj.parameter] || '';
-
-                            return (
-                                <Box
-                                    key={flagObj.flag}
-                                    sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        marginBottom: 1,
-                                        gap: 2,
-                                    }}
-                                >
-                                    <FormControlLabel
-                                        control={
-                                            <Switch
-                                                checked={flagValue}
-                                                onChange={(e) =>
-                                                    handleParameterChange(flagObj.flag, e.target.checked)
-                                                }
-                                                color='primary'
-                                            />
-                                        }
-                                        label={
-                                            <Tooltip
-                                                title={flagHelpMessages[flagObj.flag] || 'Loading help message...'}
-                                                arrow
-                                                componentsProps={{
-                                                    tooltip: {
-                                                        sx: {
-                                                            maxWidth: 300,
-                                                            whiteSpace: 'pre-wrap',
-                                                        },
-                                                    },
-                                                }}
-                                            >
-                                                <span>{flagObj.parameter}</span>
-                                            </Tooltip>
-                                        }
-                                        sx={{ alignItems: 'center', margin: 0 }}
-                                    />
-                                    {paramConfig && flagValue && (
-                                        paramConfig.type === 'file' ? (
-                                            <>
-                                                <Button variant="outlined" component="label" size="small">
-                                                    {parameterValue ? 'Change File' : 'Upload File'}
-                                                    <input
-                                                        type="file"
-                                                        hidden
-                                                        onChange={(e) =>
-                                                            handleParameterChange(flagObj.parameter, e.target.files[0])
-                                                        }
-                                                    />
-                                                </Button>
-                                                {parameterValue && (
-                                                    <Typography variant="caption" sx={{ ml: 1 }}>
-                                                        {parameterValue.name || parameterValue}
-                                                    </Typography>
-                                                )}
-                                            </>
-                                        ) : (
-                                            <TextField
-                                                value={parameterValue}
-                                                onChange={(e) =>
-                                                    handleParameterChange(flagObj.parameter, e.target.value)
-                                                }
-                                                size="small"
-                                                label={paramConfig.type}
-                                                error={!!error}
-                                                helperText={error}
-                                                sx={{
-                                                    flexGrow: 1,
-                                                    '& .MuiOutlinedInput-root': {
-                                                        borderColor: error ? 'red' : 'default',
-                                                    },
-                                                    '& .MuiOutlinedInput-notchedOutline': error
-                                                        ? {
-                                                            borderColor: 'red',
-                                                            borderWidth: '1px',
-                                                        }
-                                                        : {},
-                                                    alignSelf: 'center',
-                                                }}
-                                                type={
-                                                    toolConfig.parameters.find((p) => p.name === flagObj.parameter)?.type ===
-                                                        'integer'
-                                                        ? 'number'
-                                                        : toolConfig.parameters.find((p) => p.name === flagObj.parameter)
-                                                            ?.type === 'float'
-                                                            ? 'number'
-                                                            : 'text'
-                                                }
-                                                inputProps={
-                                                    toolConfig.parameters.find((p) => p.name === flagObj.parameter)?.type ===
-                                                        'integer' ||
-                                                        toolConfig.parameters.find((p) => p.name === flagObj.parameter)?.type ===
-                                                        'float'
-                                                        ? { step: 'any' }
-                                                        : {}
-                                                }
-                                            />
-                                        )
-                                    )}
-                                </Box>
-                            );
-                        })}
-                    </Box>
-                )}
-            </Box>
-        );
-    };
-
 
     return (
         <Paper
@@ -595,6 +247,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
             <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
                 <Paper
                     elevation={1}
+                    data-tour="parameters"
                     sx={{
                         transition: 'transform 150ms ease, background-color 300ms ease, border-color 300ms ease', // Smooth transition for both color and transform
                         marginBottom: '8px',
@@ -609,7 +262,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
                             Tool: {tool.name}
                         </Typography>
                         <Tooltip
-                            title={<pre style={{ whiteSpace: 'pre-wrap' }}>{helpMessages.general || 'Loading help...'}</pre>}
+                            title={<pre style={{ whiteSpace: 'pre-wrap' }}>{helpMessages?.general || 'Loading help...'}</pre>}
                             arrow
                             componentsProps={{
                                 tooltip: {
@@ -647,12 +300,19 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
                     </Box>
 
                     {/* Flags Section */}
-                    {toolConfig.flags.length > 1 && (
-                        <Typography variant="body1" gutterBottom>
+                    {toolConfig.parameters.length > 1 && (
+                        <Typography variant="body1" gutterBottom >
                             Flags and Parameters
                         </Typography>
                     )}
-                    {renderParameters(tool)}
+                    <ToolParameterSection
+                        toolConfig={toolConfig}
+                        parameters={parameters}
+                        validationErrors={validationErrors}
+                        helpMessages={helpMessages?.flags}
+                        handleParameterChange={handleParameterChange}
+                        toggleParameter={toggleParameter}
+                    />
 
                     <Button
                         variant="contained"

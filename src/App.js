@@ -1,4 +1,5 @@
 import React from 'react';
+import { ReactFlowProvider } from '@xyflow/react';
 import { Route, HashRouter as Router, Routes } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import ToolsPage from './pages/ToolsPage';
@@ -12,7 +13,14 @@ const App = () => {
 
       <Routes>
         <Route path="/" element={<ToolsPage />} />
-        <Route path="/workflow" element={<WorkflowPage />} />
+        <Route
+          path="/workflow"
+          element={
+            <ReactFlowProvider>
+              <WorkflowPage />
+            </ReactFlowProvider>
+          }
+        />
         <Route path="/about" element={<AboutPage />} />
       </Routes>
     </Router>
