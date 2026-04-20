@@ -1,15 +1,12 @@
 {
   "homepage": "https://ieeta-pt.github.io/Biochef",
-  "name": "Biochef",
+  "name": "biochef",
   "version": "1.0.0",
   "description": "GTO BioChef",
   "main": "index.js",
   "scripts": {
     "start": "webpack serve --mode development --open",
     "build": "NODE_ENV=production webpack --mode production",
-    "copy-wasm": "mkdir -p public/wasm && cp src/wasm/*.wasm public/wasm/",
-    "prebuild": "bash compile-all-gto.sh",
-    "build-wasm": "bash compile-all-gto.sh",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist"
   },
@@ -17,6 +14,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@biowasm/aioli": "^3.2.1",
     "@dnd-kit/core": "^6.0.8",
     "@dnd-kit/sortable": "^7.0.2",
     "@dnd-kit/utilities": "^3.2.1",
@@ -24,6 +22,8 @@
     "@emotion/styled": "^11.13.0",
     "@mui/icons-material": "^5.16.7",
     "@mui/material": "^5.16.7",
+    "@xyflow/react": "^12.10.0",
+    "dotenv": "^17.2.3",
     "driver.js": "^1.4.0",
     "file-saver": "^2.0.5",
     "framer-motion": "^12.11.0",
@@ -42,9 +42,9 @@
     "@webassemblyjs/wasm-parser": "^1.11.6",
     "babel-loader": "^9.2.1",
     "buffer": "^6.0.3",
-    "compression-webpack-plugin": "^10.0.0",
-    "copy-webpack-plugin": "^13.0.0",
-    "crypto-browserify": "^3.12.0",
+    "compression-webpack-plugin": "^12.0.0",
+    "copy-webpack-plugin": "^14.0.0",
+    "crypto-browserify": "^3.3.0",
     "css-loader": "^6.11.0",
     "file-loader": "^6.2.0",
     "gh-pages": "^6.3.0",
@@ -57,6 +57,6 @@
     "vm-browserify": "^1.1.2",
     "webpack": "^5.95.0",
     "webpack-cli": "^5.1.4",
-    "webpack-dev-server": "^4.15.2"
+    "webpack-dev-server": "^5.2.3"
   }
 }

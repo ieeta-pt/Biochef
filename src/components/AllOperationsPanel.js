@@ -16,7 +16,8 @@ import debounce from 'lodash.debounce';
 import React, { useContext, useMemo, useState, useEffect } from 'react';
 import { DataTypeContext } from '../contexts/DataTypeContext';
 import { NotificationContext } from '../contexts/NotificationContext';
-import operationCategories from '../utils/operationCategories';
+import { getToolsByCategory, getTool } from '../utils/toolUtils';
+
 import { TourContext } from '../contexts/TourContext';
 
 const AllOperationsPanel = ({ onToolClick }) => {
@@ -25,6 +26,8 @@ const AllOperationsPanel = ({ onToolClick }) => {
     const { dataType } = useContext(DataTypeContext);
     const showNotification = useContext(NotificationContext);
     const { tourRegisterSteps, tourIsActive } = useContext(TourContext);
+
+    const tourOperationName = 'Fasta Extract (GTO)';
 
     useEffect(() => {
         tourRegisterSteps("t-tools", [
@@ -48,21 +51,12 @@ const AllOperationsPanel = ({ onToolClick }) => {
 
     useEffect(() => {
         if (tourIsActive) {
-            const targetOperationName = 'fasta_extract';
+            const toolConfig = getTool(tourOperationName)
 
-            const categoryWithTarget = Object.entries(operationCategories)
-                .find(([_, operations]) =>
-                    operations.some(op => op.name === targetOperationName)
-                );
-
-            if (categoryWithTarget) {
-                const [categoryName] = categoryWithTarget;
-
-                setExpandedCategories(prev => ({
-                    ...prev,
-                    [categoryName]: true,
-                }));
-            }
+            setExpandedCategories(prev => ({
+                ...prev,
+                [toolConfig.category]: true,
+            }));
         }
     }, [tourIsActive]);
 
@@ -107,8 +101,8 @@ const AllOperationsPanel = ({ onToolClick }) => {
                 sx={{ marginBottom: 2 }}
             />
             <List sx={{ overflowY: 'auto', flexGrow: 1 }}>
-                {Object.entries(operationCategories).map(([category, operations]) => {
-                    const filteredOps = filterOperations(operations);
+                {Object.entries(getToolsByCategory()).map(([category, tools]) => {
+                    const filteredOps = filterOperations(tools);
                     if (filteredOps.length === 0 && searchTerm !== '') return null;
 
                     return (
@@ -133,7 +127,7 @@ const AllOperationsPanel = ({ onToolClick }) => {
                                             }
                                             placement="right">
                                             <ListItemButton
-                                                data-tour={operation.name === "fasta_extract" ? "selected-tool" : undefined}
+                                                data-tour={operation.name === tourOperationName ? "selected-tool" : undefined}
                                                 sx={{
                                                     pl: 4,
                                                     bgcolor: (theme) => alpha(theme.palette.primary.main, 0.2), // Use primary color with 10% opacity

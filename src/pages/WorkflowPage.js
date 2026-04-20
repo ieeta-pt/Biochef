@@ -1,325 +1,352 @@
 import {
-    Box,
-    Container,
-    Grid,
-    useMediaQuery,
-    useTheme,
-    Button,
-    Drawer,
-    Typography
+  Box,
+  Container,
+  Grid,
+  CircularProgress,
+  Typography,
+  Paper,
+  Button,
+  Stack
 } from '@mui/material';
-import React, { useContext, useEffect, useState } from 'react';
-import description from '../../description.json';
+import React, { useCallback, useEffect, useState, useMemo, useRef } from 'react';
+import { getTool } from '../utils/toolUtils';
 import InputPanel from '../components/InputPanel';
 import ErrorBoundary from '/src/components/ErrorBoundary'; // Ensure this component exists
 import OperationsPanel from '/src/components/OperationsPanel';
 import RecipePanel from '/src/components/RecipePanel';
 import { DataTypeContext } from '/src/contexts/DataTypeContext';
-import { TourContext } from '../contexts/TourContext';
+import { loadToolIndex, loadTool } from '../utils/toolUtils';
+import ToolParameterSection from '../components/ToolParameterSection';
+import ToolOutputPanel from '../components/ToolOutputPanel'
+import { detectDataType } from '../utils/detectDataType';
 
 const WorkflowPage = () => {
-    const [workflow, setWorkflow] = useState([]);
-    const [inputData, setInputData] = useState('');
-    const [isLoading, setIsLoading] = useState(false); // State to control data type update loading
-    const [insertAtIndex, setInsertAtIndex] = useState(null); // State to control the available tools to insert
-    const [addingATool, setAddingATool] = useState(false); // State to control the adding of a tool
-    const [filteredTools, setFilteredTools] = useState([]); // State for filtered tools
-    const [isVariableLoaded, setIsVariableLoaded] = useState(false); // Control if the workflow was loaded
-    const [selectedFiles, setSelectedFiles] = useState(new Set()); // Track selected files
-    const [tabIndex, setTabIndex] = useState(0);    // Track the selected tab index for input mode
-    const { tourStart, tourRegisterSteps } = useContext(TourContext);
-    const [openHelp, setOpenHelp] = useState(false);
+  const recipePanelRef = useRef();
 
-    const initialTree = {
-        id: 'root',
-        name: 'Root',
-        type: 'folder',
-        children: [],
-    };
-    const [tree, setTree] = useState(initialTree);
+  const [toolIndexLoaded, setToolIndexLoaded] = useState(false);
 
-    const { inputDataType, setInputDataType } = useContext(DataTypeContext);
+  const [inputTabIndex, setInputTabIndex] = useState({})
+  const [selectedFileManagerFiles, setSelectedFileManagerFiles] = useState({});
+  const [inputFileManagerTree, setInputFileManagerTree] = useState({});
 
-    const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const getInitialTree = () => ({
+    id: 'root',
+    name: 'Root',
+    type: 'folder',
+    children: [],
+  });
 
-    // Load workflow and input data from localStorage
-    useEffect(() => {
-        const savedWorkflow = localStorage.getItem('workflow');
-        const savedInputData = localStorage.getItem('inputData');
-        const savedInputDataType = localStorage.getItem('inputDataType');
+  const [selectedNode, setSelectedNode] = useState(null);
+  const selectedNodeData = useMemo(() => {
+    return selectedNode ? selectedNode.data : null;
+  }, [selectedNode]);
 
-        if (savedWorkflow) {
-            setWorkflow(JSON.parse(savedWorkflow));
-        }
-        if (savedInputData) {
-            setInputData(savedInputData);
-        }
-        if (savedInputDataType) {
-            setInputDataType(savedInputDataType);
-        }
+  const selectedNodeConfig = useMemo(() => {
+    if (selectedNode && selectedNode.type === "workflowNode" && selectedNodeData) {
+      return getTool(selectedNodeData.label);
+    }
+    return null;
+  }, [selectedNode]);
 
-        setIsVariableLoaded(true); // Set flag to true after loading workflow
-    }, []);
-
-    const runWorkflowTour = () => {
-        tourStart(["w-intro", "w-input", "w-operations", "w-workflows"]);
-        localStorage.setItem("workflowPageTourCompleted", "true");
+  // load tool index on opening the page
+  useEffect(() => {
+    const fetchToolIndex = async () => {
+      await loadToolIndex();
+      setToolIndexLoaded(true);
     };
 
-    // NOTE (João): maybe this is too much?
-    // I'm not sure if we need to reset everything
-    // but if we dont the current tour doesn't work properly
-    const handleRerunTour = () => {
-        // Clear tour completion flags
-        localStorage.removeItem("workflowPageTourCompleted");
+    fetchToolIndex()
+  }, []);
 
-        // Clear stored localStorage values
-        localStorage.removeItem('workflow');
-        localStorage.removeItem('inputData');
-        localStorage.removeItem('inputDataType');
+  const handleNodeClicked = (node) => {
+    setSelectedNode(node)
+  }
 
-        // Reset workflow and input data
-        setWorkflow([]);
-        setInputData('');
-        setInputDataType('UNKNOWN');
-        setTree(initialTree);
-        setSelectedFiles(new Set());
-        setTabIndex(0);
+  const handleAddOperation = async (toolName) => {
+    console.log(toolName)
+    await loadTool(toolName)
+    const tool = getTool(toolName)
+    recipePanelRef.current.addWorkflowNode(tool);
+  };
 
-        runWorkflowTour();
+  const updateSelectedNodeData = (newData) => {
+    setSelectedNode((prevNode) => ({
+      ...prevNode,
+      data: {
+        ...prevNode.data,
+        ...newData,
+      },
+    }));
+  };
+
+  const handleUpdateSelectedInputNode = (text) => {
+    updateSelectedNodeData({ outputs: {"out": text}, outputTypes: {"out": detectDataType(text)} })
+  };
+
+  function handleToggleParam(name) {
+    if (!selectedNode) return;
+
+    const oldParam = selectedNodeData.paramValues?.[name] || {};
+
+    const newParamValues = {
+      ...selectedNodeData.paramValues,
+      [name]: {
+        ...oldParam,
+        enabled: !oldParam.enabled,
+      },
     };
 
-    useEffect(() => {
-        if (isVariableLoaded) {
-            tourRegisterSteps("w-intro", [
-                {
-                    popover: {
-                        title: "Welcome to the Workflows Page",
-                        description: "This page provides an interactive environment for building and managing custom workflows.<br /><br /> Users can load input data, select tools, configure parameters, and chain operations together to create a processing pipeline.<br /><br />The following tour highlights the main components of the interface and how to use them together to set up your workflow.<br /><br />You can re-run this tour at any time using the button on the top right.",
-                    },
-                },
-            ]);
+    updateSelectedNodeData({ paramValues: newParamValues });
+  }
 
-            if (!localStorage.getItem("workflowPageTourCompleted")) {
-                runWorkflowTour();
-            }
-        }
-    }, [isVariableLoaded]);
+  function handleChangeParam(name, value) {
+    if (!selectedNode) return;
 
-    // Save workflow in localStorage
-    useEffect(() => {
-        if (isVariableLoaded) {
-            // Create a copy of the workflow and remove file input parameters
-            const workflowToSave = workflow.map(tool => {
-                const toolConfig = description.tools.find(t => t.name === `gto_${tool.toolName}`);
-                if (toolConfig && toolConfig.input.type === "file") {
-                    // For tools with file input, create a copy without parameters
-                    return {
-                        ...tool,
-                        params: {}
-                    };
-                }
-                return tool;
-            });
-            localStorage.setItem('workflow', JSON.stringify(workflowToSave));
-        }
-    }, [workflow, isVariableLoaded]);
+    const oldParam = selectedNodeData.paramValues?.[name] || {};
 
-    // Save input in localStorage
-    useEffect(() => {
-        localStorage.setItem('inputData', inputData);
-    }, [inputData]);
-
-    // Save input data type in localStorage
-    useEffect(() => {
-        if (isVariableLoaded && tabIndex == 0) {
-            localStorage.setItem('inputDataType', inputDataType);
-        }
-    }, [inputDataType, isVariableLoaded]);
-
-    const handleAddOperation = (toolName, insertAtIndex = null, params = {}) => {
-        const uniqueId = `${toolName}-${Date.now()}`;
-        const newOperation = {
-            id: uniqueId,
-            toolName,
-            params,
-        };
-
-        let newWorkflow;
-        if (insertAtIndex !== null) {
-            newWorkflow = [...workflow];
-            newWorkflow.splice(insertAtIndex, 0, newOperation);
-        } else {
-            newWorkflow = [...workflow, newOperation];
-
-            setInsertAtIndex(newWorkflow.length - 1);
-        }
-
-        setWorkflow(newWorkflow);
+    const newParamValues = {
+      ...selectedNodeData.paramValues,
+      [name]: {
+        enabled: oldParam.enabled ?? true,
+        value: value,
+      },
     };
 
-    const isWorkflowEmpty = workflow.length === 0;
+    updateSelectedNodeData({ paramValues: newParamValues });
+  }
 
+  if (!toolIndexLoaded) {
     return (
-        <ErrorBoundary>
-            <Box
-                sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    height: 'calc(100vh - 64px)',
-                }}
-            >
-                {/* Main Content */}
-                <Container
-                    maxWidth="xl"
-                    sx={{
-                        flex: 1,
-                        py: 2,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        overflow: 'hidden', // Prevents overflow beyond the container
-                    }}
-                >
-
-                    <Button
-                        variant="outlined"
-                        size="small"
-                        onClick={() => setOpenHelp(true)}
-                        sx={{
-                            position: 'fixed',
-                            top: 80,
-                            right: 16,
-                            zIndex: 1200,
-                        }}
-                    >
-                        Re-run Tour
-                    </Button>
-
-                    <Drawer
-                        anchor="right"
-                        open={openHelp}
-                        onClose={() => setOpenHelp(false)}
-                    >
-                        <Box sx={{ width: 320, p: 3 }}>
-                            <Typography variant="h6" gutterBottom>
-                                Guided Tour
-                            </Typography>
-
-                            <Typography variant="body2" sx={{ mb: 2 }}>
-                                The guided tour will show you how to:<br />
-                                • Load input data and select tools<br />
-                                • Configure workflow steps<br />
-                                • Run and export your workflow<br /><br />
-                                Note: Starting the tour will clear your current workflow and input data.<br /><br />
-                                You can access this panel anytime to restart the tour.
-                            </Typography>
-
-                            <Button
-                                variant="contained"
-                                fullWidth
-                                onClick={() => {
-                                    setOpenHelp(false);
-                                    handleRerunTour();
-                                }}
-                            >
-                                Start Tour
-                            </Button>
-                        </Box>
-                    </Drawer>
-                    <Grid container spacing={2} sx={{ flex: 1, height: '100%', overflow: 'hidden' }}>
-                        {/* Operations Panel */}
-                        <Grid
-                            item
-                            xs={12}
-                            md={3.1}
-                            sx={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                flexGrow: 1, // Allow it to take available space without stretching
-                                overflowY: 'auto', // Enable independent scrolling
-                                height: '100%', // Ensure it does not overflow parent
-                            }}
-                        >
-                            <OperationsPanel
-                                onAddOperation={handleAddOperation}
-                                isWorkflowEmpty={isWorkflowEmpty}
-                                isLoading={isLoading}
-                                setIsLoading={setIsLoading}
-                                insertAtIndex={insertAtIndex}
-                                setInsertAtIndex={setInsertAtIndex}
-                                addingATool={addingATool}
-                                setAddingATool={setAddingATool}
-                                filteredTools={filteredTools}
-                                setFilteredTools={setFilteredTools}
-                                selectedFiles={selectedFiles}
-                                tabIndex={tabIndex}
-                                workflow={workflow}
-                            />
-                        </Grid>
-
-                        {/* Recipe/Workflow Panel */}
-                        <Grid
-                            item
-                            xs={12}
-                            md={5.2}
-                            sx={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                flexGrow: 1, // Allow it to take available space without stretching
-                                overflowY: 'auto', // Enable independent scrolling
-                                height: '100%', // Ensure it does not overflow parent
-                            }}
-                        >
-                            <RecipePanel
-                                workflow={workflow}
-                                setWorkflow={setWorkflow}
-                                inputData={inputData}
-                                setInputData={setInputData}
-                                isLoading={isLoading}
-                                setIsLoading={setIsLoading}
-                                insertAtIndex={insertAtIndex}
-                                setInsertAtIndex={setInsertAtIndex}
-                                setAddingATool={setAddingATool}
-                                setFilteredTools={setFilteredTools}
-                                selectedFiles={selectedFiles}
-                                setSelectedFiles={setSelectedFiles}
-                                tabIndex={tabIndex}
-                                setTabIndex={setTabIndex}
-                                tree={tree}
-                                setTree={setTree}
-                            />
-                        </Grid>
-
-                        {/* Input and Output Panels */}
-                        <Grid
-                            item
-                            xs={12}
-                            md={3.7}
-                            sx={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                flexGrow: 1, // Allow it to take available space without stretching
-                                overflowY: 'auto', // Enable independent scrolling
-                                height: '100%', // Ensure it does not overflow parent
-                            }}
-                        >
-                            <InputPanel
-                                tabIndex={tabIndex}
-                                setTabIndex={setTabIndex}
-                                selectedFiles={selectedFiles}
-                                setSelectedFiles={setSelectedFiles}
-                                inputData={inputData}
-                                setInputData={setInputData}
-                                tree={tree}
-                                setTree={setTree}
-                            />
-                        </Grid>
-                    </Grid>
-                </Container>
-            </Box>
-        </ErrorBoundary>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: 'calc(100vh - 64px)',
+        }}
+      >
+        <CircularProgress />
+      </Box>
     );
+  }
+
+  return (
+    <ErrorBoundary>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          height: 'calc(100vh - 64px)',
+        }}
+      >
+        {/* Main Content */}
+        <Container
+          maxWidth="false"
+          sx={{
+            flex: 1,
+            py: 2,
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden', // Prevents overflow beyond the container
+          }}
+        >
+          <Grid container spacing={2} sx={{ flex: 1, height: '100%', overflow: 'hidden' }}>
+            {/* Operations Panel */}
+            <Grid
+              item
+              xs={12}
+              md={2.6}
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                flexGrow: 1, // Allow it to take available space without stretching
+                overflowY: 'auto', // Enable independent scrolling
+                height: '100%', // Ensure it does not overflow parent
+              }}
+            >
+
+              <OperationsPanel
+                onAddOperation={handleAddOperation}
+                // isWorkflowEmpty={isWorkflowEmpty}
+                // isLoading={isLoading}
+                setIsLoading={() => { return }}
+                // insertAtIndex={insertAtIndex}
+                // setInsertAtIndex={setInsertAtIndex}
+                // addingATool={addingATool}
+                // setAddingATool={setAddingATool}
+                filteredTools={[]}
+              // setFilteredTools={setFilteredTools}
+              // selectedFiles={selectedFiles}
+              // tabIndex={0}
+              // workflow={workflow}
+              />
+            </Grid>
+
+            {/* Recipe/Workflow Panel */}
+            <Grid
+              item
+              xs={12}
+              md={6.8}
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                flexGrow: 1, // Allow it to take available space without stretching
+                overflowY: 'auto', // Enable independent scrolling
+                height: '100%', // Ensure it does not overflow parent
+              }}
+            >
+              {/* TODO: this is a temporary thing, make it better in the future */}
+
+              <RecipePanel
+                ref={recipePanelRef}
+                selectedNode={selectedNode}
+                handleNodeClicked={handleNodeClicked}
+                indexLoaded={toolIndexLoaded}
+              />
+            </Grid>
+
+            {/* Input and Output Panels */}
+            <Grid
+              item
+              xs={12}
+              md={2.6}
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                flexGrow: 1, // Allow it to take available space without stretching
+                overflowY: 'auto', // Enable independent scrolling
+                height: '100%', // Ensure it does not overflow parent
+              }}
+            >
+              {!selectedNode && (
+                // <h1>nothing to do</h1>
+                <Paper elevation={3} sx={{ padding: 2, height: '100%', display: 'flex', flexDirection: 'column' }}></Paper>
+              )}
+
+              {/* NOTE(andrade) 
+                  I'm reusing the old panels instead of creating new ones
+                  that is the reason for these horrendous looking wrappers.
+                  These panels expect tree and selectedFiles to be useStates
+                  but now we need different ones for each node.
+                  It would probably be a good idea either to adapt the panels or
+                  just make new ones altogether so this doesn't have to exist.
+              */}
+              {selectedNode && selectedNode.type === 'inputWorkflowNode' && (
+                <InputPanel
+                  tabIndex={inputTabIndex?.[selectedNode.id] ?? 0}
+                  setTabIndex={(value) =>
+                    setInputTabIndex(prev => ({
+                      ...prev,
+                      [selectedNode.id]: value
+                    }))
+                  }
+                  selectedFiles={selectedFileManagerFiles?.[selectedNode.id] ?? new Set()}
+                  setSelectedFiles={(updater) =>
+                    setSelectedFileManagerFiles(prev => {
+                      const currentFiles = prev[selectedNode.id] || new Set()
+                      const newFiles = typeof updater === "function" ? updater(currentFiles) : updater;
+                      return {
+                        ...prev,
+                        [selectedNode.id]: newFiles,
+                      };
+                    })
+                  }
+                  inputData={selectedNodeData.outputs?.["out"] ?? ""}
+                  setInputData={handleUpdateSelectedInputNode}
+                  tree={inputFileManagerTree?.[selectedNode.id] ?? getInitialTree()}
+                  setTree={(updater) =>
+                    setInputFileManagerTree(prev => {
+                      const currentTree = prev[selectedNode.id] || {}
+                      const newTree = typeof updater === "function" ? updater(currentTree) : updater;
+                      return {
+                        ...prev,
+                        [selectedNode.id]: newTree,
+                      };
+                    })
+                  }
+                />
+              )}
+
+              {selectedNode && selectedNode.type === 'workflowNode' && (
+                <Paper elevation={3} sx={{ padding: 2, height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
+                    <Typography variant="h6" gutterBottom>{selectedNodeData.label}</Typography>
+                  </Box>
+                  <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                    <Box sx={{ marginBottom: 3 }}>
+                      <Typography variant="body1" gutterBottom>
+                        Supported Formats
+                      </Typography>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        {/* Inputs */}
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="body2" sx={{ color: 'text.secondary' }}>Input:</Typography>
+                          {selectedNodeConfig.io?.inputs?.length > 0 ? (
+                            selectedNodeConfig.io.inputs.map((input, index, arr) => (
+                              <Typography key={input.name} variant="body2">
+                                {arr.length > 1 ? `${input.name}: ` : ''}
+                                {input.types.join(', ')}
+                              </Typography>
+                            ))
+                          ) : (
+                            <Typography variant="body2">None available</Typography>
+                          )}
+                        </Box>
+
+                        {/* Outputs */}
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="body2" sx={{ color: 'text.secondary' }}>Output:</Typography>
+                          {selectedNodeConfig.io?.outputs?.length > 0 ? (
+                            selectedNodeConfig.io.outputs.map((output, index, arr) => (
+                              <Typography key={output.name} variant="body2">
+                                {arr.length > 1 ? `${output.name}: ` : ''}
+                                {output.types.join(', ')}
+                              </Typography>
+                            ))
+                          ) : (
+                            <Typography variant="body2">None available</Typography>
+                          )}
+                        </Box>
+                      </Box>
+                    </Box>
+                    <Box sx={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+                      <Paper elevation={0} sx={{
+                        transition: 'transform 150ms ease, background-color 300ms ease, border-color 300ms ease',
+                        marginBottom: 1, padding: 1, borderRadius: 1, cursor: 'grab', backgroundColor: 'white'
+                      }}>
+                        <ToolParameterSection
+                          toolConfig={selectedNodeConfig}
+                          parameters={selectedNodeData.paramValues}
+                          validationErrors={{}}
+                          handleParameterChange={handleChangeParam}
+                          toggleParameter={handleToggleParam}
+                        />
+                      </Paper>
+                    </Box>
+                    {/* <Box>
+                      <ToolOutputPanel outputData={selectedNodeData.outputs} rows={5} />
+                    </Box> */}
+                  </Box>
+                </Paper>
+              )}
+
+              {selectedNode && selectedNode.type === 'outputWorkflowNode' && (
+                <ToolOutputPanel
+                  outputData={selectedNodeData.output}
+                  // setOutputData={setOutputData} 
+                  // tool={selectedTool} 
+                  // inputData={inputData} 
+                  // page={'ToolPage'} 
+                  rows={25}
+                />
+              )}
+
+            </Grid>
+          </Grid>
+        </Container>
+      </Box>
+    </ErrorBoundary>
+  );
 };
 
 export default WorkflowPage;

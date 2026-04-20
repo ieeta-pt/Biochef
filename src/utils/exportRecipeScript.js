@@ -1,4 +1,4 @@
-import description from '../../description.json';
+import { getTool } from '../utils/toolUtils';
 import { detectDataType } from '../utils/detectDataType';
 
 const TypeToExtensionMap = {
@@ -32,7 +32,7 @@ export const exportRecipeScript = (workflow, inputData, inputDataType, outputs, 
     const outputFile = `output.${TypeToExtensionMap[detectDataType('output.txt', outputContent)] || 'txt'}`;
 
     const commands = exportWorkflow.map((tool, index) => {
-        const toolConfig = description.tools.find((t) => `gto_${tool.toolName}` === t.name);
+        const toolConfig = getTool(tool.toolName);
         if (!toolConfig) return '';
 
         const flags = toolConfig.flags
@@ -43,7 +43,7 @@ export const exportRecipeScript = (workflow, inputData, inputDataType, outputs, 
             .filter(Boolean)
             .join(' ');
 
-        const toolCommand = `./gto_${tool.toolName} ${flags}`;
+        const toolCommand = `./${tool.toolName} ${flags}`;
         return index === 0 ? `${toolCommand} < ${inputFile}` : `${toolCommand}`;
     });
 
@@ -91,7 +91,7 @@ export const exportRecipeScript = (workflow, inputData, inputDataType, outputs, 
 
     const workflowSummary = exportWorkflow
         .map((tool, index) => {
-            const toolConfig = description.tools.find((t) => `gto_${tool.toolName}` === t.name);
+            const toolConfig = getTool(tool.toolName);
             if (!toolConfig) return '';
             const flags = toolConfig.flags
                 .map((flag) => {
@@ -102,7 +102,7 @@ export const exportRecipeScript = (workflow, inputData, inputDataType, outputs, 
                 .join(' ');
 
             const inputRedirection = index === 0 ? '<input_file>' : '';
-            return `gto_${tool.toolName} ${flags} ${inputRedirection}`;
+            return `${tool.toolName} ${flags} ${inputRedirection}`;
         })
         .join(' | '); // Use '|' to pipe the commands
 
@@ -242,7 +242,7 @@ export const exportRecipeScript = (workflow, inputData, inputDataType, outputs, 
 
         // First tool with input redirection
         const firstTool = exportWorkflow[0];
-        const firstToolConfig = description.tools.find((t) => `gto_${firstTool.toolName}` === t.name);
+        const firstToolConfig = getTool(firstTool.toolName);
         const firstToolFlags = firstToolConfig.flags
             .map((flag) => {
                 const flagValue = firstTool.params[flag.parameter];
@@ -254,16 +254,16 @@ export const exportRecipeScript = (workflow, inputData, inputDataType, outputs, 
         if (firstToolConfig.is_multi_output) {
             scriptLines.push('    # First tool is multi-output');
             scriptLines.push('    mkdir -p "$TEMP_DIR/output_tool_1"');
-            scriptLines.push(`    $GTO_BIN_DIR/gto_${firstTool.toolName} ${firstToolFlags} < "$file" -l "$TEMP_DIR/output_tool_1"`);
+            scriptLines.push(`    $GTO_BIN_DIR/${firstTool.toolName} ${firstToolFlags} < "$file" -l "$TEMP_DIR/output_tool_1"`);
             scriptLines.push('    output_files_1=($(ls "$TEMP_DIR/output_tool_1"))');
         } else {
-            scriptLines.push(`    $GTO_BIN_DIR/gto_${firstTool.toolName} ${firstToolFlags} < "$file" > "$TEMP_DIR/temp_output_1.txt"`);
+            scriptLines.push(`    $GTO_BIN_DIR/${firstTool.toolName} ${firstToolFlags} < "$file" > "$TEMP_DIR/temp_output_1.txt"`);
         }
 
         // Remaining tools in the chain
         for (let i = 1; i < exportWorkflow.length; i++) {
             const tool = exportWorkflow[i];
-            const toolConfig = description.tools.find((t) => `gto_${tool.toolName}` === t.name);
+            const toolConfig = getTool(tool.toolName);
             const toolFlags = toolConfig.flags
                 .map((flag) => {
                     const flagValue = tool.params[flag.parameter];
@@ -273,7 +273,7 @@ export const exportRecipeScript = (workflow, inputData, inputDataType, outputs, 
                 .join(' ');
 
             const previousTool = exportWorkflow[i - 1];
-            const previousToolConfig = description.tools.find((t) => `gto_${previousTool.toolName}` === t.name);
+            const previousToolConfig = getTool(previousTool.toolName);
 
             if (previousToolConfig.is_multi_output) {
                 scriptLines.push(`    # Previous tool was multi-output, processing each file`);
@@ -281,9 +281,9 @@ export const exportRecipeScript = (workflow, inputData, inputDataType, outputs, 
                 scriptLines.push(`    for split_file in "\${output_files_${i}[@]}"; do`);
                 if (toolConfig.is_multi_output) {
                     scriptLines.push(`      mkdir -p "$TEMP_DIR/output_tool_${i + 1}/\$split_file"`);
-                    scriptLines.push(`      $GTO_BIN_DIR/gto_${tool.toolName} ${toolFlags} < "$TEMP_DIR/output_tool_${i}/\$split_file" -l "$TEMP_DIR/output_tool_${i + 1}/\$split_file"`);
+                    scriptLines.push(`      $GTO_BIN_DIR/${tool.toolName} ${toolFlags} < "$TEMP_DIR/output_tool_${i}/\$split_file" -l "$TEMP_DIR/output_tool_${i + 1}/\$split_file"`);
                 } else {
-                    scriptLines.push(`      $GTO_BIN_DIR/gto_${tool.toolName} ${toolFlags} < "$TEMP_DIR/output_tool_${i}/\$split_file" > "$TEMP_DIR/output_tool_${i + 1}/\$split_file"`);
+                    scriptLines.push(`      $GTO_BIN_DIR/${tool.toolName} ${toolFlags} < "$TEMP_DIR/output_tool_${i}/\$split_file" > "$TEMP_DIR/output_tool_${i + 1}/\$split_file"`);
                 }
                 scriptLines.push(`    done`);
                 scriptLines.push(`    output_files_${i + 1}=($(ls "$TEMP_DIR/output_tool_${i + 1}"))`);
@@ -291,17 +291,17 @@ export const exportRecipeScript = (workflow, inputData, inputDataType, outputs, 
                 if (toolConfig.is_multi_output) {
                     scriptLines.push(`    # Current tool is multi-output`);
                     scriptLines.push(`    mkdir -p "$TEMP_DIR/output_tool_${i + 1}"`);
-                    scriptLines.push(`    $GTO_BIN_DIR/gto_${tool.toolName} ${toolFlags} < "$TEMP_DIR/temp_output_${i}.txt" -l "$TEMP_DIR/output_tool_${i + 1}"`);
+                    scriptLines.push(`    $GTO_BIN_DIR/${tool.toolName} ${toolFlags} < "$TEMP_DIR/temp_output_${i}.txt" -l "$TEMP_DIR/output_tool_${i + 1}"`);
                     scriptLines.push(`    output_files_${i + 1}=($(ls "$TEMP_DIR/output_tool_${i + 1}"))`);
                 } else {
-                    scriptLines.push(`    $GTO_BIN_DIR/gto_${tool.toolName} ${toolFlags} < "$TEMP_DIR/temp_output_${i}.txt" > "$TEMP_DIR/temp_output_${i + 1}.txt"`);
+                    scriptLines.push(`    $GTO_BIN_DIR/${tool.toolName} ${toolFlags} < "$TEMP_DIR/temp_output_${i}.txt" > "$TEMP_DIR/temp_output_${i + 1}.txt"`);
                 }
             }
         }
 
         // Move final output to its destination
         const lastTool = exportWorkflow[exportWorkflow.length - 1];
-        const lastToolConfig = description.tools.find((t) => `gto_${lastTool.toolName}` === t.name);
+        const lastToolConfig = getTool(lastTool.toolName);
         const lastToolFlags = lastToolConfig.flags
             .map((flag) => {
                 const flagValue = lastTool.params[flag.parameter];
@@ -318,13 +318,13 @@ export const exportRecipeScript = (workflow, inputData, inputDataType, outputs, 
         } else {
             // Check if any previous tool was multi-output
             const previousTool = exportWorkflow[exportWorkflow.length - 2];
-            const previousToolConfig = description.tools.find((t) => `gto_${previousTool.toolName}` === t.name);
+            const previousToolConfig = getTool(previousTool.toolName);
 
             if (previousToolConfig.is_multi_output) {
                 scriptLines.push('    # Previous tool was multi-output, processing each file');
                 scriptLines.push('    mkdir -p "$OUTPUT_DIR_ABS/$file"');
                 scriptLines.push(`    for split_file in "\${output_files_${exportWorkflow.length - 1}[@]}"; do`);
-                scriptLines.push(`      $GTO_BIN_DIR/gto_${lastTool.toolName} ${lastToolFlags} < "$TEMP_DIR/output_tool_${exportWorkflow.length - 1}/\$split_file" > "$OUTPUT_DIR_ABS/$file/\$split_file"`);
+                scriptLines.push(`      $GTO_BIN_DIR/${lastTool.toolName} ${lastToolFlags} < "$TEMP_DIR/output_tool_${exportWorkflow.length - 1}/\$split_file" > "$OUTPUT_DIR_ABS/$file/\$split_file"`);
                 scriptLines.push('    done');
                 scriptLines.push(`    echo "Output saved to: $OUTPUT_DIR_ABS/$file/"`);
             } else {
@@ -414,7 +414,7 @@ export const exportRecipeScript = (workflow, inputData, inputDataType, outputs, 
         scriptLines.push('echo -e "\\nExecuting the workflow..."');
         scriptLines.push('previousOutput="$inputFile"');
         exportWorkflow.forEach((tool, index) => {
-            const toolConfig = description.tools.find((t) => `gto_${tool.toolName}` === t.name);
+            const toolConfig = getTool(tool.toolName);
             const isLastTool = index === exportWorkflow.length - 1;
 
             if (!toolConfig) {
@@ -422,7 +422,7 @@ export const exportRecipeScript = (workflow, inputData, inputDataType, outputs, 
                 return;
             }
 
-            const toolCommand = `$GTO_BIN_DIR/gto_${tool.toolName}`;
+            const toolCommand = `$GTO_BIN_DIR/${tool.toolName}`;
             const flags = toolConfig.flags
                 .map((flag) => {
                     const flagValue = tool.params[flag.parameter];
@@ -457,7 +457,7 @@ export const exportRecipeScript = (workflow, inputData, inputDataType, outputs, 
                 scriptLines.push(`previousOutput="${outputDir}/output_tool_${index + 1}"`);
             } else {
                 // Check if previous tool was multi-output
-                const previousTool = index > 0 ? description.tools.find((t) => `gto_${exportWorkflow[index - 1].toolName}` === t.name) : null;
+                const previousTool = index > 0 ? getTool(exportWorkflow[index - 1].toolName) : null;
                 if (previousTool && previousTool.is_multi_output) {
                     // Process each file from the previous multi-output tool
                     const outputDir = isLastTool ? '$OUTPUT_DIR' : '$TEMP_DIR';

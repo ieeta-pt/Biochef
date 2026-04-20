@@ -1,8 +1,0 @@
-Found match in range [ 1536 : 2048 ]
-Boldness be my friend. William Shakespeare
-
-
-Found match in range [ 3072 : 3584 ]
-Fight till the last gasp. William Shakespeare
-
-

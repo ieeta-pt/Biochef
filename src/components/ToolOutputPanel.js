@@ -5,7 +5,7 @@ import JSZip from 'jszip';
 import React, { useEffect, useState, useContext } from 'react';
 import { TourContext } from '../contexts/TourContext';
 
-const ToolOutputPanel = ({ outputData, setOutputData, workflow = null, tool = null, inputData, page }) => {
+const ToolOutputPanel = ({ outputData, setOutputData, workflow = null, tool = null, inputData, page, rows=8 }) => {
     const [selectedFile, setSelectedFile] = useState('');
     const [displayedOutput, setDisplayedOutput] = useState('');
     const { tourRegisterSteps } = useContext(TourContext);
@@ -95,10 +95,10 @@ const ToolOutputPanel = ({ outputData, setOutputData, workflow = null, tool = nu
     };
 
     return (
-        <Paper elevation={3} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }} data-tour="output">
+        <Paper elevation={1} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }} data-tour="output">
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 2, flexShrink: 0 }}>
                 <Typography variant="h6">Output</Typography>
-                {typeof outputData === 'object' && !Array.isArray(outputData) && Object.keys(outputData).length > 0 && (
+                {typeof outputData === 'object' && !Array.isArray(outputData) && Object.keys(outputData).length > 1 && (
                     <FormControl size="small" sx={{ minWidth: 150 }}>
                         <Select
                             value={selectedFile}
@@ -125,7 +125,7 @@ const ToolOutputPanel = ({ outputData, setOutputData, workflow = null, tool = nu
                         inputComponent: 'textarea',
                         readOnly: true,
                     }}
-                    rows={8}
+                    rows={rows}
                     sx={{
                         flexGrow: 1,
                         flexShrink: 1,

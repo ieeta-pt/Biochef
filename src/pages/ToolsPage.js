@@ -1,19 +1,28 @@
-import { Box, Container, Grid, Typography, Button, Drawer } from '@mui/material';
-import React, { useState, useContext, useEffect } from 'react';
-import { loadWasmModule } from '../gtoWasm';
+import { Box, Button, Container, Grid, Typography, Tabs, Tab, CircularProgress, useTheme, useMediaQuery } from '@mui/material';
+import React, { useState, useEffect, useContext } from 'react';
 import AllOperationsPanel from '/src/components/AllOperationsPanel';
 import ToolInputPanel from '/src/components/ToolInputPanel';
 import ToolOutputPanel from '/src/components/ToolOutputPanel';
 import ToolTestingPanel from '/src/components/ToolTestingPanel';
+import { loadToolIndex, loadTool } from '../utils/toolUtils';
 import { TourContext } from '../contexts/TourContext';
 
 const ToolsPage = () => {
     const [selectedTool, setSelectedTool] = useState(null);
-    const [helpMessage, setHelpMessage] = useState('');
     const [inputData, setInputData] = useState('');
     const [outputData, setOutputData] = useState('');
+    const [toolIndexLoaded, setToolIndexLoaded] = useState(false);
+    const [loadingTool, setLoadingTool] = useState(false);
+    const [tab, setTab] = useState(0);
+
     const { tourStart, tourRegisterSteps, tourMoveNext, tourIsActive } = useContext(TourContext);
-    const [openHelp, setOpenHelp] = useState(false);
+
+    const handleTabChange = (event, newValue) => {
+        setTab(newValue);
+    };
+
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
     const runToolsTour = () => {
         tourStart(["t-intro", "t-tools", "t-input", "t-testing"]);
@@ -21,6 +30,8 @@ const ToolsPage = () => {
     };
 
     useEffect(() => {
+        if(!toolIndexLoaded) return
+
         tourRegisterSteps("t-intro", [
             {
                 popover: {
@@ -29,10 +40,12 @@ const ToolsPage = () => {
                 },
             },
         ]);
+
         if (!localStorage.getItem("toolsPageTourCompleted")) {
             runToolsTour();
         }
-    }, []);
+
+    }, [toolIndexLoaded]);
 
     const handleRerunTour = () => {
         localStorage.removeItem("toolsPageTourCompleted");
@@ -40,26 +53,49 @@ const ToolsPage = () => {
         runToolsTour();
     };
 
+    useEffect(() => {
+        const fetchTools = async () => {
+            const result = await loadToolIndex();
+            setToolIndexLoaded(!!result);
+        };
+
+        fetchTools();
+    }, []);
+
     const handleToolClick = async (tool) => {
-        setSelectedTool(tool); // Update the selected tool
-        if (tourIsActive) tourMoveNext();
+        setLoadingTool(true);
+        await loadTool(tool.name);
+        setSelectedTool(tool);
+        setLoadingTool(false);
+        if(tourIsActive) tourMoveNext();
 
-        try {
-            const startTime = performance.now();
-            const runFunction = await loadWasmModule(tool.name);
-            const loadTime = performance.now() - startTime;
-            console.log(`Module ${tool.name} loaded in ${loadTime.toFixed(2)}ms`);
-            const outputData = await runFunction('', ['-h']);
-
-            if (outputData.stderr) {
-                console.error('Error loading tool:', outputData.stderr);
-            } else {
-                setHelpMessage(outputData.stdout);
-            }
-        } catch (error) {
-            console.error('Error loading tool:', error);
+        if (isMobile) {
+            setTab(2)
         }
     };
+
+    const handleSetOutputData = (outputData) => {
+        setOutputData(outputData)
+
+        if (isMobile) {
+            setTab(3)
+        }
+    }
+
+    if (!toolIndexLoaded) {
+        return (
+            <Box
+                sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: 'calc(100vh - 64px)',
+                }}
+            >
+                <CircularProgress />
+            </Box>
+        );
+    }
 
     return (
         <Box
@@ -81,121 +117,149 @@ const ToolsPage = () => {
                     height: '100%',
                 }}
             >
-                <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={() => setOpenHelp(true)}
-                    sx={{
-                        position: 'fixed',
-                        top: 80,
-                        right: 16,
-                        zIndex: 1200,
-                    }}
-                >
-                    Re-run Tour
-                </Button>
-                <Drawer
-                    anchor="right"
-                    open={openHelp}
-                    onClose={() => setOpenHelp(false)}
-                >
-                    <Box sx={{ width: 320, p: 3 }}>
-                        <Typography variant="h6" gutterBottom>
-                            Guided Tour
-                        </Typography>
+                {isMobile ? (
+                    <>
+                        <Tabs value={tab} onChange={handleTabChange}>
+                            <Tab label="Tools" />
+                            <Tab label="Run" />
+                            <Tab label="Input" />
+                            <Tab label="Output" />
+                        </Tabs>
 
-                        <Typography variant="body2" sx={{ mb: 2 }}>
-                            This tour will show you how to:<br />
-                            • Browse and select available tools<br />
-                            • Configure tool inputs<br />
-                            • Execute and test tools in the browser<br />
-                            • Inspect outputs and results<br /><br />
-                            Starting the tour will guide you through the main interface and highlight key components.<br /><br />
-                            You can re-run this tour anytime using the button below.
-                        </Typography>
+                        <div style={{ display: tab === 0 ? 'block' : 'none' }}>
+                            <AllOperationsPanel onToolClick={handleToolClick} />
+                        </div>
 
+                        <div style={{ display: tab === 1 ? 'block' : 'none' }}>
+                            {loadingTool ? (
+                                <CircularProgress />
+                            ) : selectedTool ? (
+                                <ToolTestingPanel
+                                    tool={selectedTool}
+                                    inputData={inputData}
+                                    setOutputData={handleSetOutputData}
+                                />
+                            ) : (
+                                <Typography align="center" variant="h6" sx={{ marginTop: '20%' }}>
+                                    Select a tool from the list to view details and test it
+                                </Typography>
+                            )}
+                        </div>
+
+                        <div style={{ display: tab === 2 ? 'block' : 'none' }}>
+                            <ToolInputPanel
+                                tool={selectedTool}
+                                inputData={inputData}
+                                setInputData={setInputData}
+                            />
+                        </div>
+
+                        <div style={{ display: tab === 3 ? 'block' : 'none' }}>
+                            <ToolOutputPanel
+                                outputData={outputData}
+                                setOutputData={setOutputData}
+                                tool={selectedTool}
+                                inputData={inputData}
+                                page={'ToolPage'}
+                            />
+                        </div>
+
+                    </>
+                ) : (
+                    <Grid container spacing={2} sx={{ flex: 1, overflow: 'hidden' }}>
+                        {/* Tool Selection Panel */}
+                        <Grid
+                            item
+                            xs={12}
+                            md={3.2}
+                            sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                overflowY: 'auto',
+                                maxHeight: '100%',
+                            }}
+                        >
+                            <AllOperationsPanel onToolClick={handleToolClick} />
+                        </Grid>
+
+                        {/* Testing Tool Panel */}
+                        <Grid
+                            item
+                            xs={12}
+                            md={5.8}
+                            sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                overflowY: 'auto', // Independent scrolling
+                                maxHeight: '100%',
+                            }}
+                        >
+                            {loadingTool ? (
+                                <Box
+                                    sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        height: '100%',
+                                    }}
+                                >
+                                    <CircularProgress />
+                                </Box>
+                            ) : selectedTool ? (
+                                <ToolTestingPanel tool={selectedTool} inputData={inputData} setOutputData={setOutputData} />
+                            ) : (
+                                <Typography align="center" variant="h6" sx={{ marginTop: '20%' }}>
+                                    Select a tool from the list to view details and test it
+                                </Typography>
+                            )
+                            }
+                        </Grid>
+
+                        {/* Input and Output Panels */}
+                        <Grid
+                            item
+                            xs={12}
+                            md={3}
+                            sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                overflowY: 'auto', // Independent scrolling
+                                maxHeight: '100%', // Adjusts height relative to header/footer
+                            }}
+                        >
+                            <Box
+                                sx={{
+                                    flexGrow: 1,
+                                    mb: 2,
+                                    overflowY: 'auto', // Independent scrolling
+                                }}
+                            >
+                                <ToolInputPanel tool={selectedTool} inputData={inputData} setInputData={setInputData} />
+                            </Box>
+                            <Box
+                                sx={{
+                                    flexGrow: 1,
+                                    overflowY: 'auto', // Independent scrolling
+                                }}
+                            >
+                                <ToolOutputPanel outputData={outputData} setOutputData={setOutputData} tool={selectedTool} inputData={inputData} page={'ToolPage'} />
+                            </Box>
+                        </Grid>
                         <Button
-                            variant="contained"
-                            fullWidth
-                            onClick={() => {
-                                setOpenHelp(false);
-                                handleRerunTour();
+                            variant="outlined"
+                            size="small"
+                            onClick={handleRerunTour}
+                            sx={{
+                                position: 'fixed',
+                                top: 80,      // below app bar
+                                right: 16,
+                                zIndex: 1200,
                             }}
                         >
-                            Start Tour
+                            Re-run tour
                         </Button>
-                    </Box>
-                </Drawer>
-
-                <Grid container spacing={2} sx={{ flex: 1, overflow: 'hidden' }}>
-                    {/* Tool Selection Panel */}
-                    <Grid
-                        item
-                        xs={12}
-                        md={3.2}
-                        sx={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            overflowY: 'auto',
-                            maxHeight: '100%',
-                        }}
-                    >
-                        <AllOperationsPanel onToolClick={handleToolClick} />
                     </Grid>
-
-                    {/* Testing Tool Panel */}
-                    <Grid
-                        item
-                        xs={12}
-                        md={5.8}
-                        sx={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            overflowY: 'auto', // Independent scrolling
-                            maxHeight: '100%',
-                        }}
-                    >
-                        {selectedTool ? (
-                            <ToolTestingPanel tool={selectedTool} inputData={inputData} setOutputData={setOutputData} />
-                        ) : (
-                            <Typography align="center" variant="h6" sx={{ marginTop: '20%' }}>
-                                Select a tool from the list to view details and test it
-                            </Typography>
-                        )
-                        }
-                    </Grid>
-
-                    {/* Input and Output Panels */}
-                    <Grid
-                        item
-                        xs={12}
-                        md={3}
-                        sx={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            overflowY: 'auto', // Independent scrolling
-                            maxHeight: '100%', // Adjusts height relative to header/footer
-                        }}
-                    >
-                        <Box
-                            sx={{
-                                flexGrow: 1,
-                                mb: 2,
-                                overflowY: 'auto', // Independent scrolling
-                            }}
-                        >
-                            <ToolInputPanel tool={selectedTool} inputData={inputData} setInputData={setInputData} />
-                        </Box>
-                        <Box
-                            sx={{
-                                flexGrow: 1,
-                                overflowY: 'auto', // Independent scrolling
-                            }}
-                        >
-                            <ToolOutputPanel outputData={outputData} setOutputData={setOutputData} tool={selectedTool} inputData={inputData} page={'ToolPage'} />
-                        </Box>
-                    </Grid>
-                </Grid>
+                )}
             </Container>
         </Box>
     );

@@ -1,7 +1,7 @@
 import UploadIcon from '@mui/icons-material/Upload';
 import { Box, IconButton, MenuItem, Paper, Select, TextField, Tooltip, Typography } from '@mui/material';
 import React, { useContext, useEffect, useState } from 'react';
-import description from '../../description.json';
+import { getTool } from '../utils/toolUtils';
 import { DataTypeContext } from '../contexts/DataTypeContext';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { detectDataType } from '../utils/detectDataType';
@@ -15,6 +15,11 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
     const [isAcceptable, setIsAcceptable] = useState(true);
     const [toolInputFormat, setToolInputFormat] = useState([]);
     const [selectedInputFormat, setSelectedInputFormat] = useState('');
+    const [selectedInput, setSelectedInput] = useState('');
+
+    const toolConfig = tool ? getTool(tool.name) : null
+    const toolInputs = toolConfig ? toolConfig.io.inputs : []
+
     const { tourRegisterSteps, tourIsActive, tourMoveNext } = useContext(TourContext);
 
     useEffect(() => {
@@ -54,14 +59,17 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
     useEffect(() => {
         if (tool) {
             // Update the input format based on the selected tool
-            const toolConfig = description.tools.find((t) => t.name === `gto_${tool.name}`);
-            const inputFormats = toolConfig?.input.format.split(',').map((f) => f.trim()) || [];
+            const inputFormats = toolConfig.inputTypes;
             setToolInputFormat(inputFormats);
 
             // Reset input format and data if the tool changes
             if (inputFormats.length !== toolInputFormat.length || !(inputFormats.every((value, index) => value === toolInputFormat[index]))) {
-                setSelectedInputFormat('');
-                setInputData('');
+                setSelectedInputFormat({});
+                setInputData({});
+            }
+
+            if (toolInputs.length > 0) {
+                setSelectedInput(toolInputs[0]);
             }
         }
     }, [tool]);
@@ -71,7 +79,7 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
     const exampleInput = {
         "FASTA": ">seq\nTTGCACTGACCTGAAGTCTTGGAGTATGACCGCGGCTCGGCTCTATCGAACGCTCGATCTAGCGCTATAGGTGGTGCCGAAGGCGGTCTGTCGTCGTA",
         "Multi-FASTA": ">seq1\nGTTCCAGTAGCGGCGTATCGTAGGTGACGTAGCAGTCGATCGCTAGCGAAGCGCTGACTAGCTCGATAGCGGCTACTCGTACGTAGTACGTAGCATACG\n>seq2\nAGCTGCTGATCGTGATCGAGCTCGATGCATCGATCGCTAGCGTACGTAGCTGACGTAGCGTGACTGATCGTAGCTGATCGTGACGTAGCTGACGTAGCTG",
-        "FASTQ": "@seq\nGCTAGCTGATCGTACGTAGCGTATCGTAGCTGATCGTACGATCGTAGCTAGCTGATCGTAGCTAGCTAGCTGATCGTAGCTAGCTGATCGTACGTAGC\n+\n!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~!!!!!!!!!!",
+        "FASTQ": "@seq\nGCTAGCTGATCGTACGTAGCGTATCGTAGCTGATCGTACGATCGTAGCTAGCTGATCGTAGCTAGCTAGCTGATCGTAGCTAGCTGATCGTACGTAGC\n+\n!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~!!!!!",
         "DNA": "CGTACGTAGCTGACTGATCGTAGCTAGCTGACTGACTAGCTGATCGTAGCTGATCGTACGTAGCTAGCTAGCTGACTAGCTGATCGTACGTAGCTGAC",
         "RNA": "CGUACGUAGCUGACUGAUCGAUGCUACGUAGCUGACGUAGCUAGCUAGCUAGCUAGCUAGCUAGCUAGCUAGCUAGCUAGCUAGCUAGCUAGCUAGCUA",
         "AminoAcids": "ACDEFGHIKLMNPQRSTVWYACDEFGHIKLMNPQRSTVWYACDEFGHIKLMNPQRSTVWYACDEFGHIKLMNPQRSTVWYACDEFGHIKLMNPQRSTV",
@@ -80,9 +88,25 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
         "PackagedFASTQ": "GATTTGGGGTTCAAAGCAGTATCGATCAAATAGTAAATCCATTTGTTCAACTCACAGTTT!''*((((***+))%%%++)(%%%%).1***-+*''))**55CCF>>>>>>CCCCCCC6SEQ_ID+	0"
     };
 
+    const updateSelectedInputData = (data) => {
+        setInputData(prev => ({
+            ...prev,
+            [selectedInput.name]: data
+        }));
+    }
+
+    const updateSelectedInputFormat = (fomat) => {
+        setSelectedInputFormat(prev => ({
+            ...prev,
+            [selectedInput.name]: fomat
+        }));
+    }
+
     const handleInputFormatChange = (format) => {
-        setSelectedInputFormat(format);
-        setInputData(exampleInput[format] || ''); // Load example input if available
+        updateSelectedInputFormat(format);
+
+        const example_input = exampleInput[format] || ''
+        updateSelectedInputData(example_input); // Load example input if available
     };
 
     // Debounce state
@@ -90,7 +114,7 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
 
     const processFileContent = (file, content, isPartial) => {
         const lines = isPartial ? content.split('\n').slice(0, 100).join('\n') : content;
-        setInputData(lines);
+        updateSelectedInputData(lines);
 
         const detectedType = detectDataType(file.name, lines);
         setInputDataType(detectedType);
@@ -105,7 +129,6 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
     };
 
     const handleFileUpload = (event) => {
-        if (tourIsActive) tourMoveNext();
         const file = event.target.files[0];
         if (file) {
             const extension = `.${file.name.split('.').pop().toLowerCase()}`;
@@ -113,7 +136,7 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
                 showNotification(`Unsupported file type: ${extension}`, 'error');
                 setIsAcceptable(false);
                 setFileName('');
-                setInputData('');
+                setInputData({});
                 setIsValid(false);
                 setInputDataType('UNKNOWN'); // Reset data type
                 return;
@@ -144,9 +167,15 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
         }
     };
 
-    const handleTextChange = (e) => {
-        const content = e.target.value;
-        setInputData(content);
+    const handleSelectedInputChange = (inputName) => {
+        const selected = toolInputs.find(
+            (input) => input.name === inputName
+        );
+        setSelectedInput(selected);
+    }
+
+    const handleTextChange = (content) => {
+        updateSelectedInputData(content)
 
         // Clear existing debounce timer
         if (debounceTimer) {
@@ -162,7 +191,7 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
                 return;
             }
 
-            const detectedType = detectDataType('input.txt', content);
+            const detectedType = detectDataType(content);
             setInputDataType(detectedType);
             const valid = validateData(content, detectedType);
 
@@ -185,16 +214,29 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
         };
     }, [debounceTimer]);
 
-    const numberOfLines = inputData.split('\n').length;
-
     return (
         <Paper elevation={3} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }} data-tour="input-section">
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 2 }}>
+            <Box
+                sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    padding: 2,
+                }}
+            >
                 <Typography variant="h6">Input</Typography>
-                <Box sx={{ minWidth: 200 }}>
+
+                <Box
+                    sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 2,
+                        minWidth: 200,
+                    }}
+                >
                     <Select
                         data-tour="example-input"
-                        value={selectedInputFormat}
+                        value={selectedInputFormat[selectedInput.name] || ''}
                         onChange={(e) => handleInputFormatChange(e.target.value)}
                         displayEmpty
                         fullWidth
@@ -209,14 +251,34 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
                             </MenuItem>
                         ))}
                     </Select>
+
+                    {toolInputs.length > 1 && selectedInput && (
+                        <Select
+                            value={selectedInput?.name || ''}
+                            onChange={(e) => handleSelectedInputChange(e.target.value)}
+                            displayEmpty
+                            fullWidth
+                            size="small"
+                        >
+                            <MenuItem value="" disabled>
+                                Select Input
+                            </MenuItem>
+                            {toolInputs.map((input) => (
+                                <MenuItem key={input.name} value={input.name}>
+                                    {input.name}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    )}
+
                 </Box>
             </Box>
             {/* TextField with dynamic height */}
             <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: 2 }}>
                 <TextField
                     variant="outlined"
-                    value={inputData}
-                    onChange={handleTextChange}
+                    value={inputData[selectedInput.name] || ''}
+                    onChange={(e) => handleTextChange(e.target.value)}
                     placeholder="e.g., >Sequence1\nACGT..."
                     InputProps={{
                         multiline: true,
@@ -247,7 +309,7 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
                 }}
             >
                 <Typography variant="body2" color="textSecondary">
-                    {inputData.length}/100000 characters, {numberOfLines} lines
+                    {(inputData[selectedInput.name]?.length || 0)}/100000 characters, {(inputData[selectedInput.name]?.split('\n').length || 0)} lines
                 </Typography>
                 <Tooltip title="Upload File">
                     <IconButton

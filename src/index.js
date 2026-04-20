@@ -6,6 +6,7 @@ import App from './App';
 import { DataTypeProvider } from './contexts/DataTypeContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ValidationErrorsProvider } from './contexts/ValidationErrorsContext';
+import "./index.css"
 import { TourProvider } from './contexts/TourContext';
 
 const theme = createTheme({
