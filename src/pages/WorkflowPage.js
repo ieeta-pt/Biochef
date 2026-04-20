@@ -63,7 +63,6 @@ const WorkflowPage = () => {
   }
 
   const handleAddOperation = async (toolName) => {
-    console.log(toolName)
     await loadTool(toolName)
     const tool = getTool(toolName)
     recipePanelRef.current.addWorkflowNode(tool);

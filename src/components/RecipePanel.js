@@ -25,7 +25,7 @@ const RecipePanel = forwardRef(({ selectedNode, handleNodeClicked, indexLoaded }
   const [workflowLoaded, setWorkflowLoaded] = useState(false);
 
   useEffect(() => {
-    if(!indexLoaded) return;
+    if (!indexLoaded) return;
 
     const fetchWorkflow = async () => {
       const flow = JSON.parse(localStorage.getItem("workflow"));
@@ -356,9 +356,11 @@ const RecipePanel = forwardRef(({ selectedNode, handleNodeClicked, indexLoaded }
           <WorkflowButton onClick={runWorkflow} >
             Run Workflow
           </WorkflowButton>
-          <WorkflowButton onClick={() => setOpenDialog(true)}>
-            Run Workflow with Agent
-          </WorkflowButton>
+          {process.env.NODE_ENV === 'development' && (
+            <WorkflowButton onClick={() => setOpenDialog(true)}>
+              Run Workflow with Agent
+            </WorkflowButton>
+          )}
         </Panel>
 
       </ReactFlow>
