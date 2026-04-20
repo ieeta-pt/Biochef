@@ -1,1 +1,0 @@
-window.segment=segment;
