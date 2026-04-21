@@ -7,7 +7,9 @@ import {
     Tabs,
     TextField,
     Typography,
-    Button
+    Button,
+    Menu,
+    MenuItem
 } from '@mui/material';
 import React, { useContext, useEffect, useState } from 'react';
 import { DataTypeContext } from '../contexts/DataTypeContext';
@@ -15,6 +17,7 @@ import { NotificationContext } from '../contexts/NotificationContext';
 import { detectDataType } from '../utils/detectDataType';
 import FileExplorer from './FileExplorer';
 import { TourContext } from '../contexts/TourContext';
+import { exampleInputs } from '../utils/exampleInputs';
 
 const InputPanel = ({ tabIndex, setTabIndex, selectedFiles, setSelectedFiles, inputData, setInputData, tree, setTree }) => {
     const showNotification = useContext(NotificationContext);
@@ -24,9 +27,13 @@ const InputPanel = ({ tabIndex, setTabIndex, selectedFiles, setSelectedFiles, in
     const [debounceTimer, setDebounceTimer] = useState(null);
     const numberOfLines = inputData.split('\n').length;
 
+    const [selectedExampleFormat, setSelectedExampleFormat] = useState('');
+
+    const [anchorEl, setAnchorEl] = useState(null);
+
     useEffect(() => {
         if (tabIndex != 1) return
-        
+
         if (selectedFiles.size == 0) {
             setInputDataType('UNKNOWN');
             if (inputData != '') setInputData('')
@@ -45,7 +52,7 @@ const InputPanel = ({ tabIndex, setTabIndex, selectedFiles, setSelectedFiles, in
             // Otherwise, either leave it unchanged or set it to a fallback value.
             setInputDataType('UNKNOWN');
         }
-        
+
         // NOTE(andrade)
         // Not sure if concatenating the files is the correct thing to do
         // Maybe we want to limit to one selected file at a time
@@ -153,6 +160,12 @@ const InputPanel = ({ tabIndex, setTabIndex, selectedFiles, setSelectedFiles, in
         };
     }, [debounceTimer]);
 
+    function handleExampleFormatChange(new_format) {
+        setInputData(exampleInputs[new_format])
+        setInputDataType(new_format);
+        setSelectedExampleFormat(new_format)
+    }
+
     return (
         <Paper data-tour="input-panel" elevation={3} sx={{
             height: '100%', display: 'flex', flexDirection: 'column'
@@ -175,7 +188,7 @@ const InputPanel = ({ tabIndex, setTabIndex, selectedFiles, setSelectedFiles, in
                     sx={{
                         borderBottom: 1,
                         borderColor: 'divider',
-                        flexShrink: 0,      
+                        flexShrink: 0,
                         '& .MuiTab-root': {
                             minHeight: 64,
                             fontWeight: 'bold',
@@ -198,6 +211,43 @@ const InputPanel = ({ tabIndex, setTabIndex, selectedFiles, setSelectedFiles, in
                     {tabIndex === 0 && (
                         <Box>
                             < Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: 2 }}>
+                                <Box
+                                    sx={{
+                                        flexGrow: 1,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        overflow: 'hidden',
+                                        paddingBottom: 2,
+                                        // gap: 2,
+                                    }}
+                                >
+                                    <Button
+                                        variant="outlined"
+                                        size="small"
+                                        onClick={(e) => setAnchorEl(e.currentTarget)}
+                                    >
+                                        {'Load Example Input'}
+                                    </Button>
+
+                                    <Menu
+                                        anchorEl={anchorEl}
+                                        open={Boolean(anchorEl)}
+                                        onClose={(e) => setAnchorEl(null)}
+                                    >
+                                        {Object.keys(exampleInputs).map((format) => (
+                                            <MenuItem
+                                                key={format}
+                                                onClick={() => {
+                                                    handleExampleFormatChange(format);
+                                                    setAnchorEl(null);
+                                                }}
+                                            >
+                                                {format}
+                                            </MenuItem>
+                                        ))}
+                                    </Menu>
+                                </Box>
+
                                 <TextField
                                     variant="outlined"
                                     value={inputData}
@@ -239,9 +289,11 @@ const InputPanel = ({ tabIndex, setTabIndex, selectedFiles, setSelectedFiles, in
                             </Box>
                         </Box>
                     )}
+
                     {tabIndex === 1 && <FileExplorer selectedFiles={selectedFiles} setSelectedFiles={setSelectedFiles} tree={tree} setTree={setTree} />}
                 </Box>
             </Box>
+
         </Paper >
     );
 };

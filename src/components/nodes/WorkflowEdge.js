@@ -27,9 +27,14 @@ export function WorkflowEdge(props) {
 
   const typeColors = {
     FASTA: "#e74c3c",
-    NUM: "#3498db",
-    TEXT: "#2ecc71",
+    "Multi-FASTA": "#d35400",
+    FASTQ: "#e67e22",
     DNA: "#9b59b6",
+    RNA: "#8e44ad",
+    AminoAcids: "#16a085",
+    NUM: "#3498db",
+    PackagedFASTQ: "#2c3e50",
+    TEXT: "#2ecc71",
     BIN: "#123456"
   };
 
