@@ -5,8 +5,8 @@ import {
   CircularProgress,
   Typography,
   Paper,
-  Button,
-  Stack
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import React, { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import { getTool } from '../utils/toolUtils';
@@ -28,6 +28,9 @@ const WorkflowPage = () => {
   const [inputTabIndex, setInputTabIndex] = useState({})
   const [selectedFileManagerFiles, setSelectedFileManagerFiles] = useState({});
   const [inputFileManagerTree, setInputFileManagerTree] = useState({});
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const getInitialTree = () => ({
     id: 'root',
@@ -79,7 +82,7 @@ const WorkflowPage = () => {
   };
 
   const handleUpdateSelectedInputNode = (text) => {
-    updateSelectedNodeData({ outputs: {"out": text}, outputTypes: {"out": detectDataType(text)} })
+    updateSelectedNodeData({ outputs: { "out": text }, outputTypes: { "out": detectDataType(text) } })
   };
 
   function handleToggleParam(name) {
@@ -114,7 +117,31 @@ const WorkflowPage = () => {
     updateSelectedNodeData({ paramValues: newParamValues });
   }
 
-  if (!toolIndexLoaded) {
+  if (isMobile) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: 'calc(100vh - 64px)',
+          textAlign: 'center',
+          px: 2,
+        }}
+      >
+        <Paper elevation={3} sx={{ padding: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Not supported on mobile
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            This workflow builder currently requires a larger screen.
+            Please use a desktop or tablet device.
+          </Typography>
+        </Paper>
+      </Box>
+    );
+  }
+  else if (!toolIndexLoaded) {
     return (
       <Box
         sx={{
