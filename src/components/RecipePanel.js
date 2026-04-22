@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useImperativeHandle, forwardRef, useState } from 'react';
+import React, { useEffect, useContext, useCallback, useImperativeHandle, forwardRef, useState } from 'react';
 import { ReactFlow, useStoreApi, useReactFlow, useNodesState, useEdgesState, applyNodeChanges, applyEdgeChanges, addEdge, Background, BackgroundVariant, MarkerType, Panel } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Paper, Button, Box, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from '@mui/material';
@@ -8,10 +8,11 @@ import { OutputWorkflowNode } from './nodes/OutputWorkflowNode';
 import { InputWorkflowNode } from './nodes/InputWorkflowNode';
 import { WorkflowEdge } from './nodes/WorkflowEdge';
 import { loadTool, getTool } from '../utils/toolUtils';
+import { NotificationContext } from '../contexts/NotificationContext';
 import { isValidWorkflowConnection, sanitizeWorkflowNodes } from '../utils/workflowUtils';
 import logger from '../utils/logger';
 
-const RecipePanel = forwardRef(({ selectedNode, handleNodeClicked, indexLoaded }, ref) => {
+const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClicked, indexLoaded }, ref) => {
   const [nodes, setNodes] = useNodesState([]);
   const [edges, setEdges] = useEdgesState([]);
 
@@ -20,6 +21,7 @@ const RecipePanel = forwardRef(({ selectedNode, handleNodeClicked, indexLoaded }
 
   const store = useStoreApi()
   const { updateNodeData, screenToFlowPosition, getNode, setViewport, toObject } = useReactFlow();
+  const showNotification = useContext(NotificationContext);
 
   const [agentUrl, setAgentUrl] = useState("http://localhost:8000/convert");
   const [openDialog, setOpenDialog] = useState(false);
@@ -46,6 +48,19 @@ const RecipePanel = forwardRef(({ selectedNode, handleNodeClicked, indexLoaded }
 
         const { x = 0, y = 0, zoom = 1 } = viewport;
         setViewport({ x, y, zoom });
+      }
+
+      // add an initial input node if the worklow was empty
+      if (flow.nodes.length == 0) {
+        setNodes([{
+          id: `input-${Date.now()}`,
+          type: 'inputWorkflowNode',
+          data: { label: "Input" },
+          position: {
+            x: 0,
+            y: 200,
+          },
+        }])
       }
 
       setWorkflowLoaded(true);
@@ -98,6 +113,14 @@ const RecipePanel = forwardRef(({ selectedNode, handleNodeClicked, indexLoaded }
     handleNodeClicked(node);
   });
 
+  const onNodesDelete = useCallback((nodes) => {
+    for (const node of nodes) {
+      if (node.id == selectedNode.id) {
+        setSelectedNode(null)
+      }
+    }
+  });
+
   const getCenterPosition = () => {
     const { domNode } = store.getState()
     const boundingRect = domNode?.getBoundingClientRect()
@@ -116,7 +139,7 @@ const RecipePanel = forwardRef(({ selectedNode, handleNodeClicked, indexLoaded }
         id: uniqueId,
         type: 'workflowNode',
         data: { label: tool.name, output: "", outputs: {} },
-        position: {
+        position:{
           x: center.x - nodeWidth / 2,
           y: center.y - nodeHeight / 2,
         },
@@ -266,11 +289,13 @@ const RecipePanel = forwardRef(({ selectedNode, handleNodeClicked, indexLoaded }
     }
     catch {
       logger.error("Could not send request to agent")
+      showNotification("Agent could not be reached", "error")
       return
     }
 
     if (!response) {
       logger.error("Did not get a response from agent agent")
+      showNotification("Agent did not responde", "error")
       return
     }
 
@@ -280,10 +305,11 @@ const RecipePanel = forwardRef(({ selectedNode, handleNodeClicked, indexLoaded }
     }
     catch {
       logger.error("Could not process response from agent")
+      showNotification("Invalid reponse from agent", "error")
       return
     }
 
-    for (const [node_id, outputs] of Object.entries(data)) {    
+    for (const [node_id, outputs] of Object.entries(data)) {
       updateNodeData(node_id, { outputs })
     }
   }
@@ -337,6 +363,7 @@ const RecipePanel = forwardRef(({ selectedNode, handleNodeClicked, indexLoaded }
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={onNodeClick}
+        onNodesDelete={onNodesDelete}
         nodeTypes={{
           workflowNode: WorkflowNode,
           outputWorkflowNode: OutputWorkflowNode,

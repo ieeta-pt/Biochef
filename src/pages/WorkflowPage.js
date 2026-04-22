@@ -201,10 +201,11 @@ const WorkflowPage = () => {
                 // addingATool={addingATool}
                 // setAddingATool={setAddingATool}
                 filteredTools={[]}
-              // setFilteredTools={setFilteredTools}
-              // selectedFiles={selectedFiles}
-              // tabIndex={0}
-              // workflow={workflow}
+                // setFilteredTools={setFilteredTools}
+                // selectedFiles={selectedFiles}
+                // tabIndex={0}
+                // workflow={workflow}
+                selectedNode={selectedNode}
               />
             </Grid>
 
@@ -226,6 +227,7 @@ const WorkflowPage = () => {
               <RecipePanel
                 ref={recipePanelRef}
                 selectedNode={selectedNode}
+                setSelectedNode={setSelectedNode}
                 handleNodeClicked={handleNodeClicked}
                 indexLoaded={toolIndexLoaded}
               />

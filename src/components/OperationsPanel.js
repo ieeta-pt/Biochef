@@ -24,10 +24,10 @@ import { NotificationContext } from '../contexts/NotificationContext';
 import { ValidationErrorsContext } from '../contexts/ValidationErrorsContext';
 import { TourContext } from '../contexts/TourContext';
 import { getCompatibleTools } from '../utils/compatibility';
-import { getToolsByCategory } from '../utils/toolUtils';
+import { getToolsByCategory, getTool } from '../utils/toolUtils';
 
 
-const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoading, insertAtIndex, setInsertAtIndex, addingATool, setAddingATool, filteredTools, setFilteredTools, selectedFiles, tabIndex, workflow }) => {
+const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoading, insertAtIndex, setInsertAtIndex, addingATool, setAddingATool, filteredTools, setFilteredTools, selectedFiles, tabIndex, workflow, selectedNode }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedCategories, setExpandedCategories] = useState({});
   const { dataType } = useContext(DataTypeContext);
@@ -57,11 +57,30 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
 
   // Filter operations based on search term
   const filterOperations = (operations) => {
-    return operations.filter(
-      (op) =>
+    let selectedNodeTypes = []
+
+    if (selectedNode?.type == "inputWorkflowNode") {
+      const outputs = selectedNode?.data?.outputTypes
+      if (outputs && "out" in outputs) {
+        selectedNodeTypes = [outputs["out"]]
+      }
+    }
+    else if (selectedNode?.type == "workflowNode") {
+      const toolName = selectedNode?.data?.label
+      const toolInfo = getTool(toolName)
+      selectedNodeTypes = toolInfo.outputTypes
+    }
+
+    return operations.filter((op) => {
+      const matchesSearch =
         op.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        op.description.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+        op.description.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesType =
+        op.inputTypes?.some((type) => selectedNodeTypes.includes(type));
+
+      return matchesSearch && matchesType;
+    });
   };
 
   // Determine compatible tools
