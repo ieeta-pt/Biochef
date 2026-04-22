@@ -9,6 +9,7 @@ import { InputWorkflowNode } from './nodes/InputWorkflowNode';
 import { WorkflowEdge } from './nodes/WorkflowEdge';
 import { loadTool, getTool } from '../utils/toolUtils';
 import { isValidWorkflowConnection, sanitizeWorkflowNodes } from '../utils/workflowUtils';
+import logger from '../utils/logger';
 
 const RecipePanel = forwardRef(({ selectedNode, handleNodeClicked, indexLoaded }, ref) => {
   const [nodes, setNodes] = useNodesState([]);
@@ -256,18 +257,33 @@ const RecipePanel = forwardRef(({ selectedNode, handleNodeClicked, indexLoaded }
       formData.append("files", file);
     }
 
-    const response = await fetch(url, {
-      method: "POST",
-      body: formData
-    });
+    let response = null
+    try {
+      response = await fetch(url, {
+        method: "POST",
+        body: formData
+      });
+    }
+    catch {
+      logger.error("Could not send request to agent")
+      return
+    }
 
-    const data = await response.json();
-    console.log(data)
+    if (!response) {
+      logger.error("Did not get a response from agent agent")
+      return
+    }
 
-    for (const [node_id, outputs] of Object.entries(data)) {
-      // console.log(`${key}: ${value}`);
-      // console.log(JSON.stringify(value, null, 2));
-      // console.log(getNode(key))      
+    let data = null
+    try {
+      data = await response.json();
+    }
+    catch {
+      logger.error("Could not process response from agent")
+      return
+    }
+
+    for (const [node_id, outputs] of Object.entries(data)) {    
       updateNodeData(node_id, { outputs })
     }
   }
