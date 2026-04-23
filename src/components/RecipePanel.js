@@ -51,7 +51,7 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
       }
 
       // add an initial input node if the worklow was empty
-      if (flow.nodes.length == 0) {
+      if (!flow || flow.nodes.length == 0) {
         setNodes([{
           id: `input-${Date.now()}`,
           type: 'inputWorkflowNode',
