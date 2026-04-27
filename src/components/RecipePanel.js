@@ -11,6 +11,7 @@ import { loadTool, getTool } from '../utils/toolUtils';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { isValidWorkflowConnection, sanitizeWorkflowNodes } from '../utils/workflowUtils';
 import logger from '../utils/logger';
+import { resolveCollisions } from '../utils/resolveNodeCollisions';
 
 const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClicked, indexLoaded }, ref) => {
   const [nodes, setNodes] = useNodesState([]);
@@ -109,6 +110,28 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
     );
   }, [setEdges]);
 
+  const onNodeDragStop = useCallback(() => {
+    setNodes((nds) =>
+      resolveCollisions(nds, {
+        maxIterations: Infinity,
+        overlapThreshold: 0.5,
+        margin: 2,
+      }),
+    );
+  }, [setNodes]);
+
+  const resolveAndSetNodes = useCallback((updater) => {
+    setNodes((prev) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+
+      return resolveCollisions(next, {
+        maxIterations: 50,
+        overlapThreshold: 0.5,
+        margin: 2,
+      });
+    });
+  }, [setNodes]);
+
   const onNodeClick = useCallback((event, node) => {
     handleNodeClicked(node);
   });
@@ -134,11 +157,13 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
   const addWorkflowNode = (tool) => {
     const uniqueId = `${tool.id}-${Date.now()}`;
     const center = getCenterPosition()
-    setNodes(prevNodes => {
+    resolveAndSetNodes(prevNodes => {
       const newNode = {
         id: uniqueId,
         type: 'workflowNode',
         data: { label: tool.name, output: "", outputs: {} },
+        width: nodeWidth,
+        height: nodeHeight,
         position:{
           x: center.x - nodeWidth / 2,
           y: center.y - nodeHeight / 2,
@@ -151,11 +176,13 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
 
   const addInputNode = () => {
     const center = getCenterPosition()
-    setNodes(prevNodes => {
+    resolveAndSetNodes(prevNodes => {
       const newNode = {
         id: `input-${Date.now()}`,
         type: 'inputWorkflowNode',
         data: { label: "Input" },
+        width: nodeWidth,
+        height: nodeHeight,
         position: {
           x: center.x - nodeWidth / 2,
           y: center.y - nodeHeight / 2,
@@ -168,11 +195,13 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
 
   const addOutputNode = () => {
     const center = getCenterPosition()
-    setNodes(prevNodes => {
+    resolveAndSetNodes(prevNodes => {
       const newNode = {
         id: `output-${Date.now()}`,
         type: 'outputWorkflowNode',
         data: { label: "Output" },
+        width: nodeWidth,
+        height: nodeHeight,
         position: {
           x: center.x - nodeWidth / 2,
           y: center.y - nodeHeight / 2,
@@ -362,6 +391,7 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onNodeDragStop={onNodeDragStop}
         onNodeClick={onNodeClick}
         onNodesDelete={onNodesDelete}
         nodeTypes={{
