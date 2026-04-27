@@ -13,12 +13,13 @@ import { isValidWorkflowConnection, sanitizeWorkflowNodes } from '../utils/workf
 import logger from '../utils/logger';
 import { resolveCollisions } from '../utils/resolveNodeCollisions';
 
+export const defaultNodeWidth = 150
+export const defaultNodeHeight = 40
+
 const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClicked, indexLoaded }, ref) => {
   const [nodes, setNodes] = useNodesState([]);
   const [edges, setEdges] = useEdgesState([]);
 
-  const nodeWidth = 150
-  const nodeHeight = 40
 
   const store = useStoreApi()
   const { updateNodeData, screenToFlowPosition, getNode, setViewport, toObject } = useReactFlow();
@@ -162,11 +163,9 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
         id: uniqueId,
         type: 'workflowNode',
         data: { label: tool.name, output: "", outputs: {} },
-        width: nodeWidth,
-        height: nodeHeight,
         position:{
-          x: center.x - nodeWidth / 2,
-          y: center.y - nodeHeight / 2,
+          x: center.x - defaultNodeWidth / 2,
+          y: center.y - defaultNodeHeight / 2,
         },
       };
 
@@ -181,11 +180,9 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
         id: `input-${Date.now()}`,
         type: 'inputWorkflowNode',
         data: { label: "Input" },
-        width: nodeWidth,
-        height: nodeHeight,
         position: {
-          x: center.x - nodeWidth / 2,
-          y: center.y - nodeHeight / 2,
+          x: center.x - defaultNodeWidth / 2,
+          y: center.y - defaultNodeHeight / 2,
         },
       };
 
@@ -200,11 +197,9 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
         id: `output-${Date.now()}`,
         type: 'outputWorkflowNode',
         data: { label: "Output" },
-        width: nodeWidth,
-        height: nodeHeight,
         position: {
-          x: center.x - nodeWidth / 2,
-          y: center.y - nodeHeight / 2,
+          x: center.x - defaultNodeWidth / 2,
+          y: center.y - defaultNodeHeight / 2,
         },
       };
 
