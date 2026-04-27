@@ -1,5 +1,3 @@
-import { defaultNodeHeight, defaultNodeWidth } from "../components/RecipePanel";
-
 // taken and converted from:
 // https://reactflow.dev/examples/layout/node-collisions
 
@@ -12,8 +10,8 @@ function getBoxesFromNodes(nodes, margin = 0) {
     boxes[i] = {
       x: node.position.x - margin,
       y: node.position.y - margin,
-      width: (node.width ?? node.measured?.width ?? defaultNodeWidth) + margin * 2,
-      height: (node.height ?? node.measured?.height ?? defaultNodeHeight) + margin * 2,
+      width: (node.width ?? node.measured?.width ?? 200) + margin * 2,
+      height: (node.height ?? node.measured?.height ?? 200) + margin * 2,
       node,
       moved: false,
     };

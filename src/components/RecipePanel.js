@@ -13,13 +13,12 @@ import { isValidWorkflowConnection, sanitizeWorkflowNodes } from '../utils/workf
 import logger from '../utils/logger';
 import { resolveCollisions } from '../utils/resolveNodeCollisions';
 
-export const defaultNodeWidth = 150
-export const defaultNodeHeight = 40
-
 const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClicked, indexLoaded }, ref) => {
   const [nodes, setNodes] = useNodesState([]);
   const [edges, setEdges] = useEdgesState([]);
-
+  
+  const defaultNodeWidth = 150
+  const defaultNodeHeight = 40
 
   const store = useStoreApi()
   const { updateNodeData, screenToFlowPosition, getNode, setViewport, toObject } = useReactFlow();
