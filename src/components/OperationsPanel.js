@@ -25,7 +25,7 @@ import { ValidationErrorsContext } from '../contexts/ValidationErrorsContext';
 import { TourContext } from '../contexts/TourContext';
 import { getCompatibleTools } from '../utils/compatibility';
 import { getToolsByCategory, getTool } from '../utils/toolUtils';
-
+import { detectAllDataTypes } from '../utils/detectDataType';
 
 const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoading, insertAtIndex, setInsertAtIndex, addingATool, setAddingATool, filteredTools, setFilteredTools, selectedFiles, tabIndex, workflow, selectedNode }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -46,22 +46,16 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
       return;
     }
 
-    if (selectedNode.type === "inputWorkflowNode") {
-      const outputs = selectedNode.data?.outputTypes;
-
+    if (selectedNode?.type == "inputWorkflowNode") {
+      const outputs = selectedNode?.data?.outputs
       if (outputs && "out" in outputs) {
-        setSelectedNodeTypes([outputs["out"]]);
-      } else {
-        setSelectedNodeTypes([]);
+        setSelectedNodeTypes(detectAllDataTypes(outputs["out"]))
       }
     }
-    else if (selectedNode.type === "workflowNode") {
-      const toolName = selectedNode.data?.label;
-      const toolInfo = getTool(toolName);
-      setSelectedNodeTypes(toolInfo?.outputTypes || []);
-    }
-    else {
-      setSelectedNodeTypes([]);
+    else if (selectedNode?.type == "workflowNode") {
+      const toolName = selectedNode?.data?.label
+      const toolInfo = getTool(toolName)
+      setSelectedNodeTypes(toolInfo.outputTypes)
     }
 
   }, [selectedNode]);

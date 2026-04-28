@@ -72,10 +72,6 @@ function validateBin(content) {
   return lines.every(line => /^[01]+$/.test(line.trim()));
 }
 
-export function detectFileType(fileName, content) {
-
-}
-
 // these are in order of priority
 const allTypes = [
   { type: 'FASTA', validator: validateFasta },
@@ -111,4 +107,20 @@ export function detectDataType(data, allowed = []) {
   }
 
   return 'UNKNOWN';
+}
+
+export function detectAllDataTypes(data) {
+  if (typeof data !== 'string') {
+    return [];
+  }
+
+  const matches = [];
+
+  for (let { type, validator } of allTypes) {
+    if (validator(data)) {
+      matches.push(type);
+    }
+  }
+
+  return matches;
 }
