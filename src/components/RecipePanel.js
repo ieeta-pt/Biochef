@@ -113,9 +113,9 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
   const onNodeDragStop = useCallback(() => {
     setNodes((nds) =>
       resolveCollisions(nds, {
-        maxIterations: Infinity,
+        maxIterations: 50,
         overlapThreshold: 0.5,
-        margin: 2,
+        margin: 5,
       }),
     );
   }, [setNodes]);
@@ -127,7 +127,7 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
       return resolveCollisions(next, {
         maxIterations: 50,
         overlapThreshold: 0.5,
-        margin: 2,
+        margin: 5,
       });
     });
   }, [setNodes]);
@@ -154,55 +154,64 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
     })
   }
 
-  const addWorkflowNode = (tool) => {
-    const uniqueId = `${tool.id}-${Date.now()}`;
-    const center = getCenterPosition()
-    resolveAndSetNodes(prevNodes => {
-      const newNode = {
-        id: uniqueId,
-        type: 'workflowNode',
-        data: { label: tool.name, output: "", outputs: {} },
-        position:{
-          x: center.x - defaultNodeWidth / 2,
-          y: center.y - defaultNodeHeight / 2,
-        },
-      };
+  const addNode = ({ id, type, data = {} }) => {
 
-      return [...prevNodes, newNode];
+    const referenceNode = selectedNode ? getNode(selectedNode.id) : null
+
+    let position = null
+    if (referenceNode) {
+      console.log(referenceNode)
+      position = {
+        x: referenceNode.position.x,
+        y: referenceNode.position.y + defaultNodeHeight * 2
+      }
+    }
+    else {
+      const center = getCenterPosition();
+      position = {
+        x: center.x - defaultNodeWidth / 2,
+        y: center.y - defaultNodeHeight / 2,
+      }
+    }
+
+    const newNode = {
+      id, type, data, position
+    };
+
+    resolveAndSetNodes(prevNodes => [...prevNodes, newNode]);
+
+    return id;
+  };
+
+  const addWorkflowNode = (tool) => {
+    return addNode({
+      id: `${tool.id}-${Date.now()}`,
+      type: "workflowNode",
+      data: {
+        label: tool.name,
+        outputs: {},
+        output: "",
+      },
     });
-  }
+  };
 
   const addInputNode = () => {
-    const center = getCenterPosition()
-    resolveAndSetNodes(prevNodes => {
-      const newNode = {
-        id: `input-${Date.now()}`,
-        type: 'inputWorkflowNode',
-        data: { label: "Input" },
-        position: {
-          x: center.x - defaultNodeWidth / 2,
-          y: center.y - defaultNodeHeight / 2,
-        },
-      };
-
-      return [...prevNodes, newNode];
+    return addNode({
+      id: `input-${Date.now()}`,
+      type: "inputWorkflowNode",
+      data: {
+        label: "Input",
+      }
     });
   };
 
   const addOutputNode = () => {
-    const center = getCenterPosition()
-    resolveAndSetNodes(prevNodes => {
-      const newNode = {
-        id: `output-${Date.now()}`,
-        type: 'outputWorkflowNode',
-        data: { label: "Output" },
-        position: {
-          x: center.x - defaultNodeWidth / 2,
-          y: center.y - defaultNodeHeight / 2,
-        },
-      };
-
-      return [...prevNodes, newNode];
+    return addNode({
+      id: `output-${Date.now()}`,
+      type: "outputWorkflowNode",
+      data: {
+        label: "Output",
+      }
     });
   };
 
@@ -385,6 +394,7 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onNodeDragStart={onNodeClick}
         onNodeDragStop={onNodeDragStop}
         onNodeClick={onNodeClick}
         onNodesDelete={onNodesDelete}
