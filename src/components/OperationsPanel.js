@@ -38,6 +38,34 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
   const noFilesSelected = tabIndex === 1 && selectedFiles.size === 0;
   const shouldDisableInteraction = hasValidationErrors || noFilesSelected;
 
+  const [selectedNodeTypes, setSelectedNodeTypes] = useState([]);
+
+  useEffect(() => {
+    if (!selectedNode) {
+      setSelectedNodeTypes([]);
+      return;
+    }
+
+    if (selectedNode.type === "inputWorkflowNode") {
+      const outputs = selectedNode.data?.outputTypes;
+
+      if (outputs && "out" in outputs) {
+        setSelectedNodeTypes([outputs["out"]]);
+      } else {
+        setSelectedNodeTypes([]);
+      }
+    }
+    else if (selectedNode.type === "workflowNode") {
+      const toolName = selectedNode.data?.label;
+      const toolInfo = getTool(toolName);
+      setSelectedNodeTypes(toolInfo?.outputTypes || []);
+    }
+    else {
+      setSelectedNodeTypes([]);
+    }
+
+  }, [selectedNode]);
+
   // Debounced search handler
   const handleSearch = useMemo(
     () => debounce((value) => setSearchTerm(value), 300),
@@ -57,20 +85,6 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
 
   // Filter operations based on search term
   const filterOperations = (operations) => {
-    let selectedNodeTypes = []
-
-    if (selectedNode?.type == "inputWorkflowNode") {
-      const outputs = selectedNode?.data?.outputTypes
-      if (outputs && "out" in outputs) {
-        selectedNodeTypes = [outputs["out"]]
-      }
-    }
-    else if (selectedNode?.type == "workflowNode") {
-      const toolName = selectedNode?.data?.label
-      const toolInfo = getTool(toolName)
-      selectedNodeTypes = toolInfo.outputTypes
-    }
-
     return operations.filter((op) => {
       const matchesSearch =
         op.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -79,7 +93,7 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
       const matchesType =
         op.inputTypes?.some((type) => selectedNodeTypes.includes(type));
 
-      return matchesSearch && matchesType;
+      return (searchTerm != "" && matchesSearch) || matchesType;
     });
   };
 
@@ -276,46 +290,56 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
               </ListItemButton>
               <Collapse in={expandedCategories[category] || searchTerm !== ''} timeout="auto" unmountOnExit>
                 <List component="div" disablePadding>
-                  {filteredOps.map((operation) => (
-                    <Tooltip
-                      key={operation.name}
-                      title={
-                        <React.Fragment>
-                          {operation.description.split('\n').map((line, index) => (
-                            <Typography key={index} variant="body2" color="inherit">
-                              {line}
-                            </Typography>
-                          ))}
-                        </React.Fragment>
-                      }
-                      placement="right">
-                      <ListItemButton
-                        sx={{
-                          pl: 4,
-                          bgcolor: (theme) => alpha(theme.palette.primary.main, 0.2), // Use primary color with 10% opacity
-                          '&:hover': {
-                            bgcolor: (theme) => alpha(theme.palette.primary.main, 0.4), // Slightly darker on hover
-                          },
-                        }}
-                        data-tour={operation.name === "fasta_to_seq" ? "add-operation" : undefined}
-                        onClick={() => {
-                          setIsLoading(true);
-                          if (insertAtIndex !== null && addingATool) {
-                            onAddOperation(operation.name, insertAtIndex);
-                            // setInsertAtIndex(null);
-                            setFilteredTools([]);
-                            setAddingATool(false);
-                            showNotification('Tool added successfully!', 'success');
-                          } else {
-                            onAddOperation(operation.name);
-                          }
-                        }}
+                  {filteredOps.map((operation) => {
+                    const matchesType =
+                      operation.inputTypes?.some((type) =>
+                        selectedNodeTypes.includes(type)
+                      );
+                    return (
+                      <Tooltip
+                        key={operation.name}
+                        title={
+                          <React.Fragment>
+                            {operation.description.split('\n').map((line, index) => (
+                              <Typography key={index} variant="body2" color="inherit">
+                                {!matchesType ? "This tool is not compatible with the selected node" : line}
+                              </Typography>
+                            ))}
+                          </React.Fragment>
+                        }
+                        placement="right"
                       >
-                        <ListItemText primary={operation.name} />
-                        <AddCircle sx={{ color: 'primary.main', ml: 'auto' }} />
-                      </ListItemButton>
-                    </Tooltip>
-                  ))}
+                        <span>
+                          <ListItemButton
+                            disabled={!matchesType}
+                            sx={{
+                              pl: 4,
+                              bgcolor: (theme) => alpha(theme.palette.primary.main, 0.2), // Use primary color with 10% opacity
+                              '&:hover': {
+                                bgcolor: (theme) => alpha(theme.palette.primary.main, 0.4), // Slightly darker on hover
+                              },
+                            }}
+                            data-tour={operation.name === "fasta_to_seq" ? "add-operation" : undefined}
+                            onClick={() => {
+                              setIsLoading(true);
+                              if (insertAtIndex !== null && addingATool) {
+                                onAddOperation(operation.name, insertAtIndex);
+                                // setInsertAtIndex(null);
+                                setFilteredTools([]);
+                                setAddingATool(false);
+                                showNotification('Tool added successfully!', 'success');
+                              } else {
+                                onAddOperation(operation.name);
+                              }
+                            }}
+                          >
+                            <ListItemText primary={operation.name} />
+                            <AddCircle sx={{ color: 'primary.main', ml: 'auto' }} />
+                          </ListItemButton>
+                        </span>
+                      </Tooltip>
+                    )
+                  })}
                 </List>
               </Collapse>
               <Divider />
