@@ -87,17 +87,18 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
       const matchesType =
         op.inputTypes?.some((type) => selectedNodeTypes.includes(type));
 
-      if (!searchTerm) {
-        if (selectedNode && selectedNodeTypes.length != 0) {
-          return matchesType
-        }
-        else {
-          return matchesSearch
-        }
+      const isSearching = searchTerm !== "";
+      const hasNodeSelected = selectedNode && selectedNodeTypes.length > 0 && selectedNode.type != "outputWorkflowNode";
+
+      if (isSearching) {
+        return matchesSearch;
       }
-      else {
-        return matchesSearch || matchesType
+
+      if (!hasNodeSelected) {
+        return true;
       }
+
+      return matchesType;
     });
   };
 
@@ -298,10 +299,10 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
                     const matchesType =
                       operation.inputTypes?.some((type) =>
                         selectedNodeTypes.includes(type)
-                      );
+                      ) && selectedNode?.type != "outputWorkflowNode";
 
                     let tooltipContent;
-                    if (!selectedNode) {
+                    if (!selectedNode || selectedNode.type == "outputWorkflowNode") {
                       tooltipContent = "Please select a node to be able to add new tools to the workflow"
                     }
                     else if (!matchesType) {
