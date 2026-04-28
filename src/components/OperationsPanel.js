@@ -93,7 +93,17 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
       const matchesType =
         op.inputTypes?.some((type) => selectedNodeTypes.includes(type));
 
-      return (searchTerm != "" && matchesSearch) || matchesType;
+      if (!searchTerm) {
+        if (selectedNode && selectedNodeTypes.length != 0) {
+          return matchesType
+        }
+        else {
+          return matchesSearch
+        }
+      }
+      else {
+        return matchesSearch || matchesType
+      }
     });
   };
 
@@ -295,16 +305,26 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
                       operation.inputTypes?.some((type) =>
                         selectedNodeTypes.includes(type)
                       );
+
+                    let tooltipContent;
+                    if (!selectedNode) {
+                      tooltipContent = "Please select a node to be able to add new tools to the workflow"
+                    }
+                    else if (!matchesType) {
+                      tooltipContent = "This tool is not compatible with the selected node";
+                    }
+                    else {
+                      tooltipContent = operation.description
+                    }
+
                     return (
                       <Tooltip
                         key={operation.name}
                         title={
                           <React.Fragment>
-                            {operation.description.split('\n').map((line, index) => (
-                              <Typography key={index} variant="body2" color="inherit">
-                                {!matchesType ? "This tool is not compatible with the selected node" : line}
-                              </Typography>
-                            ))}
+                            <Typography variant="body2" color="inherit">
+                              {tooltipContent}
+                            </Typography>
                           </React.Fragment>
                         }
                         placement="right"

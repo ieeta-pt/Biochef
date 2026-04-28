@@ -144,6 +144,10 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
     }
   });
 
+  const onPaneClick = useCallback((event) => {
+    setSelectedNode(null)
+  });
+
   const getCenterPosition = () => {
     const { domNode } = store.getState()
     const boundingRect = domNode?.getBoundingClientRect()
@@ -398,6 +402,7 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
         onNodeDragStop={onNodeDragStop}
         onNodeClick={onNodeClick}
         onNodesDelete={onNodesDelete}
+        onPaneClick={onPaneClick}
         nodeTypes={{
           workflowNode: WorkflowNode,
           outputWorkflowNode: OutputWorkflowNode,
