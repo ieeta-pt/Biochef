@@ -88,7 +88,7 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
         op.inputTypes?.some((type) => selectedNodeTypes.includes(type));
 
       const isSearching = searchTerm !== "";
-      const hasNodeSelected = selectedNode && selectedNodeTypes.length > 0 && selectedNode.type != "outputWorkflowNode";
+      const hasNodeSelected = selectedNode && selectedNode.type != "outputWorkflowNode";
 
       if (isSearching) {
         return matchesSearch;
@@ -97,7 +97,7 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
       if (!hasNodeSelected) {
         return true;
       }
-
+      
       return matchesType;
     });
   };
