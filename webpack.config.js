@@ -64,16 +64,8 @@ module.exports = {
     new CopyWebpackPlugin({
       patterns: [
         {
-          from: 'public/img',
-          to: 'img',
-        },
-        {
-          from: 'public/favicon_io',
-          to: 'favicon_io',
-        },
-        {
-          from: 'public/CNAME',
-          to: 'CNAME',
+          from: 'public',
+          to: '',
         },
       ],
     }),
