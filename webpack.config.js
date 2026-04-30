@@ -71,6 +71,10 @@ module.exports = {
           from: 'public/favicon_io',
           to: 'favicon_io',
         },
+        {
+          from: 'public/CNAME',
+          to: 'CNAME',
+        },
       ],
     }),
     new webpack.DefinePlugin({
