@@ -41,6 +41,7 @@ import JSZip from 'jszip';
 import React, { useContext, useRef, useState } from 'react';
 import { DataTypeContext } from '../contexts/DataTypeContext';
 import { NotificationContext } from '../contexts/NotificationContext';
+import { getUploadExtensions } from '../utils/typeDefinitions';
 import { processFile } from '../utils/fileProcessor';
 
 const FileExplorer = ({ selectedFiles, setSelectedFiles, tree, setTree }) => {
@@ -61,8 +62,7 @@ const FileExplorer = ({ selectedFiles, setSelectedFiles, tree, setTree }) => {
     const { validateData } = useContext(DataTypeContext);
     const showNotification = useContext(NotificationContext);
 
-    // Define acceptable file extensions
-    const acceptableExtensions = ['.fasta', '.fa', '.fastq', '.fq', '.pos', '.svg', '.txt', '.num'];
+    const acceptableExtensions = getUploadExtensions();
 
     // Function to insert files into a folder
     const insertFilesIntoFolder = (nodes, folderId, newFiles) => {

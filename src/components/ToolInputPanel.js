@@ -5,8 +5,8 @@ import { getTool } from '../utils/toolUtils';
 import { DataTypeContext } from '../contexts/DataTypeContext';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { detectDataType } from '../utils/detectDataType';
+import { getUploadExtensions, getExample } from '../utils/typeDefinitions';
 import { TourContext } from '../contexts/TourContext';
-import { exampleInputs } from '../utils/exampleInputs';
 
 const ToolInputPanel = ({ tool, inputData, setInputData }) => {
     const [fileName, setFileName] = useState('');
@@ -53,8 +53,7 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
         ]);
     }, []);
 
-    // Define acceptable file extensions
-    const acceptableExtensions = ['.fasta', '.fa', '.fastq', '.fq', '.pos', '.svg', '.txt', '.num'];
+    const acceptableExtensions = getUploadExtensions();
 
     // Get the input formats supported by the tool
     useEffect(() => {
@@ -92,7 +91,7 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
     const handleInputFormatChange = (format) => {
         updateSelectedInputFormat(format);
 
-        const example_input = exampleInputs[format] || ''
+        const example_input = getExample(format);
         updateSelectedInputData(example_input); // Load example input if available
     };
 
@@ -103,7 +102,7 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
         const lines = isPartial ? content.split('\n').slice(0, 100).join('\n') : content;
         updateSelectedInputData(lines);
 
-        const detectedType = detectDataType(file.name, lines);
+        const detectedType = detectDataType(lines);
         setInputDataType(detectedType);
         const valid = validateData(lines, detectedType);
         setIsValid(valid);
