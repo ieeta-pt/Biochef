@@ -1,28 +1,26 @@
 import { getTool } from "./toolUtils";
 
-export function sanitizeWorkflowNodes(nodes)
-{
+export function sanitizeWorkflowNodes(nodes) {
   return nodes.map(node => ({
     ...node,
     data: {
       ...node.data,
       output: {},
-      outputs: node.type == "inputWorkflowNode" ? node.data.outputs : {} ,
-      outputTypes: node.type == "inputWorkflowNode" ? node.data.outputTypes : {} ,
+      outputs: node.type == "inputWorkflowNode" ? node.data.outputs : {},
+      outputTypes: node.type == "inputWorkflowNode" ? node.data.outputTypes : {},
       is_running: false,
       runCalled: false
     },
   }));
 }
 
-export function isValidWorkflowConnection(sourceNode, sourceHandle, targetNode, targetHandle)
-{
+export function isValidWorkflowConnection(sourceNode, sourceHandle, targetNode, targetHandle) {
   if (!sourceNode || !targetNode) return false;
-  
+
   if (targetNode.type == "outputWorkflowNode") return true;
 
   let sourceTypes = null;
-  if (sourceNode.type == "inputWorkflowNode"){
+  if (sourceNode.type == "inputWorkflowNode") {
     sourceTypes = [sourceNode.data.outputTypes?.[sourceHandle]];
   }
   else if (sourceNode.type === "workflowNode") {
@@ -42,3 +40,27 @@ export function isValidWorkflowConnection(sourceNode, sourceHandle, targetNode, 
     targetTypes.includes(type)
   );
 };
+
+export function getNodeHandles(node) {
+  if (node.type == "inputWorkflowNode") {
+    return [
+      [],
+      ["out"]
+    ]
+  }
+  else if (node.type == "outputWorkflowNode") {
+    return [
+      [undefined],
+      []
+    ]
+  }
+  else if (node.type == "workflowNode") {
+    const toolData = getTool(node.data.label)
+    const { inputs: toolInputs = [], outputs: toolOutputs = [] } = toolData.io ?? {};
+
+    return [
+      toolInputs.map((input, idx) => input.name),
+      toolOutputs.map((output, idx) => output.name)
+    ]
+  }
+}

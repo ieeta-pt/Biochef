@@ -9,14 +9,14 @@ import { InputWorkflowNode } from './nodes/InputWorkflowNode';
 import { WorkflowEdge } from './nodes/WorkflowEdge';
 import { loadTool, getTool } from '../utils/toolUtils';
 import { NotificationContext } from '../contexts/NotificationContext';
-import { isValidWorkflowConnection, sanitizeWorkflowNodes } from '../utils/workflowUtils';
+import { getNodeHandles, isValidWorkflowConnection, sanitizeWorkflowNodes } from '../utils/workflowUtils';
 import logger from '../utils/logger';
 import { resolveCollisions } from '../utils/resolveNodeCollisions';
 
 const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClicked, indexLoaded }, ref) => {
   const [nodes, setNodes] = useNodesState([]);
   const [edges, setEdges] = useEdgesState([]);
-  
+
   const defaultNodeWidth = 150
   const defaultNodeHeight = 40
 
@@ -159,12 +159,10 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
   }
 
   const addNode = ({ id, type, data = {} }) => {
-
     const referenceNode = selectedNode ? getNode(selectedNode.id) : null
 
     let position = null
     if (referenceNode) {
-      console.log(referenceNode)
       position = {
         x: referenceNode.position.x,
         y: referenceNode.position.y + defaultNodeHeight * 2
@@ -183,6 +181,26 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
     };
 
     resolveAndSetNodes(prevNodes => [...prevNodes, newNode]);
+
+    if (referenceNode) {
+      const [sourceInputHandles, sourceOutputHandles] = getNodeHandles(referenceNode)
+      const [targetInputHandles, targetOutputHandles] = getNodeHandles(newNode)
+
+      if (sourceOutputHandles.length == 1 && targetInputHandles.length == 1) {
+        const newEdge = {
+          source: referenceNode.id,
+          sourceHandle: sourceOutputHandles[0],
+          target: newNode.id,
+          targetHandle: targetInputHandles[0],
+          type: "workflowEdge"
+        }
+  
+        setEdges((prev) =>
+          addEdge(newEdge, prev)
+        );
+      }
+
+    }
 
     return id;
   };
@@ -222,6 +240,7 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
   const clearWorkflow = () => {
     setNodes([]);
     setEdges([]);
+    setSelectedNode(null)
   };
 
   const exportWorkflow = useCallback(() => {

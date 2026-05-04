@@ -55,7 +55,7 @@ export function WorkflowEdge(props) {
 
     const inputValidity = { ...(targetNode.data.inputValidity || {}) };
     inputValidity[targetHandleId] = isValidConnection;
-    updateNodeData(target, { inputValidity });
+    // updateNodeData(target, { inputValidity });
 
     // compute colors here
     const selectedColor =
