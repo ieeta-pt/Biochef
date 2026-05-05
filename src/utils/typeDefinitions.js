@@ -128,7 +128,7 @@ export function getScriptExtension(typeId) {
   return getTypeDefinition(typeId)?.scriptExtension || getDefaultExtension(typeId).replace(/^\./, '');
 }
 
-export function getExample(typeId) {
+export function getTypeExampleInput(typeId) {
   return getTypeDefinition(typeId)?.example || '';
 }
 

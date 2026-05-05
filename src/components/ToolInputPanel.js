@@ -5,7 +5,7 @@ import { getTool } from '../utils/toolUtils';
 import { DataTypeContext } from '../contexts/DataTypeContext';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { detectDataType } from '../utils/detectDataType';
-import { getUploadExtensions, getExample } from '../utils/typeDefinitions';
+import { getUploadExtensions, getTypeExampleInput } from '../utils/typeDefinitions';
 import { TourContext } from '../contexts/TourContext';
 
 const ToolInputPanel = ({ tool, inputData, setInputData }) => {
@@ -91,7 +91,7 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
     const handleInputFormatChange = (format) => {
         updateSelectedInputFormat(format);
 
-        const example_input = getExample(format);
+        const example_input = getTypeExampleInput(format);
         updateSelectedInputData(example_input); // Load example input if available
     };
 
