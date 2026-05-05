@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { BaseEdge, getBezierPath, useNodesData, useReactFlow } from '@xyflow/react';
 import { isValidWorkflowConnection } from '../../utils/workflowUtils';
 import { getEdgeColor } from '../../utils/typeDefinitions';
+import { getTool } from '../../utils/toolUtils';
 
 export function WorkflowEdge(props) {
   const {
@@ -32,8 +33,6 @@ export function WorkflowEdge(props) {
 
     if (!sourceNode || !targetNode) return;
 
-    const handleType = sourceHandleData.data.outputTypes?.[sourceHandleId];
-
     const isValidConnection = isValidWorkflowConnection(
       sourceNode,
       sourceHandleId,
@@ -45,12 +44,28 @@ export function WorkflowEdge(props) {
     inputValidity[targetHandleId] = isValidConnection;
     // updateNodeData(target, { inputValidity });
 
-    // compute colors here
-    const selectedColor = getEdgeColor(handleType);
+    const sourceTypes = sourceHandleData.data.outputTypes?.[sourceHandleId];
+    let matchingTypes = []
+    if (targetNode.type == "workflowNode") {
+      const targetTypes = getTool(targetNode.data.label)
+        .io.inputs
+        .find(i => i.name == targetHandleId)
+        ?.types || [];
 
+      matchingTypes = sourceTypes.filter(type =>
+        targetTypes.includes(type)
+      );
+    }
+    else {
+      matchingTypes = sourceTypes
+    }
+
+    if (!Array.isArray(matchingTypes)) matchingTypes = [matchingTypes]
+
+    const selectedColor = getEdgeColor(matchingTypes?.[0]);
     const nextColor = isValidConnection ? selectedColor : "#ff0000";
     const nextLabel = isValidConnection
-      ? (handleType && handleType !== "UNKNOWN" ? handleType : label)
+      ? (matchingTypes ? matchingTypes.join(", ") : label)
       : "❌";
 
     setEdgeColor(nextColor);

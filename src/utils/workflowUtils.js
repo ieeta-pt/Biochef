@@ -1,4 +1,5 @@
 import { getTool } from "./toolUtils";
+import { detectAllDataTypes } from "./detectDataType";
 
 export function sanitizeWorkflowNodes(nodes) {
   return nodes.map(node => ({
@@ -20,8 +21,8 @@ export function isValidWorkflowConnection(sourceNode, sourceHandle, targetNode, 
   if (targetNode.type == "outputWorkflowNode") return true;
 
   let sourceTypes = null;
-  if (sourceNode.type == "inputWorkflowNode") {
-    sourceTypes = [sourceNode.data.outputTypes?.[sourceHandle]];
+  if (sourceNode.type == "inputWorkflowNode"){
+    sourceTypes = detectAllDataTypes(sourceNode.data.outputs["out"])
   }
   else if (sourceNode.type === "workflowNode") {
     const toolConfig = getTool(sourceNode.data.label);
