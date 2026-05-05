@@ -74,6 +74,26 @@ function validateBin(content) {
   return lines.every(line => /^[01]+$/.test(line.trim()));
 }
 
+function validateBed(content) {
+  if (!content) return false;
+  const lines = content.trim().split('\n');
+  return lines.every(line => {
+    if (line.startsWith('track') || line.startsWith('browser')) return true;
+    const fields = line.split('\t');
+    return fields.length >= 3 && !isNaN(fields[1]) && !isNaN(fields[2]);
+  });
+}
+
+function validateList(content) {
+  if (!content.trim()) return false;
+  const lines = content.split('\n');
+  return lines.every(line => {
+    if (!line.trim()) return true;
+    const seqId = line.split('\t')[0];
+    return seqId && !seqId.includes(' ');
+  });
+}
+
 const validators = {
   fasta: validateFasta,
   multiFasta: validateMultiFasta,
@@ -84,6 +104,8 @@ const validators = {
   dna: validateDNA,
   rna: validateRNA,
   aminoAcids: validateAminoAcids,
+  bed: validateBed,
+  list: validateList,
   text: () => true, // Default fallback for TEXT
 };
 

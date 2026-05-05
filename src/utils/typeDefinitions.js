@@ -74,15 +74,7 @@ export const typeDefinitions = [
     edgeColor: '#16a085',
     example: 'ACDEFGHIKLMNPQRSTVWYACDEFGHIKLMNPQRSTVWYACDEFGHIKLMNPQRSTVWYACDEFGHIKLMNPQRSTVWYACDEFGHIKLMNPQRSTV',
   },
-  {
-    id: 'TEXT',
-    validator: 'text',
-    defaultExtension: '.txt',
-    uploadExtensions: ['.txt'],
-    edgeColor: '#2ecc71',
-    example: 'Hello, World',
-  },
-  {
+   {
     id: 'POS',
     validator: 'pos',
     defaultExtension: '.pos',
@@ -105,6 +97,30 @@ export const typeDefinitions = [
     uploadExtensions: ['.txt'],
     edgeColor: '#34495e',
     example: 'PNUSH*X',
+  },
+  {
+    id: 'BED',
+    validator: 'bed',
+    defaultExtension: '.bed',
+    uploadExtensions: ['.bed'],
+    edgeColor: '#f1c40f',
+    example: 'seq\t0\t10\nseq1\t0\t20',
+  },
+  {
+    id: 'LIST',
+    validator: 'list',
+    defaultExtension: '.lst',
+    uploadExtensions: ['.lst', '.list'],
+    edgeColor: '#7f8c8d',
+    example: 'seq\nseq1\nseq2',
+  },
+  {
+    id: 'TEXT',
+    validator: 'text',
+    defaultExtension: '.txt',
+    uploadExtensions: ['.txt'],
+    edgeColor: '#2ecc71',
+    example: 'Hello, World',
   },
 ];
 
@@ -130,6 +146,14 @@ export function getScriptExtension(typeId) {
 
 export function getTypeExampleInput(typeId) {
   return getTypeDefinition(typeId)?.example || '';
+}
+
+export function getAllTypeExampleInputs() {
+  return Object.fromEntries(
+    typeDefinitions
+      .filter(typeDef => typeDef.example)
+      .map(typeDef => [typeDef.id, typeDef.example])
+  );
 }
 
 export function getEdgeColor(typeId) {

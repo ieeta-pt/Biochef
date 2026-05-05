@@ -65,20 +65,23 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
 
     // Get the input formats supported by the tool
     useEffect(() => {
-        if (tool) {
-            // Update the input format based on the selected tool
-            const inputFormats = toolConfig.inputTypes;
-            setToolInputFormat(inputFormats);
+        if (selectedInput) {
+            setToolInputFormat(selectedInput.types || []);
+        } else if (toolConfig) {
+            setToolInputFormat(toolConfig.inputTypes || []);
+        } else {
+            setToolInputFormat([]);
+        }
+    }, [selectedInput, toolConfig]);
 
+    // Reset input format and data if the tool changes
+    useEffect(() => {
+        if (tool) {
             setSelectedInputFormat({});
             setInputData({});
-
-            if (toolInputs.length > 0) {
-                setSelectedInput(toolInputs[0]);
-            }
+            setSelectedInput(toolInputs[0] || '');
         }
     }, [tool]);
-
     const updateSelectedInputData = (data) => {
         setInputData(prev => ({
             ...prev,
