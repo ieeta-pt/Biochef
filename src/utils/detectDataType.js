@@ -1,3 +1,5 @@
+import { getTypeDefinitions } from './typeDefinitions';
+
 function validateFasta(content) {
   const lines = content?.trim().split('\n');
   if (!lines || lines[0][0] !== '>') return false;
@@ -8,7 +10,7 @@ function validateFasta(content) {
 
 function validateMultiFasta(content) {
   if (!content) return false
-  
+
   const headerCount = (content.match(/>/g) || []).length;
   const entries = content.split('>').filter(entry => entry.trim());
   if (headerCount !== entries.length) {
@@ -72,19 +74,26 @@ function validateBin(content) {
   return lines.every(line => /^[01]+$/.test(line.trim()));
 }
 
+const validators = {
+  fasta: validateFasta,
+  multiFasta: validateMultiFasta,
+  fastq: validateFastq,
+  packagedFastq: validatePackagedFastq,
+  num: validateNum,
+  bin: validateBin,
+  dna: validateDNA,
+  rna: validateRNA,
+  aminoAcids: validateAminoAcids,
+  text: () => true, // Default fallback for TEXT
+};
+
 // these are in order of priority
-const allTypes = [
-  { type: 'FASTA', validator: validateFasta },
-  { type: 'Multi-FASTA', validator: validateMultiFasta },
-  { type: 'FASTQ', validator: validateFastq },
-  { type: 'Packaged FASTQ', validator: validatePackagedFastq },
-  { type: 'NUM', validator: validateNum },
-  { type: 'BIN', validator: validateBin },
-  { type: 'DNA', validator: validateDNA },
-  { type: 'RNA', validator: validateRNA },
-  { type: 'AminoAcids', validator: validateAminoAcids },
-  { type: 'TEXT', validator: () => true }, // Default fallback for TEXT
-];
+const allTypes = getTypeDefinitions()
+  .map(typeDef => ({
+    type: typeDef.id,
+    validator: validators[typeDef.validator],
+  }))
+  .filter(typeDef => typeDef.validator);
 
 // Function to detect data type with priority from the allowed types
 export function detectDataType(data, allowed = []) {
