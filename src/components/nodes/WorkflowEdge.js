@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BaseEdge, getBezierPath, useNodesData, useReactFlow } from '@xyflow/react';
 import { isValidWorkflowConnection } from '../../utils/workflowUtils';
+import { getEdgeColor } from '../../utils/typeDefinitions';
 
 export function WorkflowEdge(props) {
   const {
@@ -25,19 +26,6 @@ export function WorkflowEdge(props) {
     targetPosition,
   });
 
-  const typeColors = {
-    FASTA: "#e74c3c",
-    "Multi-FASTA": "#d35400",
-    FASTQ: "#e67e22",
-    DNA: "#9b59b6",
-    RNA: "#8e44ad",
-    AminoAcids: "#16a085",
-    NUM: "#3498db",
-    PackagedFASTQ: "#2c3e50",
-    TEXT: "#2ecc71",
-    BIN: "#123456"
-  };
-
   useEffect(() => {
     const sourceNode = getNode(source);
     const targetNode = getNode(target);
@@ -58,10 +46,7 @@ export function WorkflowEdge(props) {
     // updateNodeData(target, { inputValidity });
 
     // compute colors here
-    const selectedColor =
-      handleType && typeColors.hasOwnProperty(handleType)
-        ? typeColors[handleType]
-        : "#999";
+    const selectedColor = getEdgeColor(handleType);
 
     const nextColor = isValidConnection ? selectedColor : "#ff0000";
     const nextLabel = isValidConnection

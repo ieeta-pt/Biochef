@@ -5,8 +5,8 @@ import { getTool } from '../utils/toolUtils';
 import { DataTypeContext } from '../contexts/DataTypeContext';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { detectDataType } from '../utils/detectDataType';
+import { getUploadExtensions, getTypeExampleInput } from '../utils/typeDefinitions';
 import { TourContext } from '../contexts/TourContext';
-import { exampleInputs } from '../utils/exampleInputs';
 
 const ToolInputPanel = ({ tool, inputData, setInputData }) => {
     const [fileName, setFileName] = useState('');
@@ -20,6 +20,14 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
 
     const toolConfig = tool ? getTool(tool.name) : null
     const toolInputs = toolConfig ? toolConfig.io.inputs : []
+
+    const isValidSelection = toolInputs.some(
+        (input) => input.name === selectedInput?.name
+    );
+
+    const selectValue = isValidSelection
+        ? selectedInput.name
+        : (toolInputs[0]?.name || '');
 
     const { tourRegisterSteps, tourIsActive, tourMoveNext } = useContext(TourContext);
 
@@ -53,28 +61,27 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
         ]);
     }, []);
 
-    // Define acceptable file extensions
-    const acceptableExtensions = ['.fasta', '.fa', '.fastq', '.fq', '.pos', '.svg', '.txt', '.num'];
+    const acceptableExtensions = getUploadExtensions();
 
     // Get the input formats supported by the tool
     useEffect(() => {
+        if (selectedInput) {
+            setToolInputFormat(selectedInput.types || []);
+        } else if (toolConfig) {
+            setToolInputFormat(toolConfig.inputTypes || []);
+        } else {
+            setToolInputFormat([]);
+        }
+    }, [selectedInput, toolConfig]);
+
+    // Reset input format and data if the tool changes
+    useEffect(() => {
         if (tool) {
-            // Update the input format based on the selected tool
-            const inputFormats = toolConfig.inputTypes;
-            setToolInputFormat(inputFormats);
-
-            // Reset input format and data if the tool changes
-            if (inputFormats.length !== toolInputFormat.length || !(inputFormats.every((value, index) => value === toolInputFormat[index]))) {
-                setSelectedInputFormat({});
-                setInputData({});
-            }
-
-            if (toolInputs.length > 0) {
-                setSelectedInput(toolInputs[0]);
-            }
+            setSelectedInputFormat({});
+            setInputData({});
+            setSelectedInput(toolInputs[0] || '');
         }
     }, [tool]);
-
     const updateSelectedInputData = (data) => {
         setInputData(prev => ({
             ...prev,
@@ -92,7 +99,7 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
     const handleInputFormatChange = (format) => {
         updateSelectedInputFormat(format);
 
-        const example_input = exampleInputs[format] || ''
+        const example_input = getTypeExampleInput(format);
         updateSelectedInputData(example_input); // Load example input if available
     };
 
@@ -103,7 +110,7 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
         const lines = isPartial ? content.split('\n').slice(0, 100).join('\n') : content;
         updateSelectedInputData(lines);
 
-        const detectedType = detectDataType(file.name, lines);
+        const detectedType = detectDataType(lines);
         setInputDataType(detectedType);
         const valid = validateData(lines, detectedType);
         setIsValid(valid);
@@ -241,7 +248,7 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
 
                     {toolInputs.length > 1 && selectedInput && (
                         <Select
-                            value={selectedInput?.name || ''}
+                            value={selectValue}
                             onChange={(e) => handleSelectedInputChange(e.target.value)}
                             displayEmpty
                             fullWidth

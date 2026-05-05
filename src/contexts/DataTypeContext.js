@@ -120,6 +120,30 @@ export const DataTypeProvider = ({ children }) => {
         }
         return isNUMValid;
 
+      case 'BED':
+        const bedLines = trimmedData.split(/\r?\n/);
+        const isBEDValid = bedLines.every(line => {
+          if (line.startsWith('track') || line.startsWith('browser')) return true;
+          const fields = line.split('\t');
+          return fields.length >= 3 && !isNaN(fields[1]) && !isNaN(fields[2]);
+        });
+        if (!isBEDValid) {
+          console.error('BED validation failed.');
+        }
+        return isBEDValid;
+
+      case 'LIST':
+        const listLines = trimmedData.split(/\r?\n/);
+        const isLISTValid = listLines.every(line => {
+          if (!line.trim()) return true;
+          const seqId = line.split('\t')[0];
+          return seqId && !seqId.includes(' ');
+        });
+        if (!isLISTValid) {
+          console.error('LIST validation failed.');
+        }
+        return isLISTValid;
+
       case 'DNA':
         // Validation for DNA: only A, C, G, T (case-insensitive) and whitespace
         const isDNAValid = /^[ACGTNacgtn\s]+$/.test(trimmedData);

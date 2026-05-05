@@ -17,7 +17,6 @@ import { NotificationContext } from '../contexts/NotificationContext';
 import { detectDataType, detectAllDataTypes } from '../utils/detectDataType';
 import FileExplorer from './FileExplorer';
 import { TourContext } from '../contexts/TourContext';
-import { exampleInputs } from '../utils/exampleInputs';
 import CLIInputPanel from './CLIInputPanel';
 
 // const InputPanel = ({ tabIndex, setTabIndex, selectedFiles, setSelectedFiles, inputData, setInputData, tree, setTree }) => {

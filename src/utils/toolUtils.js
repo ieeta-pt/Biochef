@@ -263,10 +263,12 @@ export async function runTool(
       await CLI.mount(Object.values(files));
     }
 
-    for (const [inputName, inputValue] of Object.entries(inputs)) {
+    for (const inputConfig of toolConfig.io.inputs) {
+      const inputName = inputConfig.name;
+      const inputValue = inputs[inputName];
+
       if (!inputValue) continue
 
-      const inputConfig = toolConfig.io.inputs.find(i => i.name === inputName);
       const fileName = `${inputName}.txt`
 
       if (inputConfig.mode == "file") {
@@ -305,6 +307,7 @@ export async function runTool(
       toolName,
       args,
       cli_result,
+      inputs
     });
 
     // read output files if tool outputs to a file

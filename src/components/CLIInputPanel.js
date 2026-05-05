@@ -3,10 +3,11 @@ import {
   Button, Menu, MenuItem
 } from '@mui/material';
 import React, { useState } from 'react';
-import { exampleInputs } from '../utils/exampleInputs';
+import { getAllTypeExampleInputs, getTypeExampleInput } from '../utils/typeDefinitions';
 
 const CLIInputPanel = ({ inputData, setInputData }) => {
   const [exampleMenuAnchor, setExampleMenuAnchor] = useState(null);
+  const exampleInputs = getAllTypeExampleInputs();
 
   function handleInputChange(event) {
     const newInputValue = event.target.value
@@ -51,7 +52,7 @@ const CLIInputPanel = ({ inputData, setInputData }) => {
           <MenuItem
             key={format}
             onClick={() => {
-              setInputData(exampleInputs[format])
+              setInputData(getTypeExampleInput(format))
               setExampleMenuAnchor(null);
             }}
           >

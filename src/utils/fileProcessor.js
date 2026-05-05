@@ -1,7 +1,7 @@
 import { detectDataType } from './detectDataType';
+import { getUploadExtensions } from './typeDefinitions';
 
-// Define acceptable file extensions
-export const acceptableExtensions = ['.fasta', '.fa', '.fastq', '.fq', '.pos', '.svg', '.txt', '.num'];
+export const acceptableExtensions = getUploadExtensions();
 
 const readFirstNLines = (file, maxLines = 100) => {
     return new Promise((resolve, reject) => {
@@ -97,7 +97,7 @@ export const processFile = async (file, validateData, showNotification) => {
             });
         }
 
-        const detectedType = detectDataType(file.name, content);
+        const detectedType = detectDataType(content);
 
         if (!validateData(content, detectedType) && detectedType !== 'UNKNOWN') {
             showNotification(`Invalid ${detectedType} data format in ${file.name}.`, 'error');
