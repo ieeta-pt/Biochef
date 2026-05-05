@@ -14,6 +14,15 @@ export const typeToExtensionMap = {
     'BIN': '.bin',
     'UNKNOWN': '.txt',
     'Group': '.txt',
+    // Tabular bio formats
+    'VCF': '.vcf',
+    'BED': '.bed',
+    'GFF': '.gff',
+    'SAM': '.sam',
+    // Binary HTS formats
+    'BAM': '.bam',
+    'BCF': '.bcf',
+    'CRAM': '.cram',
 };
 
 /**

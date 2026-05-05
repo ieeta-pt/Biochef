@@ -19,6 +19,7 @@ import { loadToolIndex, loadTool } from '../utils/toolUtils';
 import ToolParameterSection from '../components/ToolParameterSection';
 import ToolOutputPanel from '../components/ToolOutputPanel'
 import { detectDataType } from '../utils/detectDataType';
+import { isDataValue, makeText } from '../utils/dataValue';
 
 const WorkflowPage = () => {
   const recipePanelRef = useRef();
@@ -81,8 +82,22 @@ const WorkflowPage = () => {
     }));
   };
 
-  const handleUpdateSelectedInputNode = (text) => {
-    updateSelectedNodeData({ outputs: { "out": text }, outputTypes: { "out": detectDataType(text) } })
+  const handleUpdateSelectedInputNode = (value) => {
+    // `value` may be a bare text string (from typing/example) OR a DataValue
+    // (from a binary upload through the file manager). Normalise: bare strings
+    // get type-detected; DataValues keep their declared type.
+    let dv;
+    let detectedType;
+    if (isDataValue(value)) {
+      dv = value;
+      detectedType = value.kind === 'binary'
+        ? (value.type || 'BIN')
+        : detectDataType(value.data ?? '');
+    } else {
+      dv = makeText(value ?? '', detectDataType(value ?? ''));
+      detectedType = dv.type;
+    }
+    updateSelectedNodeData({ outputs: { "out": dv }, outputTypes: { "out": detectedType } });
   };
 
   function handleToggleParam(name) {

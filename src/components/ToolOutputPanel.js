@@ -4,6 +4,11 @@ import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
 import React, { useEffect, useState, useContext } from 'react';
 import { TourContext } from '../contexts/TourContext';
+import { isDataValue } from '../utils/dataValue';
+
+// Map declared binary types to a sensible download MIME + extension.
+const BINARY_MIME = { BAM: 'application/x-bam', BCF: 'application/x-bcf', CRAM: 'application/x-cram', BIN: 'application/octet-stream' };
+const BINARY_EXT  = { BAM: '.bam', BCF: '.bcf', CRAM: '.cram', BIN: '.bin' };
 
 const ToolOutputPanel = ({ outputData, setOutputData, workflow = null, tool = null, inputData, page, rows=8 }) => {
     const [selectedFile, setSelectedFile] = useState('');
@@ -30,27 +35,38 @@ const ToolOutputPanel = ({ outputData, setOutputData, workflow = null, tool = nu
     }, []);
 
 
+    const renderableText = (value) => {
+        if (value === undefined || value === null) return '';
+        if (isDataValue(value)) {
+            // Don't try to dump raw bytes into the textarea.
+            if (value.kind === 'binary') {
+                const len = value.data?.length ?? 0;
+                return `[binary ${value.type || 'BIN'}, ${len} bytes - use Save to download]`;
+            }
+            return value.data ?? '';
+        }
+        return value;
+    };
+
     // Update displayed output when outputData or selectedFile changes
     useEffect(() => {
-        if (typeof outputData === 'object' && !Array.isArray(outputData)) {
-            // For object type outputs (multiple files)
+        // Multi-file object case (NOT a single DataValue object)
+        if (typeof outputData === 'object' && outputData !== null && !Array.isArray(outputData) && !isDataValue(outputData)) {
             if (Object.keys(outputData).length > 0) {
-                // If we have a selected file and it exists in the outputData, use it
                 if (selectedFile && outputData[selectedFile]) {
-                    setDisplayedOutput(outputData[selectedFile]);
+                    setDisplayedOutput(renderableText(outputData[selectedFile]));
                 } else {
-                    // Otherwise select the first file
                     const firstKey = Object.keys(outputData)[0];
                     setSelectedFile(firstKey);
-                    setDisplayedOutput(outputData[firstKey]);
+                    setDisplayedOutput(renderableText(outputData[firstKey]));
                 }
             } else {
                 setDisplayedOutput('');
                 setSelectedFile('');
             }
         } else {
-            // For string type outputs (single file)
-            setDisplayedOutput(outputData);
+            // Single-output case (string OR DataValue)
+            setDisplayedOutput(renderableText(outputData));
             setSelectedFile('');
         }
     }, [outputData, selectedFile]);
@@ -70,17 +86,32 @@ const ToolOutputPanel = ({ outputData, setOutputData, workflow = null, tool = nu
     }, [tool, inputData]);
 
     const handleSaveOutput = () => {
-        if (typeof outputData == 'object') {
+        // Binary DataValue → download as proper binary blob with declared MIME + ext.
+        if (isDataValue(outputData) && outputData.kind === 'binary') {
+            const t = outputData.type || 'BIN';
+            const blob = new Blob([outputData.data], { type: BINARY_MIME[t] || 'application/octet-stream' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = `output${BINARY_EXT[t] || '.bin'}`;
+            link.href = url;
+            link.click();
+            URL.revokeObjectURL(url);
+            return;
+        }
+        if (typeof outputData == 'object' && !isDataValue(outputData)) {
             const zip = new JSZip();
             for (const [filename, content] of Object.entries(outputData)) {
-                zip.file(filename, content);
+                // Each entry can itself be a DataValue or a bare string.
+                const payload = isDataValue(content) ? content.data : content;
+                zip.file(filename, payload);
             }
             zip.generateAsync({ type: 'blob' }).then((content) => {
                 saveAs(content, 'output.zip');
             });
         }
         else {
-            const blob = new Blob([outputData], { type: 'text/plain;charset=utf-8' });
+            const text = isDataValue(outputData) ? (outputData.data ?? '') : outputData;
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.download = `output.txt`;
@@ -98,7 +129,7 @@ const ToolOutputPanel = ({ outputData, setOutputData, workflow = null, tool = nu
         <Paper elevation={1} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }} data-tour="output">
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 2, flexShrink: 0 }}>
                 <Typography variant="h6">Output</Typography>
-                {typeof outputData === 'object' && !Array.isArray(outputData) && Object.keys(outputData).length > 1 && (
+                {typeof outputData === 'object' && !Array.isArray(outputData) && !isDataValue(outputData) && Object.keys(outputData).length > 1 && (
                     <FormControl size="small" sx={{ minWidth: 150 }}>
                         <Select
                             value={selectedFile}

@@ -1,5 +1,6 @@
 import Aioli from "./aioli-custom/aioli"
 import logger from "./logger";
+import { unwrap, makeText, makeBinary, isBinaryDeclaredTypes } from "./dataValue";
 
 const toolMap = new Map();
 const blobMap = new Map();
@@ -268,15 +269,21 @@ export async function runTool(
 
       const inputConfig = toolConfig.io.inputs.find(i => i.name === inputName);
       const fileName = `${inputName}.txt`
+      const dv = unwrap(inputValue);
+      if (!dv) continue;
 
       if (inputConfig.mode == "file") {
-        await CLI.mount({ name: fileName, data: inputValue })
+        // Binary edge values mount as a Blob so aioli writes the bytes
+        // straight into the wasm filesystem without trying to UTF-8 decode.
+        const payload = dv.kind === "binary" ? new Blob([dv.data]) : dv.data;
+        await CLI.mount({ name: fileName, data: payload })
         if (inputConfig.flag) args.push(inputConfig.flag);
         args.push(fileName)
       }
       else if (inputConfig.mode == "stdin") {
         // TODO: check if only one has stdin? or maybe add them?
-        CLI.stdin = inputValue;
+        // stdin is text-only at the aioli boundary; binary stdin is uncommon.
+        CLI.stdin = dv.kind === "binary" ? new TextDecoder("latin1").decode(dv.data) : dv.data;
       }
     };
 
@@ -311,18 +318,30 @@ export async function runTool(
     const ignoreList = [".", ".."];
     const outputs = {};
     for (const output of toolConfig.io.outputs) {
+      const declaredType = output.types?.[0] || "TEXT";
+      const isBinary = isBinaryDeclaredTypes(output.types);
+
       if (output.mode === "stdout") {
-        outputs[output.name] = cli_result.stdout; // TODO: stderr
+        // aioli's exec captures stdout as a UTF-8 string. Binary stdout is
+        // therefore lossy; recipes that produce binary should declare mode=file.
+        outputs[output.name] = makeText(cli_result.stdout, declaredType);
       }
       else if (output.mode === "file") {
-        let fileData = "";
-        if (output.filename) {
-          fileData = await CLI.cat(output.filename);
+        const path = output.filename || (output.name + ".txt");
+        if (isBinary) {
+          // ls() on a file returns its stat (with .size); read() returns Uint8Array.
+          let size = 0;
+          try { const stat = await CLI.ls(path); size = stat?.size ?? 0; } catch { size = 0; }
+          if (size > 0) {
+            const bytes = await CLI.read({ path, length: size, flag: "r" });
+            outputs[output.name] = makeBinary(bytes, declaredType);
+          } else {
+            outputs[output.name] = makeBinary(new Uint8Array(0), declaredType);
+          }
+        } else {
+          const fileData = await CLI.cat(path);
+          outputs[output.name] = makeText(fileData, declaredType);
         }
-        else {
-          fileData = await CLI.cat(output.name + ".txt");
-        }
-        outputs[output.name] = fileData;
       }
     }
 

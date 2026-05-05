@@ -48,16 +48,24 @@ export const importRecipeConfigFile = (
         try {
             setTabIndex(1);
 
-            const processedFiles = files.map(file => ({
-                id: `${file.name}-${Date.now()}`,
-                name: file.name,
-                type: "file",
-                fileType: file.fileType,
-                content: file.content,
-                size: file.content.length,
-                lastModified: new Date(),
-                relativePath: file.relativePath || file.name
-            }));
+            const processedFiles = files.map(file => {
+                // file.content is either a bare string (older code path) or a
+                // DataValue. Pull the size off the right place.
+                const c = file.content;
+                const size = (c && typeof c === 'object' && 'data' in c)
+                    ? (c.data?.length ?? 0)
+                    : (c?.length ?? 0);
+                return {
+                    id: `${file.name}-${Date.now()}`,
+                    name: file.name,
+                    type: "file",
+                    fileType: file.fileType,
+                    content: file.content,
+                    size,
+                    lastModified: new Date(),
+                    relativePath: file.relativePath || file.name
+                };
+            });
 
             const newFilesTree = [];
             processedFiles.forEach(file => {

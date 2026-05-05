@@ -12,6 +12,8 @@ import { NotificationContext } from '../contexts/NotificationContext';
 import { isValidWorkflowConnection, sanitizeWorkflowNodes } from '../utils/workflowUtils';
 import logger from '../utils/logger';
 import { resolveCollisions } from '../utils/resolveNodeCollisions';
+import { externalizeBinaryOutputs, hydrateBinaryOutputs, gcOrphans, stripBinaryForExport } from '../utils/persistBinary';
+import { prepareWorkflowForAgent } from '../utils/agentContract';
 
 const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClicked, indexLoaded }, ref) => {
   const [nodes, setNodes] = useNodesState([]);
@@ -32,9 +34,14 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
     if (!indexLoaded) return;
 
     const fetchWorkflow = async () => {
-      const flow = JSON.parse(localStorage.getItem("workflow"));
+      let flow = JSON.parse(localStorage.getItem("workflow"));
 
       if (flow) {
+        // Swap any binary-ref markers in the saved JSON back for real
+        // DataValues by fetching their bytes from IndexedDB.
+        try { flow = await hydrateBinaryOutputs(flow); }
+        catch (e) { logger.error("hydrateBinaryOutputs failed", e); }
+
         const { nodes: savedNodes = [], edges: savedEdges = [], viewport = {} } = flow;
 
         for (const node of savedNodes) {
@@ -76,10 +83,26 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
   useEffect(() => {
     if (!workflowLoaded) return;
 
+    let cancelled = false;
     const flow = toObject();
-    flow.nodes = sanitizeWorkflowNodes(flow.nodes)
+    flow.nodes = sanitizeWorkflowNodes(flow.nodes);
 
-    localStorage.setItem('workflow', JSON.stringify(flow));
+    // Externalise any binary DataValues to IndexedDB before stringifying;
+    // JSON.stringify on a raw Uint8Array silently drops the bytes, so we
+    // store refs in localStorage and the actual bytes elsewhere.
+    (async () => {
+      try {
+        const { flow: externalized } = await externalizeBinaryOutputs(flow);
+        if (cancelled) return;
+        localStorage.setItem('workflow', JSON.stringify(externalized));
+        // Drop orphaned blobs whose ids aren't referenced anywhere.
+        gcOrphans(externalized).catch(e => logger.error("gcOrphans failed", e));
+      } catch (e) {
+        logger.error("externalizeBinaryOutputs failed", e);
+        // Last-resort: skip persistence rather than corrupt localStorage.
+      }
+    })();
+    return () => { cancelled = true; };
   }, [nodes, edges]);
 
   useEffect(() => {
@@ -214,9 +237,15 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
   const exportWorkflow = useCallback(() => {
     if (nodes.length === 0) return;
 
-    const flow = toObject();
+    let flow = toObject();
     flow.nodes = sanitizeWorkflowNodes(flow.nodes);
-    const fileContent = JSON.stringify(flow, null, 2);
+    // Strip binary outputs from the exported file. Embedding raw bytes would
+    // bloat the JSON and binary-refs are useless on a different device.
+    const { flow: exportable, strippedAny } = stripBinaryForExport(flow);
+    if (strippedAny) {
+      showNotification("Binary input data was stripped from the exported workflow file.", "info");
+    }
+    const fileContent = JSON.stringify(exportable, null, 2);
 
     const blob = new Blob([fileContent], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -227,7 +256,7 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
     a.click();
 
     URL.revokeObjectURL(url);
-  }, [nodes, toObject]);
+  }, [nodes, toObject, showNotification]);
 
   // Import Workflow function
   const importWorkflow = useCallback(() => {
@@ -243,7 +272,29 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
         const text = await file.text();
         const flow = JSON.parse(text);
 
-        const { nodes: importedNodes = [], edges: importedEdges = [], viewport = {} } = flow;
+        let { nodes: importedNodes = [], edges: importedEdges = [], viewport = {} } = flow;
+
+        // Imported workflows can contain placeholder markers that don't carry
+        // usable data on this machine: `binary-stripped` (export removed bytes)
+        // or `binary-ref` (refs to a *different* device's IndexedDB). Scrub
+        // both so they don't leak into edge values silently.
+        let scrubbed = false;
+        importedNodes = importedNodes.map(node => {
+          const outs = node.data?.outputs;
+          if (!outs || typeof outs !== "object") return node;
+          const newOuts = {};
+          for (const [k, v] of Object.entries(outs)) {
+            if (v && typeof v === "object" && (v.kind === "binary-stripped" || v.kind === "binary-ref")) {
+              scrubbed = true;
+            } else {
+              newOuts[k] = v;
+            }
+          }
+          return { ...node, data: { ...node.data, outputs: newOuts } };
+        });
+        if (scrubbed) {
+          showNotification("Imported workflow had binary inputs missing on this device. Re-upload them to run.", "info");
+        }
 
         for (const node of importedNodes) {
           if (node.type === 'workflowNode') {
@@ -285,55 +336,45 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
   }
 
   async function runWorkflowAgent(url) {
-    let fileData = {}
-    for (const node of nodes) {
-      if (node.type == "inputWorkflowNode") {
-        fileData[node.id + "-out" + ".txt"] = node.data.outputs["out"]
-      }
-    }
-
-    const formData = new FormData();
-
     const flow = toObject();
     flow.nodes = sanitizeWorkflowNodes(flow.nodes);
-    formData.append("biochef_workflow", JSON.stringify(flow));
 
-    for (const [filename, content] of Object.entries(fileData)) {
-      const file = new File([content], filename, { type: "text/plain" });
-      formData.append("files", file);
-    }
+    // Split DataValues across the multipart payload: the workflow JSON gets
+    // file-ref markers, and the actual bytes go into the files slot with a
+    // declared MIME type so any tool running on the agent sees real binary.
+    const { workflowJSON, files } = prepareWorkflowForAgent(flow);
 
-    let response = null
+    const formData = new FormData();
+    formData.append("biochef_workflow", workflowJSON);
+    for (const file of files) formData.append("files", file);
+
+    let response = null;
     try {
-      response = await fetch(url, {
-        method: "POST",
-        body: formData
-      });
+      response = await fetch(url, { method: "POST", body: formData });
+    } catch {
+      logger.error("Could not send request to agent");
+      showNotification("Agent could not be reached", "error");
+      return;
     }
-    catch {
-      logger.error("Could not send request to agent")
-      showNotification("Agent could not be reached", "error")
-      return
-    }
-
     if (!response) {
-      logger.error("Did not get a response from agent agent")
-      showNotification("Agent did not responde", "error")
-      return
+      logger.error("Did not get a response from agent");
+      showNotification("Agent did not respond", "error");
+      return;
     }
 
-    let data = null
-    try {
-      data = await response.json();
-    }
+    let data = null;
+    try { data = await response.json(); }
     catch {
-      logger.error("Could not process response from agent")
-      showNotification("Invalid reponse from agent", "error")
-      return
+      logger.error("Could not process response from agent");
+      showNotification("Invalid response from agent", "error");
+      return;
     }
 
+    // Agent response shape: { node_id: { outputs: {...} } }. Currently the
+    // response is JSON-only; if we ever need to receive binary back we'd add
+    // a separate multipart channel coming from the agent.
     for (const [node_id, outputs] of Object.entries(data)) {
-      updateNodeData(node_id, { outputs })
+      updateNodeData(node_id, { outputs });
     }
   }
 

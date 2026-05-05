@@ -4,9 +4,10 @@ import React, { useContext, useEffect, useState } from 'react';
 import { getTool } from '../utils/toolUtils';
 import { DataTypeContext } from '../contexts/DataTypeContext';
 import { NotificationContext } from '../contexts/NotificationContext';
-import { detectDataType } from '../utils/detectDataType';
+import { detectDataType, isLikelyBinaryFile, detectBinaryType } from '../utils/detectDataType';
 import { TourContext } from '../contexts/TourContext';
 import { exampleInputs } from '../utils/exampleInputs';
+import { makeBinary } from '../utils/dataValue';
 
 const ToolInputPanel = ({ tool, inputData, setInputData }) => {
     const [fileName, setFileName] = useState('');
@@ -53,8 +54,12 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
         ]);
     }, []);
 
-    // Define acceptable file extensions
-    const acceptableExtensions = ['.fasta', '.fa', '.fastq', '.fq', '.pos', '.svg', '.txt', '.num'];
+    // Define acceptable file extensions (text + binary HTS formats)
+    const acceptableExtensions = [
+        '.fasta', '.fa', '.fastq', '.fq', '.pos', '.svg', '.txt', '.num',
+        '.vcf', '.bed', '.gff', '.gtf', '.sam', '.json', '.tsv',
+        '.bam', '.bcf', '.cram', '.bai', '.csi', '.tbi', '.gzi', '.mmi', '.fai', '.gz', '.bgz',
+    ];
 
     // Get the input formats supported by the tool
     useEffect(() => {
@@ -126,6 +131,24 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
                 setInputData({});
                 setIsValid(false);
                 setInputDataType('UNKNOWN'); // Reset data type
+                return;
+            }
+
+            // Binary path: read as ArrayBuffer; emit DataValue{kind:"binary"}.
+            if (isLikelyBinaryFile(file.name)) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const bytes = new Uint8Array(e.target.result);
+                    const detectedType = detectBinaryType(bytes, file.name);
+                    setInputDataType(detectedType);
+                    setIsValid(true);
+                    updateSelectedInputData(makeBinary(bytes, detectedType));
+                };
+                reader.onerror = (e) => {
+                    console.error('Error reading file:', e);
+                    showNotification('Failed to read the file.', 'error');
+                };
+                reader.readAsArrayBuffer(file);
                 return;
             }
 
@@ -264,7 +287,18 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
             <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: 2 }}>
                 <TextField
                     variant="outlined"
-                    value={inputData[selectedInput.name] || ''}
+                    value={(() => {
+                        const v = inputData[selectedInput.name];
+                        if (v === undefined || v === null) return '';
+                        if (typeof v === 'object' && 'kind' in v && 'data' in v) {
+                            if (v.kind === 'binary') {
+                                const len = v.data?.length ?? 0;
+                                return `[binary ${v.type || 'BIN'}, ${len} bytes - pre-loaded, not editable here]`;
+                            }
+                            return v.data ?? '';
+                        }
+                        return v;
+                    })()}
                     onChange={(e) => handleTextChange(e.target.value)}
                     placeholder="e.g., >Sequence1\nACGT..."
                     InputProps={{
@@ -296,7 +330,18 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
                 }}
             >
                 <Typography variant="body2" color="textSecondary">
-                    {(inputData[selectedInput.name]?.length || 0)}/100000 characters, {(inputData[selectedInput.name]?.split('\n').length || 0)} lines
+                    {(() => {
+                        const v = inputData[selectedInput.name];
+                        if (v === undefined || v === null) return '0/100000 characters, 0 lines';
+                        let text;
+                        if (typeof v === 'object' && 'kind' in v && 'data' in v) {
+                            if (v.kind === 'binary') return `${v.data?.length ?? 0} bytes (binary)`;
+                            text = v.data ?? '';
+                        } else {
+                            text = v;
+                        }
+                        return `${text.length}/100000 characters, ${text.split('\n').length} lines`;
+                    })()}
                 </Typography>
                 <Tooltip title="Upload File">
                     <IconButton

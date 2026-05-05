@@ -7,6 +7,7 @@ import { OneConnectionHandle } from './OneConnectionHandle';
 
 import { runTool, getTool } from '../../utils/toolUtils';
 import { detectDataType } from '../../utils/detectDataType';
+import { unwrap, isDataValue } from '../../utils/dataValue';
 
 export const WorkflowNode = memo(({ id, data }) => {
   const { label, paramValues, repo } = data;
@@ -69,9 +70,19 @@ export const WorkflowNode = memo(({ id, data }) => {
       inputs[targetHandle] = sourceNode.data.outputs[sourceHandle];
     });
 
-    const allInputsEmpty = Object.values(inputs).every(value =>
-      value === "" || value === undefined || value === null
-    );
+    const allInputsEmpty = Object.values(inputs).every(value => {
+      if (value === undefined || value === null || value === "") return true;
+      // Stale persistence markers (hydration failed / file imported with stripped
+      // binary) carry no data, so treat them as empty and skip the run.
+      if (value && typeof value === "object" && (value.kind === "binary-ref" || value.kind === "binary-stripped")) {
+        return true;
+      }
+      if (isDataValue(value)) {
+        if (value.kind === "binary") return !value.data || value.data.length === 0;
+        return value.data === "" || value.data === undefined || value.data === null;
+      }
+      return false;
+    });
 
     // this is to prevent the tools from running right after loading from localstorage
     if (allInputsEmpty && Object.keys(data.outputs).length === 0) return;
@@ -125,7 +136,15 @@ export const WorkflowNode = memo(({ id, data }) => {
     for (const key in data.outputs) {
       if (!outputsConnected.includes(key)) continue;
       const definedTypes = toolData.io.outputs.find(o => o.name === key).types
-      const detectedType = detectDataType(data.outputs[key], definedTypes)
+      const value = data.outputs[key];
+      let detectedType;
+      if (isDataValue(value) && value.kind === "binary") {
+        // Binary content can't be UTF-8 sniffed; trust the recipe-declared type.
+        detectedType = value.type || definedTypes?.[0] || "BIN";
+      } else {
+        const text = isDataValue(value) ? value.data : value;
+        detectedType = detectDataType(text, definedTypes);
+      }
       setInvalidOutputType(!definedTypes.includes(detectedType))
 
       outputTypes[key] = detectedType;

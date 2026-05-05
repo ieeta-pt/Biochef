@@ -1,7 +1,14 @@
-import { detectDataType } from './detectDataType';
+import { detectDataType, detectBinaryType, isLikelyBinaryFile } from './detectDataType';
+import { makeText, makeBinary } from './dataValue';
 
 // Define acceptable file extensions
-export const acceptableExtensions = ['.fasta', '.fa', '.fastq', '.fq', '.pos', '.svg', '.txt', '.num'];
+export const acceptableExtensions = [
+  // text
+  '.fasta', '.fa', '.fastq', '.fq', '.pos', '.svg', '.txt', '.num',
+  '.vcf', '.bed', '.gff', '.gtf', '.sam', '.json', '.tsv',
+  // binary (read as ArrayBuffer; emitted as DataValue{kind:"binary"})
+  '.bam', '.bcf', '.cram', '.bai', '.csi', '.tbi', '.gzi', '.mmi', '.fai', '.gz', '.bgz',
+];
 
 const readFirstNLines = (file, maxLines = 100) => {
     return new Promise((resolve, reject) => {
@@ -78,6 +85,34 @@ export const processFile = async (file, validateData, showNotification) => {
         return null;
     }
 
+    // Binary path: read as ArrayBuffer, emit DataValue{kind:"binary"}.
+    if (isLikelyBinaryFile(file.name)) {
+        try {
+            const reader = new FileReader();
+            const buf = await new Promise((resolve, reject) => {
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = () => reject(new Error('Error reading file'));
+                reader.readAsArrayBuffer(file);
+            });
+            const bytes = new Uint8Array(buf);
+            const detectedType = detectBinaryType(bytes, file.name);
+            return {
+                id: `${file.name}-${Date.now()}`,
+                name: file.name,
+                type: "file",
+                fileType: detectedType,
+                content: makeBinary(bytes, detectedType),
+                size: file.size,
+                lastModified: new Date(file.lastModified),
+                relativePath: '',
+            };
+        } catch (error) {
+            showNotification(`Failed to read file: ${file.name}`, 'error');
+            return null;
+        }
+    }
+
+    // Text path: existing behaviour, with size cap and partial-read warning.
     const fileSizeLimit = 1 * 1024 * 1024; // 1MB limit
     const isPartial = file.size > fileSizeLimit;
 
@@ -88,7 +123,6 @@ export const processFile = async (file, validateData, showNotification) => {
             showNotification(`The file ${file.name} is too large. Only the first 10000 lines will be loaded.`, 'warning');
             content = await readFirstNLines(file, 10000);
         } else {
-            // For smaller files, read the entire content
             const reader = new FileReader();
             content = await new Promise((resolve, reject) => {
                 reader.onload = (e) => resolve(e.target.result);
@@ -109,7 +143,7 @@ export const processFile = async (file, validateData, showNotification) => {
             name: file.name,
             type: "file",
             fileType: detectedType,
-            content,
+            content: makeText(content, detectedType),
             size: file.size,
             lastModified: new Date(file.lastModified),
             relativePath: '',
@@ -118,4 +152,4 @@ export const processFile = async (file, validateData, showNotification) => {
         showNotification(`Failed to read file: ${file.name}`, 'error');
         return null;
     }
-}; 
+};

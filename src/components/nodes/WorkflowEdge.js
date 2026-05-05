@@ -35,7 +35,16 @@ export function WorkflowEdge(props) {
     NUM: "#3498db",
     PackagedFASTQ: "#2c3e50",
     TEXT: "#2ecc71",
-    BIN: "#123456"
+    BIN: "#123456",
+    // Binary HTS formats
+    BAM: "#5d4037",
+    BCF: "#6d4c41",
+    CRAM: "#795548",
+    SAM: "#8d6e63",
+    // Tabular bio formats
+    VCF: "#7e57c2",
+    BED: "#26a69a",
+    GFF: "#00897b",
   };
 
   useEffect(() => {

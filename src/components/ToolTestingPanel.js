@@ -23,6 +23,7 @@ import { DataTypeContext } from '../contexts/DataTypeContext';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { runTool } from '../utils/toolUtils';
 import { detectDataType } from '../utils/detectDataType';
+import { isDataValue } from '../utils/dataValue';
 import { processFile } from '../utils/fileProcessor';
 import { validateParameters, getToolHelpMessage } from '../utils/parameterUtils';
 import ToolParameterSection from './ToolParameterSection';
@@ -179,9 +180,19 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
                 }
             });
 
-            // Verify if the input data is compatible with the tool
+            // Verify if the input data is compatible with the tool. Each value
+            // may be a bare string (text input) or a DataValue (text or binary
+            // upload). Binary inputs trust the recipe-declared type; text runs
+            // through detectDataType.
             for (const [key, value] of Object.entries(inputData)) {
-                const inputDataType = detectDataType(value);
+                let inputDataType;
+                if (isDataValue(value)) {
+                    inputDataType = value.kind === 'binary'
+                        ? (value.type || 'BIN')
+                        : detectDataType(value.data ?? '');
+                } else {
+                    inputDataType = detectDataType(value);
+                }
 
                 if (!inputFormats.includes(inputDataType)) {
                     showNotification(

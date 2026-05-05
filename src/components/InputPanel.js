@@ -15,6 +15,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { DataTypeContext } from '../contexts/DataTypeContext';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { detectDataType } from '../utils/detectDataType';
+import { isDataValue, makeText } from '../utils/dataValue';
 import FileExplorer from './FileExplorer';
 import { TourContext } from '../contexts/TourContext';
 import { exampleInputs } from '../utils/exampleInputs';
@@ -25,7 +26,19 @@ const InputPanel = ({ tabIndex, setTabIndex, selectedFiles, setSelectedFiles, in
     const { setInputDataType, validateData, inputDataType } = useContext(DataTypeContext);
     const [isValid, setIsValid] = useState(true);
     const [debounceTimer, setDebounceTimer] = useState(null);
-    const numberOfLines = inputData.split('\n').length;
+    // For rendering: extract text payload; binary inputs get a placeholder string.
+    const displayText = (() => {
+        if (inputData === undefined || inputData === null) return '';
+        if (isDataValue(inputData)) {
+            if (inputData.kind === 'binary') {
+                const len = inputData.data?.length ?? 0;
+                return `[binary ${inputData.type || 'BIN'}, ${len} bytes - pre-loaded, not editable here]`;
+            }
+            return inputData.data ?? '';
+        }
+        return inputData;
+    })();
+    const numberOfLines = displayText.split('\n').length;
 
     const [selectedExampleFormat, setSelectedExampleFormat] = useState('');
 
@@ -36,27 +49,35 @@ const InputPanel = ({ tabIndex, setTabIndex, selectedFiles, setSelectedFiles, in
 
         if (selectedFiles.size == 0) {
             setInputDataType('UNKNOWN');
-            if (inputData != '') setInputData('')
+            const isEmpty = inputData === '' || (isDataValue(inputData) && (inputData.data?.length ?? 0) === 0);
+            if (!isEmpty) setInputData('')
             return
         }
 
         // File Manager Mode: derive type from selected files.
-        // Compute the set of file types from selected files.
         const fileTypes = new Set(
             Array.from(selectedFiles).map(file => file.fileType)
         );
-        // If there's exactly one type, update inputDataType.
         if (fileTypes.size === 1) {
             setInputDataType([...fileTypes][0]);
         } else {
-            // Otherwise, either leave it unchanged or set it to a fallback value.
             setInputDataType('UNKNOWN');
         }
 
-        // NOTE(andrade)
-        // Not sure if concatenating the files is the correct thing to do
-        // Maybe we want to limit to one selected file at a time
-        setInputData(Array.from(selectedFiles).map(f => f.content).join('\n'));
+        // file.content is now a DataValue ({kind:"text"|"binary"}). Concat-by-newline
+        // only makes sense for text. For binary, hand the first selected file's
+        // DataValue through unchanged (binary streams aren't line-concatenable).
+        const files = Array.from(selectedFiles);
+        const anyBinary = files.some(f => isDataValue(f.content) && f.content.kind === 'binary');
+        if (anyBinary) {
+            const first = files.find(f => isDataValue(f.content) && f.content.kind === 'binary');
+            setInputData(first.content);
+        } else {
+            const joined = files
+                .map(f => isDataValue(f.content) ? (f.content.data ?? '') : (f.content ?? ''))
+                .join('\n');
+            setInputData(joined);
+        }
     }, [selectedFiles]);
 
     const handleTabChange = (event, newIndex) => {
@@ -250,7 +271,7 @@ const InputPanel = ({ tabIndex, setTabIndex, selectedFiles, setSelectedFiles, in
 
                                 <TextField
                                     variant="outlined"
-                                    value={inputData}
+                                    value={displayText}
                                     onChange={handleTextChange}
                                     placeholder="e.g., >Sequence1\nACGT..."
                                     InputProps={{
@@ -284,7 +305,7 @@ const InputPanel = ({ tabIndex, setTabIndex, selectedFiles, setSelectedFiles, in
                                 }}
                             >
                                 <Typography variant="caption" color="textSecondary" sx={{ marginRight: 'auto' }}>
-                                    {inputData.length}/100000 characters, {numberOfLines} lines
+                                    {displayText.length}/100000 characters, {numberOfLines} lines
                                 </Typography>
                             </Box>
                         </Box>
