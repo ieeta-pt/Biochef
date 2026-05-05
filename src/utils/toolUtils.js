@@ -305,6 +305,7 @@ export async function runTool(
       toolName,
       args,
       cli_result,
+      inputs
     });
 
     // read output files if tool outputs to a file

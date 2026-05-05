@@ -21,6 +21,14 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
     const toolConfig = tool ? getTool(tool.name) : null
     const toolInputs = toolConfig ? toolConfig.io.inputs : []
 
+    const isValidSelection = toolInputs.some(
+        (input) => input.name === selectedInput?.name
+    );
+
+    const selectValue = isValidSelection
+        ? selectedInput.name
+        : (toolInputs[0]?.name || '');
+
     const { tourRegisterSteps, tourIsActive, tourMoveNext } = useContext(TourContext);
 
     useEffect(() => {
@@ -62,11 +70,8 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
             const inputFormats = toolConfig.inputTypes;
             setToolInputFormat(inputFormats);
 
-            // Reset input format and data if the tool changes
-            if (inputFormats.length !== toolInputFormat.length || !(inputFormats.every((value, index) => value === toolInputFormat[index]))) {
-                setSelectedInputFormat({});
-                setInputData({});
-            }
+            setSelectedInputFormat({});
+            setInputData({});
 
             if (toolInputs.length > 0) {
                 setSelectedInput(toolInputs[0]);
@@ -240,7 +245,7 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
 
                     {toolInputs.length > 1 && selectedInput && (
                         <Select
-                            value={selectedInput?.name || ''}
+                            value={selectValue}
                             onChange={(e) => handleSelectedInputChange(e.target.value)}
                             displayEmpty
                             fullWidth
