@@ -141,7 +141,7 @@ export function detectDataType(data, allowed = []) {
 }
 
 export function detectAllDataTypes(data) {
-  if (typeof data !== 'string' || data == "") {
+  if (typeof data !== 'string') {
     return [];
   }
 

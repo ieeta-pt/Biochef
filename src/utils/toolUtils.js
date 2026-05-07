@@ -10,10 +10,10 @@ const REGISTRY_PASSWORD = process.env.REGISTRY_PASSWORD;
 
 const IS_GHCR = REGISTRY_URL?.includes("ghcr.io") || false;
 
+// TODO: use ID instead of tool name
 export function getTool(toolName) {
   if (!toolMap.has(toolName)) {
-    // TODO: make a logging utility
-    console.error(`[toolUtils.getTool] Tool ${toolName} is not loaded.`)
+    logger.error(`[toolUtils.getTool] Tool ${toolName} is not loaded.`)
     return;
   }
 
@@ -228,6 +228,120 @@ async function generateBlob(url, type, authorization) {
   }
 }
 
+async function getToolBlobs(toolName) {
+  const toolConfig = getTool(toolName)
+
+  const { authorization, base_url } = await getAuthorizationAndBaseUrl(toolConfig.repo);
+
+  const wasmUrl = `${base_url}/${toolConfig.repo}/blobs/${toolConfig.runtime.wasm.wasm_digest}`
+  const jsUrl = `${base_url}/${toolConfig.repo}/blobs/${toolConfig.runtime.wasm.js_digest}`
+  const wasmBlob = await generateBlob(wasmUrl, "application/wasm", authorization)
+  const jsBlob = await generateBlob(jsUrl, "application/javascript", authorization)
+
+  return [wasmBlob, jsBlob]
+}
+
+export async function runMultipleTools(
+  toolsToRun,
+  inputFiles = [],
+  onToolFinished = () => {},
+) {
+
+  let aioliTools = []
+  for (const tool of toolsToRun) {
+    if (aioliTools.some((t) => t.program == tool.name)) continue
+
+    const [wasmBlob, jsBlob] = await getToolBlobs(tool.name)
+
+    aioliTools.push({
+      program: tool.name,
+      scriptUrl: jsBlob,
+      wasmUrl: wasmBlob,
+      loading: "lazy",
+      reinit: false,
+    })
+  }
+
+  const CLI = await new Aioli(aioliTools, {
+    printInterleaved: false,
+    debug: false,
+  });
+
+  for (const { name: fileName, data: fileData } of inputFiles) {
+    await CLI.mount({ name: fileName, data: fileData })
+  }
+
+  const results = {}
+  for (const tool of toolsToRun) {
+    const toolConfig = getTool(tool.name)
+    let args = tool.args
+
+    for (const inputConfig of toolConfig.io.inputs) {
+      const inputName = inputConfig.name;
+
+      if (!tool.inputs[inputName]) continue
+      const { node: outputNode, handle: outputHandle } = tool.inputs[inputName];
+
+      const inputFileName = `${outputNode}-${outputHandle}.txt`
+      // const inputFileExists = !!await CLI.cat(inputFileName)
+
+      if (inputConfig.mode == "file") {
+        if (inputConfig.flag) args.push(inputConfig.flag);
+        args.push(inputFileName)
+      }
+      else if (inputConfig.mode == "stdin") {
+        // TODO: not sure what would happen if more than one inputs is through stdin
+        // maybe we should make it so that is not possible in the recipe
+        CLI.stdin = await CLI.cat(inputFileName);
+      }
+    };
+
+    const { stdout, stderr } = await CLI.exec(tool.name, args)
+
+    // Artificial delay for testing purposes
+    // const delay = 1000;
+    // await new Promise(resolve => setTimeout(resolve, delay));
+
+    logger.log("[runMultipleTools]", tool.name, {
+      args,
+      stdout,
+      stderr,
+    });
+
+    for (const output of toolConfig.io.outputs) {
+      const outputFileName = `${tool.id}-${output.name}.txt`
+      let result = ""
+
+      if (output.mode === "stdout") {
+        await CLI.mount({ name: outputFileName, data: stdout })
+        result = stdout
+      }
+      else if (output.mode === "file") {
+        let fileData = "";
+
+        if (output.filename) {
+          fileData = await CLI.cat(output.filename);
+        }
+        else {
+          // TODO: the validate scripts should probably make sure that output to file
+          // always has the filename defined instead of allowing this
+          fileData = await CLI.cat(output.name + ".txt");
+        }
+
+        await CLI.mount({ name: outputFileName, data: fileData })
+        result = fileData
+      }
+
+      results[tool.id] ??= {};
+      results[tool.id][output.name] = result;
+    }
+
+    onToolFinished(tool.id, results[tool.id])
+  }
+
+  return results
+}
+
 export async function runTool(
   toolName,
   inputs,
@@ -303,7 +417,7 @@ export async function runTool(
     // const delay = 10000;
     // await new Promise(resolve => setTimeout(resolve, delay));
 
-    logger.log("[runTool]", toolName , {
+    logger.log("[runTool]", toolName, {
       toolName,
       args,
       cli_result,
@@ -334,4 +448,18 @@ export async function runTool(
   } catch (error) {
     console.error(`Error running tool ${toolName}:`, error);
   }
+}
+
+export function getToolInputByName(toolName, inputName) {
+  const tool = getTool(toolName)
+  if (!tool) return null
+
+  return getTool(toolName)?.io?.inputs?.find(i => i.name == inputName)?.types || null;
+}
+
+export function getToolOutputByName(toolName, outputName) {
+  const tool = getTool(toolName)
+  if (!tool) return null
+
+  return getTool(toolName)?.io?.outputs?.find(o => o.name == outputName)?.types || null;
 }

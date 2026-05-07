@@ -156,6 +156,12 @@ export function getAllTypeExampleInputs() {
   );
 }
 
+const defaultEdgeColor = '#999'
+
+export function getDefaultEdgeColor() {
+  return defaultEdgeColor;
+}
+
 export function getEdgeColor(typeId) {
-  return getTypeDefinition(typeId)?.edgeColor || '#999';
+  return getTypeDefinition(typeId)?.edgeColor || defaultEdgeColor;
 }

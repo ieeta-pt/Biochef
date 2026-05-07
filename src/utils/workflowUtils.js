@@ -6,9 +6,7 @@ export function sanitizeWorkflowNodes(nodes) {
     ...node,
     data: {
       ...node.data,
-      output: {},
       outputs: node.type == "inputWorkflowNode" ? node.data.outputs : {},
-      outputTypes: node.type == "inputWorkflowNode" ? node.data.outputTypes : {},
       is_running: false,
       runCalled: false
     },
@@ -22,7 +20,7 @@ export function isValidWorkflowConnection(sourceNode, sourceHandle, targetNode, 
 
   let sourceTypes = null;
   if (sourceNode.type == "inputWorkflowNode"){
-    sourceTypes = detectAllDataTypes(sourceNode.data.outputs["out"])
+    sourceTypes = detectAllDataTypes(sourceNode.data.outputs?.["out"])
   }
   else if (sourceNode.type === "workflowNode") {
     const toolConfig = getTool(sourceNode.data.label);

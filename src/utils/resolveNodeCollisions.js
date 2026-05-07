@@ -10,8 +10,8 @@ function getBoxesFromNodes(nodes, margin = 0) {
     boxes[i] = {
       x: node.position.x - margin,
       y: node.position.y - margin,
-      width: (node.width ?? node.measured?.width ?? 200) + margin * 2,
-      height: (node.height ?? node.measured?.height ?? 200) + margin * 2,
+      width: (node.width ?? node.measured?.width ?? 150) + margin * 2,
+      height: (node.height ?? node.measured?.height ?? 40) + margin * 2,
       node,
       moved: false,
     };
