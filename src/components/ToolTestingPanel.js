@@ -21,7 +21,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { getTool } from '../utils/toolUtils';
 import { DataTypeContext } from '../contexts/DataTypeContext';
 import { NotificationContext } from '../contexts/NotificationContext';
-import { runTool } from '../utils/toolUtils';
+import { runTools } from '../utils/toolUtils';
 import { detectDataType } from '../utils/detectDataType';
 import { processFile } from '../utils/fileProcessor';
 import { validateParameters, getToolHelpMessage } from '../utils/parameterUtils';
@@ -154,11 +154,11 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
         tourMoveNext();
         try {
             // Validate parameters before executing the tool
-            const { isValid, errors } = validateParameters(tool.name, parameters);
+            const { isValid, verrors } = validateParameters(tool.name, parameters);
             if (!isValid) {
                 // If validation fails, notify the user and cancel execution
                 showNotification('Please correct the parameters highlighted in red.', 'error');
-                setValidationErrors(errors);
+                setValidationErrors(verrors);
                 return;
             }
 
@@ -200,13 +200,28 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
                 inputData = '';
             }
 
+            // convert to format supported by runTools
+            const inputs = {}
+            for (const [key, value] of Object.entries(inputData)) {
+                inputs[key] = {
+                    mode: "text",
+                    value,
+                }
+            }
+            const toolInvocation = {
+                toolName: tool.name,
+                uniqueId: tool.name,
+                toolArguments: args,
+                inputs
+            }
+
             // Execute the tool
-            const result = await runTool(tool.name, inputData, args, toolParameterFiles);
-            const { outputs, error } = result;
-            setOutputData(outputs)
+            const {outputs, errors} = await runTools([toolInvocation]);
+            setOutputData(outputs[tool.name])
+            const error = errors[tool.name]
 
             // TODO: code below is very much hardcoded for how GTO works with the ERROR: at the start
-            // maybe this should be removed or altere to always show as an error since it wont work on other tools
+            // maybe this should be removed or altered to always show as an error since it wont work on other tools
 
             // Handle messages in stderr 
             if (error) {

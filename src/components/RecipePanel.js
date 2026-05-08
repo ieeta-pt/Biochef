@@ -6,7 +6,7 @@ import { WorkflowNode } from './nodes/WorkflowNode';
 import { OutputWorkflowNode } from './nodes/OutputWorkflowNode';
 import { InputWorkflowNode } from './nodes/InputWorkflowNode';
 import { WorkflowEdge } from './nodes/WorkflowEdge';
-import { loadTool, getTool, runMultipleTools } from '../utils/toolUtils';
+import { loadTool, getTool, runTools } from '../utils/toolUtils';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { getNodeHandles, isValidWorkflowConnection, sanitizeWorkflowNodes } from '../utils/workflowUtils';
 import logger from '../utils/logger';
@@ -490,11 +490,11 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
 
   async function runWorkflow(component) {
     if (!isValidWorkflowComponent(component)) {
-        showNotification(`Please fix the worklow connections before running`, "error")
-        return
+      showNotification(`Please fix the worklow connections before running`, "error")
+      return
     }
 
-    let toolsToRun = []
+    let toolInvocations = []
     for (const nodeId of component) {
       const node = getNode(nodeId)
       if (!node) throw "invalid node when trying to run workflow"
@@ -505,20 +505,23 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
         return
       }
 
-      const toolData = getTool(node.data.label)
+      const toolDefinition = getTool(node.data.label)
 
       let inputs = {}
       for (const edge of edges) {
         if (edge.target == nodeId) {
+          const sourceNode = getNode(edge.source)
+
           inputs[edge.targetHandle] = {
-            node: edge.source,
-            handle: edge.sourceHandle
+            mode: sourceNode.type == "inputWorkflowNode" ? "text" : "output",
+            value: sourceNode.type == "inputWorkflowNode" ?
+              sourceNode.data.outputs["out"] : [edge.source, edge.sourceHandle],
           }
         }
       }
 
       let args = []
-      toolData.parameters.forEach(param => {
+      toolDefinition.parameters.forEach(param => {
         const enabled = node.data.paramValues[param.name]?.enabled;
         if (!enabled) return;
 
@@ -533,22 +536,11 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
         }
       });
 
-      toolsToRun.push({
-        name: node.data.label,
-        id: node.id,
-        inputs,
-        args
-      })
-    }
-
-    let inputFiles = []
-    for (const nodeId of component) {
-      const node = getNode(nodeId)
-      if (node.type != "inputWorkflowNode") continue
-
-      inputFiles.push({
-        name: `${node.id}-out.txt`,
-        data: node.data.outputs["out"]
+      toolInvocations.push({
+        toolName: node.data.label,
+        uniqueId: node.id,
+        toolArguments: args,
+        inputs
       })
     }
 
@@ -558,11 +550,10 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
       }
     }
 
-    await runMultipleTools(
-      toolsToRun,
-      inputFiles,
-      (toolId, outputs) => {
-        updateNodeData(toolId, {
+    const { outputs, errors } = await runTools(
+      toolInvocations,
+      (nodeId, outputs) => {
+        updateNodeData(nodeId, {
           outputs,
           isRunning: false
         })
