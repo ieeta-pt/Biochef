@@ -85,7 +85,7 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
   useEffect(() => {
     if (!selectedNode) return;
     const node = nodes.find((n) => n.id === selectedNode.id);
-    if (JSON.stringify(node.data) !== JSON.stringify(selectedNode.data)) {
+    if (JSON.stringify(node?.data) !== JSON.stringify(selectedNode.data)) {
       updateNodeData(selectedNode.id, selectedNode.data);
     }
   }, [selectedNode?.data]);
