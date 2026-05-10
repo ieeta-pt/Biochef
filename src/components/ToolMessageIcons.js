@@ -9,70 +9,81 @@ import React from "react";
  * Renders info/error icons with continuous pulsing animation to draw user attention.
  * @param {{ info: string[], error: string[] }} messages
  */
-export default function ToolMessageIcons({ messages = {} }) {
-    const { info = [], error = [] } = messages;
-    if (info.length === 0 && error.length === 0) return null;
+export default function ToolMessageIcons({ messages = {}, sx = {}, size = 18, pulseEnabled = true }) {
 
     const pulse = keyframes`
-    0%, 100% { transform: scale(1); }
-    50%     { transform: scale(1.15); }
-  `;
+        0%, 100% { transform: scale(1); }
+        50%     { transform: scale(1.15); }
+    `;
+
+    const hasMessages = Object.values(messages).some(
+        ({ info = [], error = [] }) => info.length || error.length
+    );
+
+    if (!hasMessages) return null;
 
     return (
-        <Box display="flex" alignItems="center" ml={1}>
-            {info.length > 0 && (
-                <Tooltip
-                    title={
-                        <Box>
-                            <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>Info</Typography>
-                            {info.map((txt, i) => (
-                                <Typography key={`info-${i}`} variant="body2">{txt}</Typography>
-                            ))}
-                        </Box>
-                    }
-                    arrow
-                >
-                    <Box
-                        component="span"
-                        sx={{
-                            animation: `${pulse} 2s ease-in-out infinite`,
-                            display: 'flex',
-                            alignItems: 'center',
-                            mr: 0.5,
-                        }}
-                    >
-                        <InfoOutlinedIcon color="info" fontSize="small" />
-                    </Box>
-                </Tooltip>
-            )}
+        <Box display="flex" alignItems="center" sx={{ ml: 1, ...sx }}>
+            {Object.entries(messages).map(([type, { info = [], error = [] }]) => (
+                <React.Fragment key={type}>
+                    {info.length > 0 && (
+                        <Tooltip
+                            title={
+                                <Box>
+                                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+                                        {type} Info
+                                    </Typography>
 
-            {error.length > 0 && (
-                <Tooltip
-                    title={
-                        <Box>
-                            <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-                                Errors
-                            </Typography>
-                            {error.map((txt, i) => (
-                                <Typography key={`error-${i}`} variant="body2">{txt}</Typography>
-                            ))}
-                        </Box>
-                    }
-                    arrow
-                >
-                    <Box
-                        component="span"
-                        sx={{
-                            animation: `${pulse} 2s ease-in-out infinite`,
-                            display: 'flex',
-                            alignItems: 'center',
-                            mr: 0.5,
-                        }}
-                    >
-                        <ErrorOutlineIcon color="error" fontSize="small" />
-                    </Box>
-                </Tooltip>
-            )}
+                                    {info.map((txt, i) => (
+                                        <Typography key={`info-${type}-${i}`} variant="body2">{txt}</Typography>
+                                    ))}
+                                </Box>
+                            }
+                            arrow
+                        >
+                            <Box
+                                component="span"
+                                sx={{
+                                    animation: pulseEnabled ? `${pulse} 2s ease-in-out infinite` : 'none',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    mr: 0.5,
+                                }}
+                            >
+                                <InfoOutlinedIcon color="info" sx={{ fontSize: size }} />
+                            </Box>
+                        </Tooltip>
+                    )}
+
+                    {error.length > 0 && (
+                        <Tooltip
+                            title={
+                                <Box>
+                                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+                                        {type} Errors
+                                    </Typography>
+                                    {error.map((txt, i) => (
+                                        <Typography key={`error-${type}-${i}`} variant="body2">{txt}</Typography>
+                                    ))}
+                                </Box>
+                            }
+                            arrow
+                        >
+                            <Box
+                                component="span"
+                                sx={{
+                                    animation: pulseEnabled ? `${pulse} 2s ease-in-out infinite` : 'none',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    mr: 0.5,
+                                }}
+                            >
+                                <ErrorOutlineIcon color="error" sx={{ fontSize: size }} />
+                            </Box>
+                        </Tooltip>
+                    )}
+                </React.Fragment>
+            ))}
         </Box>
     );
 }

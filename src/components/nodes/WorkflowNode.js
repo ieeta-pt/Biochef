@@ -1,12 +1,14 @@
 import React, { memo, useEffect, useState } from 'react';
 
-import { Tooltip } from '@mui/material';
+import { Box } from '@mui/material';
 
 import { Handle, Position, useNodeConnections, useNodesData, useReactFlow } from '@xyflow/react';
 import { OneConnectionHandle } from './OneConnectionHandle';
 
-import { runTool, getTool } from '../../utils/toolUtils';
+import { getTool } from '../../utils/toolUtils';
 import { detectDataType } from '../../utils/detectDataType';
+
+import ToolMessageIcons from '../ToolMessageIcons';
 
 export const WorkflowNode = memo(({ id, data }) => {
   const { label, paramValues, outputs, repo } = data;
@@ -44,18 +46,42 @@ export const WorkflowNode = memo(({ id, data }) => {
       param.required && param.type != "flag" && !paramValues?.[param.name]?.value
     );
 
-    setMissingRequiredParameters(missingRequiredParameters)
-    updateNodeData(id, { canRun: !missingRequiredParameters })
+    const toolMessages = {
+      ...(data.toolMessages ?? {}),
+      Parameter: {
+        ...(data.toolMessages?.Parameter ?? {}),
+        error: [],
+      },
+    };
+
+    if (missingRequiredParameters) {
+      toolMessages["Parameter"].error = ["Missing Required Parameters"]
+    }
+
+    updateNodeData(id, { canRun: !missingRequiredParameters, toolMessages })
   }, [paramValues]);
 
   // check if the output is not of an expected type
   useEffect(() => {
+    const toolMessages = {
+      ...(data.toolMessages ?? {}),
+      Parameter: {
+        ...(data.toolMessages?.Parameter ?? {}),
+        info: [],
+      },
+    };
+
     for (const outputName in outputs) {
       const definedTypes = toolData.io.outputs.find(o => o.name === outputName).types
       const detectedType = detectDataType(data.outputs[outputName], definedTypes)
       const isInvalidOutputType = !definedTypes.includes(detectedType)
-      setInvalidOutputType(isInvalidOutputType)
+
+      if (isInvalidOutputType){
+        toolMessages["Parameter"].info.push(`Output "${outputName}" is of an unexpected type "${detectedType}"`)
+      }
     }
+
+    updateNodeData(id, {toolMessages})
   }, [outputs]);
 
   function renderInputHandles() {
@@ -97,29 +123,18 @@ export const WorkflowNode = memo(({ id, data }) => {
   return (
 
     <div className="react-flow__node-default" style={{ position: 'relative' }}>
-      <label>{label}</label>
+      <Box display="flex" alignItems="center" justifyContent="center">
+        <label>{label}</label>
+      </Box>
 
-      {(missingRequiredParameters || invalidOutputType) && (
-        <Tooltip
-          title={missingRequiredParameters ? 'Missing Required Parameters' : 'Invalid Output Type'}
-          placement="top-end"
-          arrow
-        >
-          <div
-            style={{
-              position: 'absolute',
-              top: 2,
-              right: 2,
-              width: '10px',
-              height: '10px',
-              borderRadius: '50%',
-              backgroundColor: missingRequiredParameters ? 'red' : 'yellow',
-              border: '2px solid #fff',
-            }}
-          />
-        </Tooltip>
-
-      )}
+      <Box display="flex" alignItems="center" justifyContent="center">
+        <ToolMessageIcons
+          messages={data.toolMessages}
+          size={12}
+          pulseEnabled={false}
+          sx={{ ml: 0.25, height: 12 }}
+        />
+      </Box>
 
       {/* Render input and output handles */}
       {renderInputHandles()}

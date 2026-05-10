@@ -552,9 +552,30 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
 
     const { outputs, errors } = await runTools(
       toolInvocations,
-      (nodeId, outputs) => {
+      (nodeId, outputs, error) => {
+        const messages = {
+          ...(getNode(nodeId).data.toolMessages ?? {}),
+          "Output": {},
+        };
+
+        if (error) {
+          const stderrLines = error.split('\n').map(line => line.trim()).filter(Boolean);
+
+          const hasOutput = Object.values(outputs).some(
+            value => value !== undefined && value !== null && value !== ''
+          );
+          const failed = error && !hasOutput
+
+          if (failed) {
+            messages["Output"].error = stderrLines;
+          } else {
+            messages["Output"].info = stderrLines;
+          }
+        }
+
         updateNodeData(nodeId, {
           outputs,
+          toolMessages: messages,
           isRunning: false
         })
       }

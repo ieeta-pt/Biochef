@@ -7,6 +7,7 @@ export function sanitizeWorkflowNodes(nodes) {
     data: {
       ...node.data,
       outputs: node.type == "inputWorkflowNode" ? node.data.outputs : {},
+      toolMessages: {},
       is_running: false,
       runCalled: false
     },

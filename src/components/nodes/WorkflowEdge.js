@@ -73,10 +73,13 @@ export function WorkflowEdge(props) {
       );
     }
 
-    // this should never happen because we check if it's a valid connection above
-    if (matchingTypes.length == 0) {
-      throw `connection between "${sourceNode.data.label}-${sourceHandleId}" and "${targetNode.data.label}-${targetHandleId}" somehow has now matching types`
-    }
+    // NOTE(andrade) this should never happen BUT 
+    // we have checks in the WorkflowNode to check if the output is not of the expected type, 
+    // and having those check show a warning is better than throwing an error
+    //
+    // if (matchingTypes.length == 0) {
+    //   throw `connection between "${sourceNode.data.label}-${sourceHandleId}" and "${targetNode.data.label}-${targetHandleId}" somehow has now matching types`
+    // }
 
     setEdgeColor(getEdgeColor(matchingTypes[0]));
     setEdgeLabel(matchingTypes.join(", "));

@@ -383,7 +383,7 @@ export async function runTools(
     }
 
     // call the callback function after invocation is done
-    onToolFinished(invocation.uniqueId, outputs[invocation.uniqueId])
+    onToolFinished(invocation.uniqueId, outputs[invocation.uniqueId], errors[invocation.uniqueId])
   }
 
   return {"outputs": outputs, "errors": errors}
