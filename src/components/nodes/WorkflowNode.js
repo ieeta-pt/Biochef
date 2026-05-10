@@ -1,12 +1,13 @@
 import React, { memo, useEffect, useState } from 'react';
 
-import { Tooltip } from '@mui/material';
+import { Box, Tooltip } from '@mui/material';
 
 import { Handle, Position, useNodeConnections, useNodesData, useReactFlow } from '@xyflow/react';
 import { OneConnectionHandle } from './OneConnectionHandle';
 
 import { runTool, getTool } from '../../utils/toolUtils';
 import { detectDataType } from '../../utils/detectDataType';
+import ToolMessageIcons from '../ToolMessageIcons';
 
 export const WorkflowNode = memo(({ id, data }) => {
   const { label, paramValues, repo } = data;
@@ -101,10 +102,20 @@ export const WorkflowNode = memo(({ id, data }) => {
       }
     });
 
-    updateNodeData(id, { is_running: true, outputTypes: {} });
-    const { outputs, error } = await runTool(toolData.name, inputs, args, {}, outputsConnected);
+    updateNodeData(id, { is_running: true, outputTypes: {}, toolMessages: { info: [], error: [] } });
+    const { outputs = {}, error, failed } = await runTool(toolData.name, inputs, args, {}, outputsConnected);
 
-    updateNodeData(id, { outputs, is_running: false, runCalled: false });
+    const messages = { info: [], error: [] };
+    if (error) {
+      const stderrLines = error.split('\n').map(line => line.trim()).filter(Boolean);
+      if (failed) {
+        messages.error = stderrLines;
+      } else {
+        messages.info = stderrLines;
+      }
+    }
+
+    updateNodeData(id, { outputs, is_running: false, runCalled: false, toolMessages: messages });
   }
 
   useEffect(() => {
@@ -172,7 +183,15 @@ export const WorkflowNode = memo(({ id, data }) => {
   return (
 
     <div className="react-flow__node-default" style={{ position: 'relative' }}>
-      <label>{label}</label>
+      <Box display="flex" alignItems="center" justifyContent="center">
+        <label>{label}</label>
+        <ToolMessageIcons
+          messages={data.toolMessages}
+          size={12}
+          pulseEnabled={false}
+          sx={{ ml: 0.25, height: 12 }}
+        />
+      </Box>
 
       {(invalidParameters || invalidOutputType) && (
         <Tooltip

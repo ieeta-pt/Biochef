@@ -329,9 +329,18 @@ export async function runTool(
       }
     }
 
-    return { "outputs": outputs, "error": error };
+    const hasOutput = Object.values(outputs).some(
+      value => value !== undefined && value !== null && value !== ''
+    );
+
+    return { "outputs": outputs, "error": error, "failed": Boolean(error && !hasOutput) };
 
   } catch (error) {
     console.error(`Error running tool ${toolName}:`, error);
+    return {
+      outputs: {},
+      error: error?.message || String(error),
+      failed: true,
+    };
   }
 }

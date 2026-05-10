@@ -32,7 +32,9 @@ export function WorkflowEdge(props) {
 
     if (!sourceNode || !targetNode) return;
 
-    const handleType = sourceHandleData.data.outputTypes?.[sourceHandleId];
+    const handleType = sourceHandleData?.data?.outputTypes?.[sourceHandleId];
+    const outputValue = sourceHandleData?.data?.outputs?.[sourceHandleId];
+    const hasOutput = outputValue !== undefined && outputValue !== null && outputValue !== "";
 
     const isValidConnection = isValidWorkflowConnection(
       sourceNode,
@@ -42,8 +44,14 @@ export function WorkflowEdge(props) {
     );
 
     const inputValidity = { ...(targetNode.data.inputValidity || {}) };
-    inputValidity[targetHandleId] = isValidConnection;
+    inputValidity[targetHandleId] = hasOutput && isValidConnection;
     updateNodeData(target, { inputValidity });
+
+    if (!hasOutput) {
+      setEdgeColor("#999");
+      setEdgeLabel("");
+      return;
+    }
 
     // compute colors here
     const selectedColor = getEdgeColor(handleType);
@@ -58,7 +66,8 @@ export function WorkflowEdge(props) {
 
   }, [
     target,
-    sourceHandleData.data.outputTypes,
+    sourceHandleData?.data?.outputs,
+    sourceHandleData?.data?.outputTypes,
   ]);
 
   const markerId = `marker-${id}`;

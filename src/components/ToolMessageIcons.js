@@ -9,7 +9,7 @@ import React from "react";
  * Renders info/error icons with continuous pulsing animation to draw user attention.
  * @param {{ info: string[], error: string[] }} messages
  */
-export default function ToolMessageIcons({ messages = {} }) {
+export default function ToolMessageIcons({ messages = {}, sx = {}, size = 18, pulseEnabled = true }) {
     const { info = [], error = [] } = messages;
     if (info.length === 0 && error.length === 0) return null;
 
@@ -19,7 +19,7 @@ export default function ToolMessageIcons({ messages = {} }) {
   `;
 
     return (
-        <Box display="flex" alignItems="center" ml={1}>
+        <Box display="flex" alignItems="center" sx={{ ml: 1, ...sx }}>
             {info.length > 0 && (
                 <Tooltip
                     title={
@@ -35,13 +35,13 @@ export default function ToolMessageIcons({ messages = {} }) {
                     <Box
                         component="span"
                         sx={{
-                            animation: `${pulse} 2s ease-in-out infinite`,
+                            animation: pulseEnabled ? `${pulse} 2s ease-in-out infinite` : 'none',
                             display: 'flex',
                             alignItems: 'center',
                             mr: 0.5,
                         }}
                     >
-                        <InfoOutlinedIcon color="info" fontSize="small" />
+                        <InfoOutlinedIcon color="info" sx={{ fontSize: size }} />
                     </Box>
                 </Tooltip>
             )}
@@ -63,13 +63,13 @@ export default function ToolMessageIcons({ messages = {} }) {
                     <Box
                         component="span"
                         sx={{
-                            animation: `${pulse} 2s ease-in-out infinite`,
+                            animation: pulseEnabled ? `${pulse} 2s ease-in-out infinite` : 'none',
                             display: 'flex',
                             alignItems: 'center',
                             mr: 0.5,
                         }}
                     >
-                        <ErrorOutlineIcon color="error" fontSize="small" />
+                        <ErrorOutlineIcon color="error" sx={{ fontSize: size }} />
                     </Box>
                 </Tooltip>
             )}
