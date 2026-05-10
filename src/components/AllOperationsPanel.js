@@ -55,7 +55,7 @@ const AllOperationsPanel = ({ onToolClick }) => {
 
             setExpandedCategories(prev => ({
                 ...prev,
-                [toolConfig.category]: true,
+                [toolConfig?.category]: true,
             }));
         }
     }, [tourIsActive]);
