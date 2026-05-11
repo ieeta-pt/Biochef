@@ -18,8 +18,8 @@ const ToolParameterSection = ({ toolConfig, parameters, validationErrors, helpMe
 
   const renderParam = (paramName, isOptional = false) => {
     const paramConfig = toolConfig.parameters.find((p) => p.name === paramName);
-    const paramValue = parameters[paramName]?.value ?? "";
-    const paramActive = parameters[paramName]?.enabled ?? false;
+    const paramValue = parameters?.[paramName]?.value ?? "";
+    const paramActive = parameters?.[paramName]?.enabled ?? false;
     const error = validationErrors[paramName] || '';
     const flagHelpMessages = (helpMessages?.flags) || {};
 

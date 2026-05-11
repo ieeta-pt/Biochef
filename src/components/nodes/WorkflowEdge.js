@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { BaseEdge, getBezierPath, useNodesData, useReactFlow } from '@xyflow/react';
 import { isValidWorkflowConnection } from '../../utils/workflowUtils';
-import { getEdgeColor } from '../../utils/typeDefinitions';
+import { getDefaultEdgeColor, getEdgeColor } from '../../utils/typeDefinitions';
+import { getTool, getToolInputByName, getToolOutputByName } from '../../utils/toolUtils';
+import { detectAllDataTypes } from '../../utils/detectDataType';
 
 export function WorkflowEdge(props) {
   const {
@@ -11,7 +13,7 @@ export function WorkflowEdge(props) {
     target, targetHandleId, targetPosition, targetX, targetY
   } = props;
 
-  const { getNode, updateNodeData } = useReactFlow();
+  const { getNode } = useReactFlow();
   const sourceHandleData = useNodesData(source);
 
   const [edgeColor, setEdgeColor] = useState("#999");
@@ -32,8 +34,6 @@ export function WorkflowEdge(props) {
 
     if (!sourceNode || !targetNode) return;
 
-    const handleType = sourceHandleData.data.outputTypes?.[sourceHandleId];
-
     const isValidConnection = isValidWorkflowConnection(
       sourceNode,
       sourceHandleId,
@@ -41,24 +41,56 @@ export function WorkflowEdge(props) {
       targetHandleId
     );
 
-    const inputValidity = { ...(targetNode.data.inputValidity || {}) };
-    inputValidity[targetHandleId] = isValidConnection;
-    updateNodeData(target, { inputValidity });
+    if (!isValidConnection) {
+      setEdgeColor("#ff0000")
+      setEdgeLabel("❌")
+      return
+    }
 
-    // compute colors here
-    const selectedColor = getEdgeColor(handleType);
+    const sourceNodeOutput = sourceHandleData.data.outputs?.[sourceHandleId];
+    if (sourceNodeOutput == undefined) {
+      setEdgeColor(getDefaultEdgeColor())
+      setEdgeLabel("")
+      return
+    }
 
-    const nextColor = isValidConnection ? selectedColor : "#ff0000";
-    const nextLabel = isValidConnection
-      ? (handleType && handleType !== "UNKNOWN" ? handleType : label)
-      : "❌";
+    const sourceNodeDetectedOutputTypes = detectAllDataTypes(sourceNodeOutput)
 
-    setEdgeColor(nextColor);
-    setEdgeLabel(nextLabel);
+    // if it's an output node the matching types is just all the source node types
+    let matchingTypes = []
+    if (targetNode.type == "workflowNode") {
+      const targetNodeInputTypes = getToolInputByName(targetNode.data.label, targetHandleId)
 
+      matchingTypes = sourceNodeDetectedOutputTypes.filter(type =>
+        targetNodeInputTypes.includes(type)
+      );
+    }
+    else {
+      let sourceNodeOutputTypes = undefined
+      if (sourceNode.type == "workflowNode") {
+        sourceNodeOutputTypes = getToolOutputByName(sourceNode.data.label, sourceHandleId)
+      }
+      else {
+        sourceNodeOutputTypes = sourceNodeDetectedOutputTypes
+      }
+
+      matchingTypes = sourceNodeOutputTypes.filter(type =>
+        sourceNodeDetectedOutputTypes.includes(type)
+      );
+    }
+
+    // NOTE(andrade) this should never happen BUT 
+    // we have checks in the WorkflowNode to check if the output is not of the expected type, 
+    // and having those check show a warning is better than throwing an error
+    //
+    // if (matchingTypes.length == 0) {
+    //   throw `connection between "${sourceNode.data.label}-${sourceHandleId}" and "${targetNode.data.label}-${targetHandleId}" somehow has now matching types`
+    // }
+
+    setEdgeColor(getEdgeColor(matchingTypes[0]));
+    setEdgeLabel(matchingTypes.join(", "));
   }, [
-    target,
-    sourceHandleData.data.outputTypes,
+    sourceHandleData.data.outputs,
   ]);
 
   const markerId = `marker-${id}`;
@@ -111,7 +143,7 @@ export function WorkflowEdge(props) {
       <circle
         r="2.5"
         fill={edgeColor}
-        style={{ opacity: sourceHandleData?.data?.is_running ? 1 : 0 }}
+        style={{ opacity: sourceHandleData?.data?.isRunning ? 1 : 0 }}
       >
         <animateMotion dur="1s" repeatCount="indefinite" path={edgePath} />
       </circle>

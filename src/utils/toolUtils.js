@@ -10,10 +10,10 @@ const REGISTRY_PASSWORD = process.env.REGISTRY_PASSWORD;
 
 const IS_GHCR = REGISTRY_URL?.includes("ghcr.io") || false;
 
+// TODO: use ID instead of tool name
 export function getTool(toolName) {
   if (!toolMap.has(toolName)) {
-    // TODO: make a logging utility
-    console.error(`[toolUtils.getTool] Tool ${toolName} is not loaded.`)
+    logger.error(`[toolUtils.getTool] Tool ${toolName} is not loaded.`)
     return;
   }
 
@@ -228,15 +228,8 @@ async function generateBlob(url, type, authorization) {
   }
 }
 
-export async function runTool(
-  toolName,
-  inputs,
-  args,
-  files = {},
-  outputsToConsider = [], // names of outputs to consider 
-) {
+async function getToolBlobs(toolName) {
   const toolConfig = getTool(toolName)
-  const toolProgram = toolConfig.program || toolName
 
   const { authorization, base_url } = await getAuthorizationAndBaseUrl(toolConfig.repo);
 
@@ -245,93 +238,175 @@ export async function runTool(
   const wasmBlob = await generateBlob(wasmUrl, "application/wasm", authorization)
   const jsBlob = await generateBlob(jsUrl, "application/javascript", authorization)
 
-  try {
-    const CLI = await new Aioli([{
-      program: toolProgram,
-      // urlPrefix: `${window.location.origin}/wasm/${toolConfig.tool}//${toolConfig.version}/`,
+  return [wasmBlob, jsBlob]
+}
+
+/*
+ToolInvocation = {
+  toolName: string
+  // Name of the tool to run
+
+  uniqueId: string
+  // Unique id for this execution
+  // Two invocations of the same tool need to have different ids
+
+  toolArguments: string[]
+  // Arguments to pass directly to the tool
+
+  inputs: {
+    [inputName]: {
+      mode: "text" | "output"
+      // How the input value is resolved
+      // "text" - input comes from the `value` below
+      // "output" - input comes from the output of a previous invocation
+
+      value: string | [string, string]
+      // Changes depending on the `mode` above
+      // mode = "text"   → string value
+      // mode = "output" → [sourceTool, sourceToolOutputName]
+    }
+  }
+}
+*/
+export async function runTools(
+  toolInvocations,
+  onToolFinished = () => { },
+) {
+  let outputs = {}
+  let errors = {}
+
+  // prepare tools to be loaded by aioli
+  let aioliTools = []
+  for (const invocation of toolInvocations) {
+    const toolAlreadyAdded = aioliTools.some((t) => t.program == invocation.toolName)
+    if (toolAlreadyAdded) continue
+
+    const [wasmBlob, jsBlob] = await getToolBlobs(invocation.toolName)
+
+    aioliTools.push({
+      // TODO(andrade) look again into what each argument does
+      program: invocation.toolName,
       scriptUrl: jsBlob,
       wasmUrl: wasmBlob,
       loading: "lazy",
       reinit: false,
-    }], {
-      printInterleaved: false,
-      debug: false,
-    });
+    })
+  }
 
-    // create necessary files
-    if (files && Object.keys(files).length > 0) {
-      await CLI.mount(Object.values(files));
+  // load tools
+  const CLI = await new Aioli(aioliTools, {
+    // TODO(andrade) look again into what each argument does
+    printInterleaved: false,
+    debug: false,
+  });
+
+  // 1. Prepare the inputs
+  for (const invocation of toolInvocations) {
+    const toolDefinition = getTool(invocation.toolName)
+    let args = invocation.toolArguments
+
+    for (const inputDefinition of toolDefinition.io.inputs) {
+      if (!invocation.inputs[inputDefinition.name]) continue
+      const { mode, value } = invocation.inputs[inputDefinition.name];
+
+      let inputFileName = undefined
+      let stdinValue = undefined
+
+      if (mode === "text") {
+        if (inputDefinition.mode === "file") {
+          inputFileName = `input-${invocation.uniqueId}-${inputDefinition.name}.txt`
+        }
+        else if (inputDefinition.mode === "stdin") {
+          stdinValue = value
+        }
+      }
+      else if (mode === "output") {
+        const [source, sourceOutput] = value
+        inputFileName = `${source}-${sourceOutput}.txt`
+
+        if (inputDefinition.mode === "stdin") {
+          stdinValue = await CLI.cat(inputFileName)
+        }
+      }
+
+      if (inputDefinition.mode === "file") {
+        await CLI.mount({ name: inputFileName, data: value })
+
+        if (inputDefinition.flag) args.push(inputDefinition.flag)
+        args.push(inputFileName)
+      }
+      else if (inputDefinition.mode === "stdin") {
+        CLI.stdin = stdinValue
+      }
+    };
+
+    for (const outputDefinition of toolDefinition.io.outputs) {
+      if (outputDefinition.mode !== "file" || !outputDefinition.flag) continue
+
+      const outputTarget = outputDefinition.filename ?? `${outputDefinition.name}.txt`
+      args.push(outputDefinition.flag)
+      args.push(outputTarget)
     }
 
-    for (const inputConfig of toolConfig.io.inputs) {
-      const inputName = inputConfig.name;
-      const inputValue = inputs[inputName];
+    // 2. Run the tool
+    const { stdout, stderr } = await CLI.exec(invocation.toolName, args)
+    errors[invocation.uniqueId] = stderr
 
-      if (!inputValue) continue
-
-      const fileName = `${inputName}.txt`
-
-      if (inputConfig.mode == "file") {
-        await CLI.mount({ name: fileName, data: inputValue })
-        if (inputConfig.flag) args.push(inputConfig.flag);
-        args.push(fileName)
-      }
-      else if (inputConfig.mode == "stdin") {
-        // TODO: check if only one has stdin? or maybe add them?
-        CLI.stdin = inputValue;
-      }
-    };
-
-    for (const output of toolConfig.io.outputs) {
-      if (outputsToConsider != [] && !outputsToConsider.includes(output.name)) {
-        continue;
-      }
-      if (output.mode == "file" && !output.filename) {
-        const fileName = `${output.name}.txt`
-        // await CLI.mount({ name: fileName, data: "" })
-
-        if (output.flag) args.push(output.flag);
-        args.push(fileName)
-      }
-    };
-
-    // let cli_result = { stdout: tool.stdout, stderr: tool.stderr };
-    const cli_result = await CLI.exec(toolProgram, args);
-    const error = cli_result.stderr
-
+    logger.log("[runMultipleTools]", invocation.toolName, {
+      args,
+      stdout,
+      stderr,
+    });
     // Artificial delay for testing purposes
-    // const delay = 10000;
+    // const delay = 1000;
     // await new Promise(resolve => setTimeout(resolve, delay));
 
-    logger.log("[runTool]", toolName , {
-      toolName,
-      args,
-      cli_result,
-      inputs
-    });
+    // 3. Use outputs to save results and prepare files for the next invocations
+    for (const outputDefinition of toolDefinition.io.outputs) {
+      const outputFileName = `${invocation.uniqueId}-${outputDefinition.name}.txt`
+      let result = ""
 
-    // read output files if tool outputs to a file
-    const ignoreList = [".", ".."];
-    const outputs = {};
-    for (const output of toolConfig.io.outputs) {
-      if (output.mode === "stdout") {
-        outputs[output.name] = cli_result.stdout; // TODO: stderr
+      if (outputDefinition.mode === "stdout") {
+        await CLI.mount({ name: outputFileName, data: stdout })
+        result = stdout
       }
-      else if (output.mode === "file") {
+      else if (outputDefinition.mode === "file") {
         let fileData = "";
-        if (output.filename) {
-          fileData = await CLI.cat(output.filename);
+
+        if (outputDefinition.filename) {
+          fileData = await CLI.cat(outputDefinition.filename);
         }
         else {
-          fileData = await CLI.cat(output.name + ".txt");
+          // TODO: the validate scripts should probably make sure that output to file
+          // always has the filename defined instead of allowing this
+          fileData = await CLI.cat(outputDefinition.name + ".txt");
         }
-        outputs[output.name] = fileData;
+
+        await CLI.mount({ name: outputFileName, data: fileData })
+        result = fileData
       }
+
+      outputs[invocation.uniqueId] ??= {};
+      outputs[invocation.uniqueId][outputDefinition.name] = result;
     }
 
-    return { "outputs": outputs, "error": error };
-
-  } catch (error) {
-    console.error(`Error running tool ${toolName}:`, error);
+    // call the callback function after invocation is done
+    onToolFinished(invocation.uniqueId, outputs[invocation.uniqueId], errors[invocation.uniqueId])
   }
+
+  return {"outputs": outputs, "errors": errors}
+}
+
+export function getToolInputByName(toolName, inputName) {
+  const tool = getTool(toolName)
+  if (!tool) return null
+
+  return getTool(toolName)?.io?.inputs?.find(i => i.name == inputName)?.types || null;
+}
+
+export function getToolOutputByName(toolName, outputName) {
+  const tool = getTool(toolName)
+  if (!tool) return null
+
+  return getTool(toolName)?.io?.outputs?.find(o => o.name == outputName)?.types || null;
 }

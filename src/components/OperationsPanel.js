@@ -23,7 +23,6 @@ import { DataTypeContext } from '../contexts/DataTypeContext';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { ValidationErrorsContext } from '../contexts/ValidationErrorsContext';
 import { TourContext } from '../contexts/TourContext';
-import { getCompatibleTools } from '../utils/compatibility';
 import { getToolsByCategory, getTool } from '../utils/toolUtils';
 import { detectAllDataTypes } from '../utils/detectDataType';
 
@@ -94,27 +93,28 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
         return matchesSearch;
       }
 
+      const hasNoInputs = getTool(op.name).inputTypes == 0
       if (!hasNodeSelected) {
-        return true;
+        return hasNoInputs;
       }
-      
+
       return matchesType;
     });
   };
 
   // Determine compatible tools
-  const compatibleTools = useMemo(() => {
-    if (isWorkflowEmpty) {
-      // Execute getCompatibleTools even if dataType is 'UNKNOWN' when the workflow is empty
-      const compatible = getCompatibleTools(dataType, isWorkflowEmpty, workflow);
-      return new Set(compatible.map((tool) => tool.name));
-    }
+  // const compatibleTools = useMemo(() => {
+  //   if (isWorkflowEmpty) {
+  //     // Execute getCompatibleTools even if dataType is 'UNKNOWN' when the workflow is empty
+  //     const compatible = getCompatibleTools(dataType, isWorkflowEmpty, workflow);
+  //     return new Set(compatible.map((tool) => tool.name));
+  //   }
 
-    if (!dataType || dataType === 'UNKNOWN') return new Set();
-    const compatible = getCompatibleTools(dataType, isWorkflowEmpty, workflow);
+  //   if (!dataType || dataType === 'UNKNOWN') return new Set();
+  //   const compatible = getCompatibleTools(dataType, isWorkflowEmpty, workflow);
 
-    return new Set(compatible.map((tool) => tool.name));
-  }, [dataType, isWorkflowEmpty, workflow]);
+  //   return new Set(compatible.map((tool) => tool.name));
+  // }, [dataType, isWorkflowEmpty, workflow]);
 
   useEffect(() => {
     tourRegisterSteps("w-operations", [
@@ -138,17 +138,15 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
 
   // Expand categories with available tools
   useEffect(() => {
-    if (insertAtIndex === null) {
-      const newExpandedCategories = {};
-      Object.entries(getToolsByCategory()).forEach(([category, operations]) => {
-        const filteredOps = filterOperations(operations).filter((op) => compatibleTools.has(op.name));
-        if (filteredOps.length > 0) {
-          newExpandedCategories[category] = true;
-        }
-      });
-      setExpandedCategories(newExpandedCategories);
-    }
-  }, [searchTerm, compatibleTools, insertAtIndex]);
+    const newExpandedCategories = {};
+    Object.entries(getToolsByCategory()).forEach(([category, operations]) => {
+      const filteredOps = filterOperations(operations)
+      if (filteredOps.length > 0) {
+        newExpandedCategories[category] = true;
+      }
+    });
+    setExpandedCategories(newExpandedCategories);
+  }, [selectedNodeTypes, searchTerm, insertAtIndex]);
 
   useEffect(() => {
     if (insertAtIndex !== null && filteredTools.length > 0) {
@@ -280,12 +278,6 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
       <List sx={{ overflowY: 'auto', flexGrow: 1 }}>
         {Object.entries(getToolsByCategory()).map(([category, operations]) => {
           const filteredOps = filterOperations(operations)
-          // const filteredOps = insertAtIndex !== null
-          //   ? operations.filter((op) =>
-          //     filteredTools.some((tool) => tool.name === op.name)
-          //   )
-          //   : filterOperations(operations).filter((op) => compatibleTools.has(op.name));
-          // if (filteredOps.length === 0 && searchTerm !== '') return null;
 
           return (
             <React.Fragment key={category}>
@@ -296,20 +288,27 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
               <Collapse in={expandedCategories[category] || searchTerm !== ''} timeout="auto" unmountOnExit>
                 <List component="div" disablePadding>
                   {filteredOps.map((operation) => {
+                    const hasNoInput = getTool(operation.name).inputTypes.length == 0
+
                     const matchesType =
                       operation.inputTypes?.some((type) =>
                         selectedNodeTypes.includes(type)
-                      ) && selectedNode?.type != "outputWorkflowNode";
+                      ) && selectedNode?.type !== "outputWorkflowNode";
+
+                    const isDisabled = !hasNoInput && (!selectedNode || !matchesType);
 
                     let tooltipContent;
-                    if (!selectedNode || selectedNode.type == "outputWorkflowNode") {
-                      tooltipContent = "Please select a node to be able to add new tools to the workflow"
+                    if (hasNoInput && !selectedNode) {
+                      tooltipContent = "";
+                    }
+                    else if (!selectedNode || selectedNode.type === "outputWorkflowNode") {
+                      tooltipContent = "Please select a node to be able to add new tools to the workflow";
                     }
                     else if (!matchesType) {
                       tooltipContent = "This tool is not compatible with the selected node";
                     }
                     else {
-                      tooltipContent = operation.description
+                      tooltipContent = operation.description;
                     }
 
                     return (
@@ -323,15 +322,16 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
                           </React.Fragment>
                         }
                         placement="right"
+                        disableHoverListener={tooltipContent === ""}
                       >
                         <span>
                           <ListItemButton
-                            disabled={!matchesType}
+                            disabled={isDisabled}
                             sx={{
                               pl: 4,
-                              bgcolor: (theme) => alpha(theme.palette.primary.main, 0.2), // Use primary color with 10% opacity
+                              bgcolor: (theme) => alpha(theme.palette.primary.main, 0.2),
                               '&:hover': {
-                                bgcolor: (theme) => alpha(theme.palette.primary.main, 0.4), // Slightly darker on hover
+                                bgcolor: (theme) => alpha(theme.palette.primary.main, 0.4),
                               },
                             }}
                             data-tour={operation.name === "fasta_to_seq" ? "add-operation" : undefined}
@@ -339,7 +339,6 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
                               setIsLoading(true);
                               if (insertAtIndex !== null && addingATool) {
                                 onAddOperation(operation.name, insertAtIndex);
-                                // setInsertAtIndex(null);
                                 setFilteredTools([]);
                                 setAddingATool(false);
                                 showNotification('Tool added successfully!', 'success');

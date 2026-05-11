@@ -1,38 +1,27 @@
 import React, { memo, useEffect, useState } from 'react';
 
-import { Tooltip } from '@mui/material';
+import { Box } from '@mui/material';
 
 import { Handle, Position, useNodeConnections, useNodesData, useReactFlow } from '@xyflow/react';
 import { OneConnectionHandle } from './OneConnectionHandle';
 
-import { runTool, getTool } from '../../utils/toolUtils';
+import { getTool } from '../../utils/toolUtils';
 import { detectDataType } from '../../utils/detectDataType';
 
+import ToolMessageIcons from '../ToolMessageIcons';
+
 export const WorkflowNode = memo(({ id, data }) => {
-  const { label, paramValues, repo } = data;
+  const { label, paramValues, outputs, repo } = data;
 
+  const { updateNodeData } = useReactFlow();
 
-  const { updateNodeData, getNode } = useReactFlow();
-
-  const toolData = getTool(label) // TODO: use ID instead of tool name
+  const toolData = getTool(label)
   const { inputs: toolInputs = [], outputs: toolOutputs = [] } = toolData.io ?? {};
 
-  useEffect(() => {
-    if (!repo && toolData?.repo) {
-      updateNodeData(id, { repo: toolData.repo });
-    }
-  }, [repo, toolData?.repo, id, updateNodeData]);
-
-  const inputConnections = useNodeConnections({ handleType: 'target' });
-  const inputConnectionsData = useNodesData(inputConnections.map(conn => conn.source));
-
-  const outputConnections = useNodeConnections({ handleType: 'source' });
-  const outputsConnected = outputConnections.map(output => output.sourceHandle);
-
   const [invalidOutputType, setInvalidOutputType] = useState(false);
-  // TODO: check parameters before running because of agent
-  const [invalidParameters, setInvalidParameters] = useState(false)
+  const [missingRequiredParameters, setMissingRequiredParameters] = useState(false)
 
+  // init
   useEffect(() => {
     if (!paramValues) {
       const initialParamValues = {};
@@ -46,92 +35,54 @@ export const WorkflowNode = memo(({ id, data }) => {
 
       updateNodeData(id, { paramValues: initialParamValues });
     }
+    if (!repo) {
+      updateNodeData(id, { repo: toolData.repo });
+    }
   }, []);
 
-  async function handleRunTool() {
-    const inputValidity = data.inputValidity || {};
-    const hasInvalidInputs = Object.values(inputValidity).some(v => v === false);
-    if (hasInvalidInputs) {
-      updateNodeData(id, { outputs: {}, outputTypes: {} })
-      return;
-    }
-
-    // Merge each input connection with its corresponding source node
-    const connections = inputConnections.map(conn => ({
-      ...conn,
-      sourceNode: inputConnectionsData?.find(n => n.id === conn.source)
-    }));
-
-    if (!connections.length) return;
-
-    const inputs = {};
-    connections.forEach(({ sourceNode, sourceHandle, targetHandle }) => {
-      inputs[targetHandle] = sourceNode.data.outputs[sourceHandle];
-    });
-
-    const allInputsEmpty = Object.values(inputs).every(value =>
-      value === "" || value === undefined || value === null
-    );
-
-    // this is to prevent the tools from running right after loading from localstorage
-    if (allInputsEmpty && Object.keys(data.outputs).length === 0) return;
-
+  // check if required parameters are not filled in
+  useEffect(() => {
     const missingRequiredParameters = toolData.parameters?.some(param =>
-      param.required && param.type != "flag" && (paramValues[param.name]?.value === "" || paramValues[param.name]?.value === undefined || paramValues[param.name]?.value === null)
+      param.required && param.type != "flag" && !paramValues?.[param.name]?.value
     );
 
-    setInvalidParameters(missingRequiredParameters)
-    if (missingRequiredParameters) {
-      updateNodeData(id, { outputs: {}, outputTypes: {} })
-      return
+    const toolMessages = {
+      ...(data.toolMessages ?? {}),
+      Parameter: {
+        ...(data.toolMessages?.Parameter ?? {}),
+        error: [],
+      },
     };
 
-    const args = [];
-    toolData.parameters.forEach(param => {
-      const enabled = paramValues[param.name].enabled;
-      if (!enabled) return;
+    if (missingRequiredParameters) {
+      toolMessages["Parameter"].error = ["Missing Required Parameters"]
+    }
 
-      const value = paramValues[param.name].value;
+    updateNodeData(id, { canRun: !missingRequiredParameters, toolMessages })
+  }, [paramValues]);
 
-      if (param.type === 'flag') {
-        args.push(param.flag);
+  // check if the output is not of an expected type
+  useEffect(() => {
+    const toolMessages = {
+      ...(data.toolMessages ?? {}),
+      Parameter: {
+        ...(data.toolMessages?.Parameter ?? {}),
+        info: [],
+      },
+    };
+
+    for (const outputName in outputs) {
+      const definedTypes = toolData.io.outputs.find(o => o.name === outputName).types
+      const detectedType = detectDataType(data.outputs[outputName], definedTypes)
+      const isInvalidOutputType = !definedTypes.includes(detectedType)
+
+      if (isInvalidOutputType){
+        toolMessages["Parameter"].info.push(`Output "${outputName}" is of an unexpected type "${detectedType}"`)
       }
-      else if (value !== '' && value !== undefined) {
-        param.flag ? args.push(param.flag, value) : args.push(value);
-      }
-    });
-
-    updateNodeData(id, { is_running: true, outputTypes: {} });
-    const { outputs, error } = await runTool(toolData.name, inputs, args, {}, outputsConnected);
-
-    updateNodeData(id, { outputs, is_running: false, runCalled: false });
-  }
-
-  useEffect(() => {
-    if (data.runCalled && !data.is_running) {
-      updateNodeData(id, { runCalled: false })
-      handleRunTool()
     }
-  }, [data]);
 
-  useEffect(() => {
-    if (!inputConnections.every(conn => getNode(conn.source).type === "inputWorkflowNode")) {
-      handleRunTool();
-    }
-  }, [data.inputValidity, paramValues, inputConnections]);
-
-  useEffect(() => {
-    const outputTypes = {};
-    for (const key in data.outputs) {
-      if (!outputsConnected.includes(key)) continue;
-      const definedTypes = toolData.io.outputs.find(o => o.name === key).types
-      const detectedType = detectDataType(data.outputs[key], definedTypes)
-      setInvalidOutputType(!definedTypes.includes(detectedType))
-
-      outputTypes[key] = detectedType;
-    }
-    updateNodeData(id, { outputTypes })
-  }, [data.outputs]);
+    updateNodeData(id, {toolMessages})
+  }, [outputs]);
 
   function renderInputHandles() {
     return toolInputs.map((input, idx) => (
@@ -172,29 +123,18 @@ export const WorkflowNode = memo(({ id, data }) => {
   return (
 
     <div className="react-flow__node-default" style={{ position: 'relative' }}>
-      <label>{label}</label>
+      <Box display="flex" alignItems="center" justifyContent="center">
+        <label>{label}</label>
+      </Box>
 
-      {(invalidParameters || invalidOutputType) && (
-        <Tooltip
-          title={invalidParameters ? 'Invalid Parameters' : 'Invalid Output Type'}
-          placement="top-end"
-          arrow
-        >
-          <div
-            style={{
-              position: 'absolute',
-              top: 2,
-              right: 2,
-              width: '10px',
-              height: '10px',
-              borderRadius: '50%',
-              backgroundColor: invalidParameters ? 'red' : 'yellow',
-              border: '2px solid #fff',
-            }}
-          />
-        </Tooltip>
-
-      )}
+      <Box display="flex" alignItems="center" justifyContent="center">
+        <ToolMessageIcons
+          messages={data.toolMessages}
+          size={12}
+          pulseEnabled={false}
+          sx={{ ml: 0.25, height: 12 }}
+        />
+      </Box>
 
       {/* Render input and output handles */}
       {renderInputHandles()}

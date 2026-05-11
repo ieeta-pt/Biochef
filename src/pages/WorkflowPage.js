@@ -18,7 +18,7 @@ import { DataTypeContext } from '/src/contexts/DataTypeContext';
 import { loadToolIndex, loadTool } from '../utils/toolUtils';
 import ToolParameterSection from '../components/ToolParameterSection';
 import ToolOutputPanel from '../components/ToolOutputPanel'
-import { detectDataType } from '../utils/detectDataType';
+import { detectAllDataTypes } from '../utils/detectDataType';
 
 const WorkflowPage = () => {
   const recipePanelRef = useRef();
@@ -82,7 +82,7 @@ const WorkflowPage = () => {
   };
 
   const handleUpdateSelectedInputNode = (text) => {
-    updateSelectedNodeData({ outputs: { "out": text }, outputTypes: { "out": detectDataType(text) } })
+    updateSelectedNodeData({ outputs: { "out": text } })
   };
 
   function handleToggleParam(name) {
