@@ -474,7 +474,7 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
   function isValidWorkflowComponent(component) {
     for (const edge of edges) {
       if (!component.includes(edge.source) || !component.includes(edge.target)) continue
-      
+
       const valid = isValidWorkflowConnection(
         getNode(edge.source),
         edge.sourceHandle,
@@ -542,6 +542,11 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
         toolArguments: args,
         inputs
       })
+    }
+
+    if (toolInvocations.length == 0) {
+      showNotification(`Cannot run workflow with no tools`, "error")
+      return
     }
 
     for (const nodeId of component) {
@@ -757,6 +762,9 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
       <ViewportPortal>
         {renderWorklowBoxes && getWorklowComponents().map((component, idx) => {
           const bounds = getComponentBounds(component);
+          if (!component.some((n) => getNode(n)?.type === "workflowNode")) {
+            return
+          }
 
           return (
             <React.Fragment key={idx}>
