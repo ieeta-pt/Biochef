@@ -340,6 +340,14 @@ export async function runTools(
       }
     };
 
+    for (const outputDefinition of toolDefinition.io.outputs) {
+      if (outputDefinition.mode !== "file" || !outputDefinition.flag) continue
+
+      const outputTarget = outputDefinition.filename ?? `${outputDefinition.name}.txt`
+      args.push(outputDefinition.flag)
+      args.push(outputTarget)
+    }
+
     // 2. Run the tool
     const { stdout, stderr } = await CLI.exec(invocation.toolName, args)
     errors[invocation.uniqueId] = stderr
