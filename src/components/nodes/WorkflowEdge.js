@@ -66,7 +66,13 @@ export function WorkflowEdge(props) {
       );
     }
     else {
-      const sourceNodeOutputTypes = getToolOutputByName(sourceNode.data.label, sourceHandleId)
+      let sourceNodeOutputTypes = undefined
+      if (sourceNode.type == "workflowNode") {
+        sourceNodeOutputTypes = getToolOutputByName(sourceNode.data.label, sourceHandleId)
+      }
+      else {
+        sourceNodeOutputTypes = sourceNodeDetectedOutputTypes
+      }
 
       matchingTypes = sourceNodeOutputTypes.filter(type =>
         sourceNodeDetectedOutputTypes.includes(type)
