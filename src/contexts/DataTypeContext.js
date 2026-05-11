@@ -53,6 +53,27 @@ export const DataTypeProvider = ({ children }) => {
         }
         return false;
 
+      case 'EFA':
+        const efaSections = trimmedData
+          .split(/(?=^<)/m)
+          .map(section => section.trim())
+          .filter(Boolean);
+        const isEFAValid = efaSections.length > 0 && efaSections.every(section => {
+          const sectionLines = section.split(/\r?\n/);
+          if (!sectionLines[0].startsWith('<') || sectionLines.length < 3) return false;
+          const fastaBlocks = sectionLines.slice(1).join('\n').split('>').slice(1);
+          return fastaBlocks.length > 1 && fastaBlocks.every(block => {
+            const lines = block.split(/\r?\n/).filter(line => line.trim() !== '');
+            if (lines.length < 2) return false;
+            const sequence = lines.slice(1).join('');
+            return /^[ACDEFGHIKLMNPQRSTVWYacdefghiklmnpqrstvwy*.-]+$/.test(sequence.trim());
+          });
+        });
+        if (!isEFAValid) {
+          console.error('EFA validation failed.');
+        }
+        return isEFAValid;
+
       case 'PackagedFASTQ':
         // Validation for PackagedFASTQ: lines contain ESCAPE characters and end with tab+number
         const packagedLines = trimmedData.split(/\r?\n/);
