@@ -23,7 +23,6 @@ import { DataTypeContext } from '../contexts/DataTypeContext';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { ValidationErrorsContext } from '../contexts/ValidationErrorsContext';
 import { TourContext } from '../contexts/TourContext';
-import { getCompatibleTools } from '../utils/compatibility';
 import { getToolsByCategory, getTool } from '../utils/toolUtils';
 import { detectAllDataTypes } from '../utils/detectDataType';
 
@@ -98,24 +97,24 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
       if (!hasNodeSelected) {
         return hasNoInputs;
       }
-      
+
       return matchesType;
     });
   };
 
   // Determine compatible tools
-  const compatibleTools = useMemo(() => {
-    if (isWorkflowEmpty) {
-      // Execute getCompatibleTools even if dataType is 'UNKNOWN' when the workflow is empty
-      const compatible = getCompatibleTools(dataType, isWorkflowEmpty, workflow);
-      return new Set(compatible.map((tool) => tool.name));
-    }
+  // const compatibleTools = useMemo(() => {
+  //   if (isWorkflowEmpty) {
+  //     // Execute getCompatibleTools even if dataType is 'UNKNOWN' when the workflow is empty
+  //     const compatible = getCompatibleTools(dataType, isWorkflowEmpty, workflow);
+  //     return new Set(compatible.map((tool) => tool.name));
+  //   }
 
-    if (!dataType || dataType === 'UNKNOWN') return new Set();
-    const compatible = getCompatibleTools(dataType, isWorkflowEmpty, workflow);
+  //   if (!dataType || dataType === 'UNKNOWN') return new Set();
+  //   const compatible = getCompatibleTools(dataType, isWorkflowEmpty, workflow);
 
-    return new Set(compatible.map((tool) => tool.name));
-  }, [dataType, isWorkflowEmpty, workflow]);
+  //   return new Set(compatible.map((tool) => tool.name));
+  // }, [dataType, isWorkflowEmpty, workflow]);
 
   useEffect(() => {
     tourRegisterSteps("w-operations", [
@@ -139,17 +138,15 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
 
   // Expand categories with available tools
   useEffect(() => {
-    if (insertAtIndex === null) {
-      const newExpandedCategories = {};
-      Object.entries(getToolsByCategory()).forEach(([category, operations]) => {
-        const filteredOps = filterOperations(operations).filter((op) => compatibleTools.has(op.name));
-        if (filteredOps.length > 0) {
-          newExpandedCategories[category] = true;
-        }
-      });
-      setExpandedCategories(newExpandedCategories);
-    }
-  }, [searchTerm, compatibleTools, insertAtIndex]);
+    const newExpandedCategories = {};
+    Object.entries(getToolsByCategory()).forEach(([category, operations]) => {
+      const filteredOps = filterOperations(operations)
+      if (filteredOps.length > 0) {
+        newExpandedCategories[category] = true;
+      }
+    });
+    setExpandedCategories(newExpandedCategories);
+  }, [selectedNodeTypes, searchTerm, insertAtIndex]);
 
   useEffect(() => {
     if (insertAtIndex !== null && filteredTools.length > 0) {
