@@ -25,12 +25,12 @@ export const DataTypeProvider = ({ children }) => {
         const isFASTAValid =
           trimmedData.startsWith('>') &&
           fastaLines.length > 0 &&
-          fastaLines.every(line => /^[ACDEFGHIKLMNPQRSTVWYacdefghiklmnpqrstvwy]+$/.test(line.trim())); // Allowing 'N' and 'n'
+          fastaLines.every(line => /^[ACDEFGHIKLMNPQRSTVWYacdefghiklmnpqrstvwy*.-]+$/.test(line.trim()));
         if (!isFASTAValid) {
           console.error('FASTA validation failed:', {
             startsWithGreaterThan: trimmedData.startsWith('>'),
             hasSequenceLines: fastaLines.length > 0,
-            allSequencesValid: fastaLines.every(line => /^[ACDEFGHIKLMNPQRSTVWYacdefghiklmnpqrstvwy]+$/.test(line.trim())),
+            allSequencesValid: fastaLines.every(line => /^[ACDEFGHIKLMNPQRSTVWYacdefghiklmnpqrstvwy*.-]+$/.test(line.trim())),
           });
         }
         return isFASTAValid;
@@ -44,7 +44,7 @@ export const DataTypeProvider = ({ children }) => {
             const lines = block.split(/\r?\n/).filter(line => line.trim() !== '');
             if (lines.length < 2) return false; // At least one header and one sequence line
             const sequence = lines.slice(1).join('');
-            return /^[ACDEFGHIKLMNPQRSTVWYacdefghiklmnpqrstvwy]+$/.test(sequence.trim()); // Allowing 'N' and 'n'
+            return /^[ACDEFGHIKLMNPQRSTVWYacdefghiklmnpqrstvwy*.-]+$/.test(sequence.trim());
           });
           if (!isMultiFastaValid) {
             console.error('Multi-FASTA validation failed.');
@@ -131,6 +131,24 @@ export const DataTypeProvider = ({ children }) => {
           console.error('BED validation failed.');
         }
         return isBEDValid;
+
+      case 'GFF':
+        const gffLines = trimmedData.split(/\r?\n/);
+        const isGFFValid = gffLines.every(line => {
+          if (!line.trim() || line.startsWith('#')) return true;
+          const fields = line.split('\t');
+          if (fields.length !== 9) return false;
+
+          const [, , , start, end, , strand, phase] = fields;
+          return !isNaN(start) &&
+            !isNaN(end) &&
+            ['+', '-', '.'].includes(strand) &&
+            ['0', '1', '2', '.'].includes(phase);
+        });
+        if (!isGFFValid) {
+          console.error('GFF validation failed.');
+        }
+        return isGFFValid;
 
       case 'LIST':
         const listLines = trimmedData.split(/\r?\n/);

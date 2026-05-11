@@ -107,6 +107,15 @@ export const typeDefinitions = [
     example: 'seq\t0\t10\nseq1\t0\t20',
   },
   {
+    id: 'GFF',
+    validator: 'gff',
+    defaultExtension: '.gff',
+    scriptExtension: 'gff',
+    uploadExtensions: ['.gff', '.gff3', '.gtf'],
+    edgeColor: '#1abc9c',
+    example: 'seq\t.\tgene\t1\t30\t.\t+\t.\tID=gene1\nseq\t.\tmRNA\t1\t30\t.\t+\t.\tID=tx1;Parent=gene1\nseq\t.\texon\t1\t30\t.\t+\t.\tParent=tx1\nseq\t.\tCDS\t1\t30\t.\t+\t0\tParent=tx1',
+  },
+  {
     id: 'LIST',
     validator: 'list',
     defaultExtension: '.lst',

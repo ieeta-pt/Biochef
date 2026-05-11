@@ -5,7 +5,7 @@ function validateFasta(content) {
   if (!lines || lines[0][0] !== '>') return false;
 
   const sequence = lines.slice(1).join('').trim();
-  return sequence && /^[A-Z\s]+$/i.test(sequence);
+  return sequence && /^[A-Z*.\-\s]+$/i.test(sequence);
 }
 
 function validateMultiFasta(content) {
@@ -84,6 +84,22 @@ function validateBed(content) {
   });
 }
 
+function validateGff(content) {
+  if (!content) return false;
+  const lines = content.trim().split('\n');
+  return lines.every(line => {
+    if (!line.trim() || line.startsWith('#')) return true;
+    const fields = line.split('\t');
+    if (fields.length !== 9) return false;
+
+    const [, , , start, end, , strand, phase] = fields;
+    return !isNaN(start) &&
+      !isNaN(end) &&
+      ['+', '-', '.'].includes(strand) &&
+      ['0', '1', '2', '.'].includes(phase);
+  });
+}
+
 function validateList(content) {
   if (!content.trim()) return false;
   const lines = content.split('\n');
@@ -105,6 +121,7 @@ const validators = {
   rna: validateRNA,
   aminoAcids: validateAminoAcids,
   bed: validateBed,
+  gff: validateGff,
   list: validateList,
   text: () => true, // Default fallback for TEXT
 };
