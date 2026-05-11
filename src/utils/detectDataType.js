@@ -19,6 +19,23 @@ function validateMultiFasta(content) {
   return entries.every(entry => validateFasta('>' + entry.trim()));
 }
 
+function validateEfa(content) {
+  if (!content) return false;
+
+  const sections = content
+    .split(/(?=^<)/m)
+    .map(section => section.trim())
+    .filter(Boolean);
+
+  if (!sections.length) return false;
+
+  return sections.every(section => {
+    const lines = section.split(/\r?\n/);
+    if (!lines[0].startsWith('<') || lines.length < 3) return false;
+    return validateMultiFasta(lines.slice(1).join('\n'));
+  });
+}
+
 function validateFastq(content) {
   const lines = content?.trim().split('\n');
 
@@ -113,6 +130,7 @@ function validateList(content) {
 const validators = {
   fasta: validateFasta,
   multiFasta: validateMultiFasta,
+  efa: validateEfa,
   fastq: validateFastq,
   packagedFastq: validatePackagedFastq,
   num: validateNum,

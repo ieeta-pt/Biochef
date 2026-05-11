@@ -18,6 +18,15 @@ export const typeDefinitions = [
     example: '>seq1\nGTTCCAGTAGCGGCGTATCGTAGGTGACGTAGCAGTCGATCGCTAGCGAAGCGCTGACTAGCTCGATAGCGGCTACTCGTACGTAGTACGTAGCATACG\n>seq2\nAGCTGCTGATCGTGATCGAGCTCGATGCATCGATCGCTAGCGTACGTAGCTGACGTAGCGTGACTGATCGTAGCTGATCGTGACGTAGCTGACGTAGCTG',
   },
   {
+    id: 'EFA',
+    validator: 'efa',
+    defaultExtension: '.efa',
+    scriptExtension: 'efa',
+    uploadExtensions: ['.efa'],
+    edgeColor: '#f06000',
+    example: '<none.1\n>alpha\nACGTACGTACGTACGT\n>beta\nACGTACGTTCGTACGT\n>gamma\nACGTACGTACGTTCGT\n<abc.1\n>alpha\nACGTACGTACGTACGT\n>beta\nACGTACGTTCGTACGT\n>gamma\nACGTACGTACGTTCGT',
+  },
+  {
     id: 'FASTQ',
     validator: 'fastq',
     defaultExtension: '.fastq',
