@@ -133,6 +133,15 @@ export const typeDefinitions = [
     example: 'seq\nseq1\nseq2',
   },
   {
+    id: 'JSON',
+    validator: 'json',
+    defaultExtension: '.json',
+    scriptExtension: 'json',
+    uploadExtensions: ['.json', '.jsonl'],
+    edgeColor: '#415b54',
+    example: '{"samples":[{"id":"sample_1","condition":"control","value":12.5},{"id":"sample_2","condition":"treated","value":18.2}],"metadata":{"organism":"example","assay":"measurement"}}',
+  },
+  {
     id: 'TEXT',
     validator: 'text',
     defaultExtension: '.txt',

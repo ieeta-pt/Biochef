@@ -202,6 +202,17 @@ function validateCram(content) {
   return validateBinWithMagic(content, BINARY_MAGIC.CRAM)
 }
 
+function validateJson(content) {
+  if (!content?.trim()) return false;
+
+  try {
+    JSON.parse(content);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 const validators = {
   fasta: validateFasta,
   multiFasta: validateMultiFasta,
@@ -219,6 +230,7 @@ const validators = {
   sam: validateSam,
   bam: validateBam,
   cram: validateCram,
+  json: validateJson,
   text: () => true, // Default fallback for TEXT
 };
 
