@@ -183,6 +183,15 @@ export const DataTypeProvider = ({ children }) => {
         }
         return isLISTValid;
 
+      case 'JSON':
+        try {
+          JSON.parse(trimmedData);
+          return true;
+        } catch {
+          console.error('JSON validation failed.');
+          return false;
+        }
+
       case 'DNA':
         // Validation for DNA: only A, C, G, T (case-insensitive) and whitespace
         const isDNAValid = /^[ACGTNacgtn\s]+$/.test(trimmedData);
