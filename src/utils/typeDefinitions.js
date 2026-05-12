@@ -83,7 +83,7 @@ export const typeDefinitions = [
     edgeColor: '#16a085',
     example: 'ACDEFGHIKLMNPQRSTVWYACDEFGHIKLMNPQRSTVWYACDEFGHIKLMNPQRSTVWYACDEFGHIKLMNPQRSTVWYACDEFGHIKLMNPQRSTV',
   },
-   {
+  {
     id: 'POS',
     validator: 'pos',
     defaultExtension: '.pos',
@@ -140,6 +140,30 @@ export const typeDefinitions = [
     edgeColor: '#2ecc71',
     example: 'Hello, World',
   },
+  {
+    id: 'BAM',
+    validator: 'bam',
+    defaultExtension: '.bam',
+    uploadExtensions: ['.bam'],
+    edgeColor: '#9dce32',
+    format: 'binary'
+  },
+    {
+    id: 'CRAM',
+    validator: 'cram',
+    defaultExtension: '.cram',
+    uploadExtensions: ['.cram'],
+    edgeColor: '#3b5502',
+    format: 'binary'
+  },
+  {
+    id: 'SAM',
+    validator: 'sam',
+    defaultExtension: '.sam',
+    uploadExtensions: ['.sam'],
+    edgeColor: '#1aa3fd',
+    example: '@SQ	SN:ref	LN:45\n@SQ	SN:ref2	LN:40\nr001	163	ref	7	30	8M4I4M1D3M	=	37	39	TTAGATAAAGAGGATACTG	*	XX:B:S,12561,2,20,112\nr002	0	ref	9	30	1S2I6M1P1I1P1I4M2I	*	0	0	AAAAGATAAGGGATAAA	*\nr003	0	ref	9	30	5H6M	*	0	0	AGCTAA	*\nr004	0	ref	16	30	6M14N1I5M	*	0	0	ATAGCTCTCAGC	*\nr003	16	ref	29	30	6H5M	*	0	0	TAGGC	*\nr001	83	ref	37	30	9M	=	7	-39	CAGCGCCAT	*\nx1	0	ref2	1	30	20M	*	0	0	aggttttataaaacaaataa	????????????????????\nx2	0	ref2	2	30	21M	*	0	0	ggttttataaaacaaataatt	?????????????????????\nx3	0	ref2	6	30	9M4I13M	*	0	0	ttataaaacAAATaattaagtctaca	??????????????????????????\nx4	0	ref2	10	30	25M	*	0	0	CaaaTaattaagtctacagagcaac	?????????????????????????\nx5	0	ref2	12	30	24M	*	0	0	aaTaattaagtctacagagcaact	????????????????????????\nx6	0	ref2	14	30	23M	*	0	0	Taattaagtctacagagcaacta	???????????????????????',
+  },
 ];
 
 export function getTypeDefinitions() {
@@ -152,6 +176,10 @@ export function getTypeDefinition(typeId) {
 
 export function getUploadExtensions() {
   return [...new Set(typeDefinitions.flatMap(typeDef => typeDef.uploadExtensions || []))];
+}
+
+export function getBinaryUploadExtensions() {
+  return [...new Set(typeDefinitions.flatMap(typeDef => typeDef.format === "binary" ? (typeDef.uploadExtensions || []) : []))];
 }
 
 export function getDefaultExtension(typeId) {
@@ -182,4 +210,8 @@ export function getDefaultEdgeColor() {
 
 export function getEdgeColor(typeId) {
   return getTypeDefinition(typeId)?.edgeColor || defaultEdgeColor;
+}
+
+export function isTypeBinary(typeId) {
+  return getTypeDefinition(typeId).format == "binary"
 }

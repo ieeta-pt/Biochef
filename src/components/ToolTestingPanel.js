@@ -181,7 +181,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
 
             // Verify if the input data is compatible with the tool
             for (const [key, value] of Object.entries(inputData)) {
-                const inputDataType = detectDataType(value);
+                const inputDataType = detectDataType(value, toolConfig.io.inputs.find((i)=>i.name == key).types);
 
                 if (!inputFormats.includes(inputDataType)) {
                     showNotification(

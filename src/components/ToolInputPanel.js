@@ -4,9 +4,10 @@ import React, { useContext, useEffect, useState } from 'react';
 import { getTool } from '../utils/toolUtils';
 import { DataTypeContext } from '../contexts/DataTypeContext';
 import { NotificationContext } from '../contexts/NotificationContext';
-import { detectDataType } from '../utils/detectDataType';
+import { detectDataType, detectIsBinaryFile } from '../utils/detectDataType';
 import { getUploadExtensions, getTypeExampleInput } from '../utils/typeDefinitions';
 import { TourContext } from '../contexts/TourContext';
+import { makeTextDataValue, makeBinaryDataValue } from '../utils/dataValue';
 
 const ToolInputPanel = ({ tool, inputData, setInputData }) => {
     const [fileName, setFileName] = useState('');
@@ -82,6 +83,7 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
             setSelectedInput(toolInputs[0] || '');
         }
     }, [tool]);
+
     const updateSelectedInputData = (data) => {
         setInputData(prev => ({
             ...prev,
@@ -100,26 +102,25 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
         updateSelectedInputFormat(format);
 
         const example_input = getTypeExampleInput(format);
-        updateSelectedInputData(example_input); // Load example input if available
+        updateSelectedInputData(makeTextDataValue(example_input)); // Load example input if available
     };
 
     // Debounce state
     const [debounceTimer, setDebounceTimer] = useState(null);
 
     const processFileContent = (file, content, isPartial) => {
-        const lines = isPartial ? content.split('\n').slice(0, 100).join('\n') : content;
-        updateSelectedInputData(lines);
+        const isBinary = detectIsBinaryFile(content)
 
-        const detectedType = detectDataType(lines);
-        setInputDataType(detectedType);
-        const valid = validateData(lines, detectedType);
-        setIsValid(valid);
-
-        if (!valid && detectedType !== 'UNKNOWN') {
-            showNotification(`Invalid ${detectedType} data format.`, 'error');
-        } else if (isPartial) {
-            showNotification("Processing the first 100 lines of the file.", 'success');
+        let dv
+        if (isBinary) {
+            dv = makeBinaryDataValue(content)
         }
+        else {
+            const text = new TextDecoder("utf-8").decode(content);
+            dv = makeTextDataValue(text)
+        }
+
+        handleInputChange(dv)
     };
 
     const handleFileUpload = (event) => {
@@ -144,7 +145,7 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
 
             const reader = new FileReader();
             reader.onload = (e) => {
-                const content = e.target.result;
+                const content = new Uint8Array(e.target.result);
                 processFileContent(file, content, isPartial);
             };
             reader.onerror = (e) => {
@@ -154,9 +155,9 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
 
             // if file size is too large, read only the first 100 MB
             if (isPartial) {
-                reader.readAsText(file.slice(0, fileSizeLimit));
+                reader.readAsArrayBuffer(file.slice(0, fileSizeLimit));
             } else {
-                reader.readAsText(file);
+                reader.readAsArrayBuffer(file);
             }
         }
     };
@@ -168,35 +169,17 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
         setSelectedInput(selected);
     }
 
-    const handleTextChange = (content) => {
-        updateSelectedInputData(content)
+    const handleInputChange = (dataValue) => {
+        updateSelectedInputData(dataValue)
+        const detectedDataType = detectDataType(dataValue, selectedInput.types)
+        setInputDataType(detectedDataType)
 
-        // Clear existing debounce timer
-        if (debounceTimer) {
-            clearTimeout(debounceTimer);
+        const valid = detectedDataType != "" && detectedDataType != "UNKNOWN"
+        setIsValid(valid);
+
+        if (!valid && detectedDataType !== 'UNKNOWN') {
+            showNotification(`Invalid ${detectedDataType} data format.`, 'error');
         }
-
-        // Set a new debounce timer
-        const timer = setTimeout(() => {
-            if (content.trim() === '') {
-                // If input is empty, reset data type and validation
-                setInputDataType('UNKNOWN');
-                setIsValid(true); // Treat empty input as valid. Adjust based on requirements
-                return;
-            }
-
-            const detectedType = detectDataType(content);
-            setInputDataType(detectedType);
-            const valid = validateData(content, detectedType);
-
-            setIsValid(valid);
-
-            if (!valid && detectedType !== 'UNKNOWN') {
-                showNotification(`Invalid ${detectedType} data format.`, 'error');
-            }
-        }, 1000); // 1000ms delay
-
-        setDebounceTimer(timer);
     };
 
     // Cleanup the debounce timer on unmount
@@ -271,8 +254,12 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
             <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: 2 }}>
                 <TextField
                     variant="outlined"
-                    value={inputData[selectedInput.name] || ''}
-                    onChange={(e) => handleTextChange(e.target.value)}
+                    value={
+                        inputData[selectedInput.name]?.kind === "binary"
+                            ? `[binary ${inputData[selectedInput.name].data?.length ?? 0} bytes - use Save to download]`
+                            : inputData[selectedInput.name]?.data || ''
+                    }
+                    onChange={(e) => handleInputChange(makeTextDataValue(e.target.value))}
                     placeholder="e.g., >Sequence1\nACGT..."
                     InputProps={{
                         multiline: true,
@@ -302,9 +289,12 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
                     flexShrink: 0,
                 }}
             >
-                <Typography variant="body2" color="textSecondary">
-                    {(inputData[selectedInput.name]?.length || 0)}/100000 characters, {(inputData[selectedInput.name]?.split('\n').length || 0)} lines
-                </Typography>
+
+                {inputData[selectedInput.name]?.kind != "binary" && (
+                    <Typography variant="body2" color="textSecondary">
+                        {(inputData[selectedInput.name]?.data?.length || 0)}/100000 characters, {(inputData[selectedInput.name]?.data?.split('\n').length || 0)} lines
+                    </Typography>
+                )}
                 <Tooltip title="Upload File">
                     <IconButton
                         color="primary"

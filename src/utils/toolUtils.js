@@ -1,5 +1,7 @@
 import Aioli from "./aioli-custom/aioli"
 import logger from "./logger";
+import { detectIsBinaryFile } from "./detectDataType";
+import { makeBinaryDataValue, makeTextDataValue } from './dataValue'
 
 const toolMap = new Map();
 const blobMap = new Map();
@@ -241,7 +243,21 @@ async function getToolBlobs(toolName) {
   return [wasmBlob, jsBlob]
 }
 
+async function aioliReadFileHelper(CLI, fileName) {
+  const stat = await CLI.ls(fileName)
+  const buffer = await CLI.read({ path: fileName, length: stat.size })
+
+  if (detectIsBinaryFile(buffer)) {
+    return makeBinaryDataValue(buffer);
+  }
+  else {
+    const text = new TextDecoder("utf-8").decode(buffer);
+    return makeTextDataValue(text)
+  }
+}
+
 /*
+TODO change this to reflect dataValue changes
 ToolInvocation = {
   toolName: string
   // Name of the tool to run
@@ -272,6 +288,8 @@ export async function runTools(
   toolInvocations,
   onToolFinished = () => { },
 ) {
+  logger.log("[runMultipleTools] Running invocations", toolInvocations);
+
   let outputs = {}
   let errors = {}
 
@@ -315,9 +333,11 @@ export async function runTools(
       if (mode === "text") {
         if (inputDefinition.mode === "file") {
           inputFileName = `input-${invocation.uniqueId}-${inputDefinition.name}.txt`
+          const fileContent = value.kind === "binary" ? new Blob([value.data]) : value.data;
+          await CLI.mount({ name: inputFileName, data: fileContent })
         }
         else if (inputDefinition.mode === "stdin") {
-          stdinValue = value
+          stdinValue = value.data
         }
       }
       else if (mode === "output") {
@@ -325,13 +345,12 @@ export async function runTools(
         inputFileName = `${source}-${sourceOutput}.txt`
 
         if (inputDefinition.mode === "stdin") {
-          stdinValue = await CLI.cat(inputFileName)
+          const fileData = await aioliReadFileHelper(CLI, inputFileName)
+          stdinValue = fileData.data
         }
       }
 
       if (inputDefinition.mode === "file") {
-        await CLI.mount({ name: inputFileName, data: value })
-
         if (inputDefinition.flag) args.push(inputDefinition.flag)
         args.push(inputFileName)
       }
@@ -364,26 +383,29 @@ export async function runTools(
     // 3. Use outputs to save results and prepare files for the next invocations
     for (const outputDefinition of toolDefinition.io.outputs) {
       const outputFileName = `${invocation.uniqueId}-${outputDefinition.name}.txt`
-      let result = ""
+      let result
 
       if (outputDefinition.mode === "stdout") {
         await CLI.mount({ name: outputFileName, data: stdout })
-        result = stdout
+        result = makeTextDataValue(stdout)
       }
       else if (outputDefinition.mode === "file") {
-        let fileData = "";
-
+        let fileToRead
         if (outputDefinition.filename) {
-          fileData = await CLI.cat(outputDefinition.filename);
+          fileToRead = outputDefinition.filename
         }
         else {
-          // TODO: the validate scripts should probably make sure that output to file
-          // always has the filename defined instead of allowing this
-          fileData = await CLI.cat(outputDefinition.name + ".txt");
+          fileToRead = outputDefinition.name + ".txt"
         }
 
-        await CLI.mount({ name: outputFileName, data: fileData })
-        result = fileData
+        result = await aioliReadFileHelper(CLI, fileToRead)
+
+        if (result.kind == "binary") {
+          await CLI.mount({ name: outputFileName, data: new Blob([result.data]) })
+        }
+        else {
+          await CLI.mount({ name: outputFileName, data: result.data })
+        }
       }
 
       outputs[invocation.uniqueId] ??= {};
@@ -394,7 +416,9 @@ export async function runTools(
     onToolFinished(invocation.uniqueId, outputs[invocation.uniqueId], errors[invocation.uniqueId])
   }
 
-  return {"outputs": outputs, "errors": errors}
+  logger.log("[runMultipleTools] Results", outputs, errors);
+
+  return { "outputs": outputs, "errors": errors }
 }
 
 export function getToolInputByName(toolName, inputName) {

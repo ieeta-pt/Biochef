@@ -4,9 +4,10 @@ import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
 import React, { useEffect, useState, useContext } from 'react';
 import { TourContext } from '../contexts/TourContext';
+import { isDataValue } from '../utils/dataValue';
 
-const ToolOutputPanel = ({ outputData, setOutputData, workflow = null, tool = null, inputData, page, rows=8 }) => {
-    const [selectedFile, setSelectedFile] = useState('');
+const ToolOutputPanel = ({ outputData, setOutputData, workflow = null, tool = null, inputData, page, rows = 8 }) => {
+    const [selectedOutput, setSelectedOutput] = useState('');
     const [displayedOutput, setDisplayedOutput] = useState('');
     const { tourRegisterSteps } = useContext(TourContext);
 
@@ -30,30 +31,30 @@ const ToolOutputPanel = ({ outputData, setOutputData, workflow = null, tool = nu
     }, []);
 
 
-    // Update displayed output when outputData or selectedFile changes
+    // Update displayed output when outputData or selectedOutput changes
     useEffect(() => {
-        if (typeof outputData === 'object' && !Array.isArray(outputData)) {
-            // For object type outputs (multiple files)
-            if (Object.keys(outputData).length > 0) {
-                // If we have a selected file and it exists in the outputData, use it
-                if (selectedFile && outputData[selectedFile]) {
-                    setDisplayedOutput(outputData[selectedFile]);
-                } else {
-                    // Otherwise select the first file
-                    const firstKey = Object.keys(outputData)[0];
-                    setSelectedFile(firstKey);
-                    setDisplayedOutput(outputData[firstKey]);
-                }
-            } else {
-                setDisplayedOutput('');
-                setSelectedFile('');
-            }
-        } else {
-            // For string type outputs (single file)
-            setDisplayedOutput(outputData);
-            setSelectedFile('');
+        if (!outputData || Object.keys(outputData).length === 0) {
+            setDisplayedOutput("")
+            return
         }
-    }, [outputData, selectedFile]);
+
+        // if it has multiple outputs, get the one for the currently selected output
+        if (!isDataValue(outputData) && typeof outputData === 'object') {
+            let file = selectedOutput
+            if (!file) {
+                file = Object.keys(outputData)[0]
+                setSelectedOutput(file)
+            }
+            outputData = outputData[file]
+        }
+
+        if (outputData.kind == "binary") {
+            setDisplayedOutput(`[binary ${outputData.data.length ?? 0} bytes - use Save to download]`)
+        }
+        else if (outputData.kind == "text") {
+            setDisplayedOutput(outputData.data)
+        }
+    }, [outputData, selectedOutput]);
 
     // Clear output data when workflow or input data changes, beacuse the output data is no longer valid
     useEffect(() => {
@@ -70,20 +71,28 @@ const ToolOutputPanel = ({ outputData, setOutputData, workflow = null, tool = nu
     }, [tool, inputData]);
 
     const handleSaveOutput = () => {
-        if (typeof outputData == 'object') {
+        if (typeof outputData == 'object' && !isDataValue(outputData)) {
             const zip = new JSZip();
-            for (const [filename, content] of Object.entries(outputData)) {
-                zip.file(filename, content);
+            for (const [outputName, content] of Object.entries(outputData)) {
+                zip.file(outputName, content.data);
             }
             zip.generateAsync({ type: 'blob' }).then((content) => {
                 saveAs(content, 'output.zip');
             });
         }
         else {
-            const blob = new Blob([outputData], { type: 'text/plain;charset=utf-8' });
+            let content
+            if (outputData.kind == "binary") {
+                content = outputData.data
+            }
+            else {
+                content = displayedOutput
+            }
+
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
-            link.download = `output.txt`;
+            link.download = `output`; // TODO get the correct file extension
             link.href = url;
             link.click();
             URL.revokeObjectURL(url);
@@ -91,17 +100,17 @@ const ToolOutputPanel = ({ outputData, setOutputData, workflow = null, tool = nu
     };
 
     const handleFileChange = (event) => {
-        setSelectedFile(event.target.value);
+        setSelectedOutput(event.target.value);
     };
 
     return (
         <Paper elevation={1} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }} data-tour="output">
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 2, flexShrink: 0 }}>
                 <Typography variant="h6">Output</Typography>
-                {typeof outputData === 'object' && !Array.isArray(outputData) && Object.keys(outputData).length > 1 && (
+                {typeof outputData === 'object' && !isDataValue(outputData) && !Array.isArray(outputData) && Object.keys(outputData).length > 1 && (
                     <FormControl size="small" sx={{ minWidth: 150 }}>
                         <Select
-                            value={selectedFile}
+                            value={selectedOutput}
                             onChange={handleFileChange}
                             displayEmpty
                         >

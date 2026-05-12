@@ -2,16 +2,30 @@ import { getTool } from "./toolUtils";
 import { detectAllDataTypes } from "./detectDataType";
 
 export function sanitizeWorkflowNodes(nodes) {
-  return nodes.map(node => ({
-    ...node,
-    data: {
+  return nodes.map(node => {
+
+    const newData = {
       ...node.data,
-      outputs: node.type == "inputWorkflowNode" ? node.data.outputs : {},
+      outputs: {}, 
+      output: {},
       toolMessages: {},
       is_running: false,
       runCalled: false
-    },
-  }));
+    };
+
+    if (node.type === "inputWorkflowNode") {
+      for (const [key, value] of Object.entries(node.data.outputs || {})) {
+        if (value?.kind == "text") {
+          newData.outputs[key] = value;
+        }
+      }
+    }
+
+    return {
+      ...node,
+      data: newData
+    };
+  });
 }
 
 export function isValidWorkflowConnection(sourceNode, sourceHandle, targetNode, targetHandle) {

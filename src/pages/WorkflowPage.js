@@ -81,8 +81,8 @@ const WorkflowPage = () => {
     }));
   };
 
-  const handleUpdateSelectedInputNode = (text) => {
-    updateSelectedNodeData({ outputs: { "out": text } })
+  const handleUpdateSelectedInputNode = (dataValue) => {
+    updateSelectedNodeData({ outputs: { "out": dataValue } })
   };
 
   function handleToggleParam(name) {
