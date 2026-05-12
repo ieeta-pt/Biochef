@@ -127,6 +127,17 @@ function validateList(content) {
   });
 }
 
+function validateJson(content) {
+  if (!content?.trim()) return false;
+
+  try {
+    JSON.parse(content);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 const validators = {
   fasta: validateFasta,
   multiFasta: validateMultiFasta,
@@ -141,6 +152,7 @@ const validators = {
   bed: validateBed,
   gff: validateGff,
   list: validateList,
+  json: validateJson,
   text: () => true, // Default fallback for TEXT
 };
 
