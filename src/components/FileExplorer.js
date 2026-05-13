@@ -624,7 +624,7 @@ const FileExplorer = ({ selectedFiles, setSelectedFiles, tree, setTree }) => {
                         }
                         />
                         <ListItemSecondaryAction>
-                            {node.type === 'file' && (
+                            {node.type === 'file' && node.content?.kind == "text" && (
                                 <IconButton edge="end" onClick={() => handleViewContent(node)} style={{ marginRight: '8px' }}>
                                     <Visibility fontSize="small" />
                                 </IconButton>
@@ -952,7 +952,7 @@ const FileExplorer = ({ selectedFiles, setSelectedFiles, tree, setTree }) => {
                                 wordBreak: 'break-all'
                             }}
                         >
-                            {activeNode?.content || 'No content available'}
+                            {activeNode?.content?.data || 'No content available'}
                         </Typography>
                     </Paper>
                 </DialogContent>
