@@ -375,7 +375,7 @@ export async function runTools(
 
     // 2. Run the tool
     const { stdout, stderr } = await CLI.exec(invocation.toolName, args)
-    errors[invocation.uniqueId] = stderr
+    errors[invocation.uniqueId] = [stderr]
 
     logger.log("[runMultipleTools]", invocation.toolName, {
       args,
@@ -409,6 +409,7 @@ export async function runTools(
         if (!result) {
           // TODO maybe have a proper way to handle this
           result = makeTextDataValue("")
+          errors[invocation.uniqueId].push(`Output "${outputDefinition.name}" did not produce the expected file "${fileToRead}"`)
         }
 
         if (result.kind == "binary") {
