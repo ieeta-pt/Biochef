@@ -87,7 +87,7 @@ const InputPanel = ({
         <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
           {tabIndex === 0 && (
             <CLIInputPanel
-              inputData={inputData ? inputData.kind == "binary" ? `[binary ${inputData.data.length ?? 0} bytes - use Save to download]` : inputData.data : ""}
+              inputData={inputData ? inputData.kind == "binary" ? `[binary ${inputData.data.length ?? 0} bytes]` : inputData.data : ""}
               setInputData={(newInputData) => {
                 setInputData(makeTextDataValue(newInputData))
               }}

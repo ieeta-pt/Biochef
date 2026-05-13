@@ -256,7 +256,7 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
                     variant="outlined"
                     value={
                         inputData[selectedInput.name]?.kind === "binary"
-                            ? `[binary ${inputData[selectedInput.name].data?.length ?? 0} bytes - use Save to download]`
+                            ? `[binary ${inputData[selectedInput.name].data?.length ?? 0} bytes]`
                             : inputData[selectedInput.name]?.data || ''
                     }
                     onChange={(e) => handleInputChange(makeTextDataValue(e.target.value))}

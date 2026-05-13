@@ -303,7 +303,7 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
                       tooltipContent = "";
                     }
                     else if (!selectedNode || selectedNode.type === "outputWorkflowNode") {
-                      tooltipContent = `Please select a node to be able to add new tools to the workflow)`;
+                      tooltipContent = `Please select a node to be able to add new tools to the workflow (this tool requires: ${toolInputTypes})`;
                     }
                     else if (!matchesType) {
                       tooltipContent = `This tool is not compatible with the selected node (this tool requires: ${toolInputTypes})`;
