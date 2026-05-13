@@ -288,7 +288,8 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
               <Collapse in={expandedCategories[category] || searchTerm !== ''} timeout="auto" unmountOnExit>
                 <List component="div" disablePadding>
                   {filteredOps.map((operation) => {
-                    const hasNoInput = getTool(operation.name).inputTypes.length == 0
+                    const toolInputTypes = getTool(operation.name).inputTypes
+                    const hasNoInput = toolInputTypes.length == 0
 
                     const matchesType =
                       operation.inputTypes?.some((type) =>
@@ -302,10 +303,10 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
                       tooltipContent = "";
                     }
                     else if (!selectedNode || selectedNode.type === "outputWorkflowNode") {
-                      tooltipContent = "Please select a node to be able to add new tools to the workflow";
+                      tooltipContent = `Please select a node to be able to add new tools to the workflow)`;
                     }
                     else if (!matchesType) {
-                      tooltipContent = "This tool is not compatible with the selected node";
+                      tooltipContent = `This tool is not compatible with the selected node (this tool requires: ${toolInputTypes})`;
                     }
                     else {
                       tooltipContent = operation.description;

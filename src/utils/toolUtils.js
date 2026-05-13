@@ -245,6 +245,12 @@ async function getToolBlobs(toolName) {
 
 async function aioliReadFileHelper(CLI, fileName) {
   const stat = await CLI.ls(fileName)
+
+  if (!stat) {
+    logger.warn(`[aioliReadFileHelper] File ${fileName} does not exist`)
+    return
+  }
+
   const buffer = await CLI.read({ path: fileName, length: stat.size })
 
   if (detectIsBinaryFile(buffer)) {
@@ -376,6 +382,7 @@ export async function runTools(
       stdout,
       stderr,
     });
+    
     // Artificial delay for testing purposes
     // const delay = 1000;
     // await new Promise(resolve => setTimeout(resolve, delay));
@@ -399,6 +406,10 @@ export async function runTools(
         }
 
         result = await aioliReadFileHelper(CLI, fileToRead)
+        if (!result) {
+          // TODO maybe have a proper way to handle this
+          result = makeTextDataValue("")
+        }
 
         if (result.kind == "binary") {
           await CLI.mount({ name: outputFileName, data: new Blob([result.data]) })
