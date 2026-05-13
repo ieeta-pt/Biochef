@@ -366,10 +366,10 @@ export async function runTools(
     };
 
     for (const outputDefinition of toolDefinition.io.outputs) {
-      if (outputDefinition.mode !== "file" || !outputDefinition.flag) continue
+      if (outputDefinition.mode !== "file") continue
 
-      const outputTarget = outputDefinition.filename ?? `${outputDefinition.name}.txt`
-      args.push(outputDefinition.flag)
+      const outputTarget = outputDefinition.filename ?? `${invocation.uniqueId}-${outputDefinition.name}.txt`
+      if (outputDefinition.flag) args.push(outputDefinition.flag)
       args.push(outputTarget)
     }
 
@@ -397,13 +397,7 @@ export async function runTools(
         result = makeTextDataValue(stdout)
       }
       else if (outputDefinition.mode === "file") {
-        let fileToRead
-        if (outputDefinition.filename) {
-          fileToRead = outputDefinition.filename
-        }
-        else {
-          fileToRead = outputDefinition.name + ".txt"
-        }
+        const fileToRead = outputDefinition.filename ?? `${invocation.uniqueId}-${outputDefinition.name}.txt`
 
         result = await aioliReadFileHelper(CLI, fileToRead)
         if (!result) {
