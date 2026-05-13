@@ -202,6 +202,10 @@ function validateCram(content) {
   return validateBinWithMagic(content, BINARY_MAGIC.CRAM)
 }
 
+function validateBai(content) {
+  return validateBinWithMagic(content, BINARY_MAGIC.BAI)
+}
+
 function validateJson(content) {
   if (!content?.trim()) return false;
 
@@ -211,6 +215,29 @@ function validateJson(content) {
   } catch {
     return false;
   }
+}
+
+function validateFai(content) {
+  if (!content || !content.trim()) return false;
+
+  const lines = content.trim().split(/\r?\n/);
+  
+  for (const line of lines) {
+    const parts = line.split('\t');
+    if (parts.length < 5) return false;
+
+    const [seqName, length, offset, lineBases, lineWidth] = parts;
+
+    // sequence name should be non-empty
+    if (!seqName || !seqName.trim()) return false;
+
+    // numeric fields must be digits
+    if (![length, offset, lineBases, lineWidth].every(p => /^\d+$/.test(p))) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 const validators = {
@@ -230,6 +257,8 @@ const validators = {
   sam: validateSam,
   bam: validateBam,
   cram: validateCram,
+  bai: validateBai,
+  fai: validateFai,
   json: validateJson,
   text: () => true, // Default fallback for TEXT
 };
@@ -260,7 +289,7 @@ function matchType(dataValue, { allowed = [], returnAll = false }) {
   for (const { type, validator } of allTypes) {
     if (isTypeBinary(type) && dataValue.kind !== "binary") continue
     if (!isTypeBinary(type) && dataValue.kind === "binary") continue
-    
+
     if (!validator(dataValue.data)) continue
 
     const isAllowed = allowed.includes(type) ? 1 : 0

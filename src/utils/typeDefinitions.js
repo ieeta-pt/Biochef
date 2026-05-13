@@ -157,7 +157,22 @@ export const typeDefinitions = [
     edgeColor: '#9dce32',
     format: 'binary'
   },
-    {
+  {
+    id: 'BAI',
+    validator: 'bai',
+    defaultExtension: '.bai',
+    uploadExtensions: ['.bai'],
+    edgeColor: '#ce32c1',
+    format: 'binary'
+  },
+  {
+    id: 'FAI',
+    validator: 'fai',
+    defaultExtension: '.fai',
+    uploadExtensions: ['.fai'],
+    edgeColor: '#77016d',
+  },
+  {
     id: 'CRAM',
     validator: 'cram',
     defaultExtension: '.cram',
