@@ -263,29 +263,33 @@ async function aioliReadFileHelper(CLI, fileName) {
 }
 
 /*
-TODO change this to reflect dataValue changes
 ToolInvocation = {
   toolName: string
-  // Name of the tool to run
+  // Name of the tool to execute
 
   uniqueId: string
-  // Unique id for this execution
-  // Two invocations of the same tool need to have different ids
-
+  // Unique identifier for this execution
+  
   toolArguments: string[]
-  // Arguments to pass directly to the tool
+  // CLI arguments passed directly to the tool
 
   inputs: {
     [inputName]: {
       mode: "text" | "output"
-      // How the input value is resolved
-      // "text" - input comes from the `value` below
-      // "output" - input comes from the output of a previous invocation
+      // "text"
+      //   Direct literal DataValue provided as input
+      //   value is a DataValue:
+      //   {
+      //     kind: "text" | "binary" | "reference",
+      //     data: any
+      //   }
 
-      value: string | [string, string]
-      // Changes depending on the `mode` above
-      // mode = "text"   → string value
-      // mode = "output" → [sourceTool, sourceToolOutputName]
+      // "output"
+      //   Input comes from a previous tool invocation output
+      //   value is a tuple:
+      //   [sourceToolUniqueId, sourceOutputName]
+
+      value: DataValue | [string, string]
     }
   }
 }
