@@ -37,7 +37,6 @@ const InputPanel = ({
     if (tabIndex != 1) return
 
     if (selectedFiles.size == 0) {
-      setInputData(makeTextDataValue(""))
       return
     }
 
