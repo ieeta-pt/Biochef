@@ -7,7 +7,7 @@ import { NotificationContext } from '../contexts/NotificationContext';
 import { detectDataType, detectIsBinaryFile } from '../utils/detectDataType';
 import { getUploadExtensions, getTypeExampleInput } from '../utils/typeDefinitions';
 import { TourContext } from '../contexts/TourContext';
-import { makeTextDataValue, makeBinaryDataValue } from '../utils/dataValue';
+import { makeTextDataValue, makeBinaryDataValue, dataValueToString } from '../utils/dataValue';
 
 const ToolInputPanel = ({ tool, inputData, setInputData }) => {
     const [fileName, setFileName] = useState('');
@@ -201,7 +201,18 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
                     padding: 2,
                 }}
             >
-                <Typography variant="h6">Input</Typography>
+                <Typography variant="h6">
+                    Input{" "}
+                    {inputData?.[selectedInput.name]?.kind && (
+                        <Typography
+                            component="span"
+                            variant="subtitle2"
+                            style={{ marginLeft: 4, color: "#555" }}
+                        >
+                            {inputData[selectedInput.name].kind}
+                        </Typography>
+                    )}
+                </Typography>
 
                 <Box
                     sx={{
@@ -254,11 +265,7 @@ const ToolInputPanel = ({ tool, inputData, setInputData }) => {
             <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: 2 }}>
                 <TextField
                     variant="outlined"
-                    value={
-                        inputData[selectedInput.name]?.kind === "binary"
-                            ? `[binary ${inputData[selectedInput.name].data?.length ?? 0} bytes]`
-                            : inputData[selectedInput.name]?.data || ''
-                    }
+                    value={dataValueToString(inputData[selectedInput.name])}
                     onChange={(e) => handleInputChange(makeTextDataValue(e.target.value))}
                     placeholder="e.g., >Sequence1\nACGT..."
                     InputProps={{

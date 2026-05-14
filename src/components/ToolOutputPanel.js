@@ -4,7 +4,7 @@ import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
 import React, { useEffect, useState, useContext } from 'react';
 import { TourContext } from '../contexts/TourContext';
-import { isDataValue } from '../utils/dataValue';
+import { dataValueToString, isDataValue } from '../utils/dataValue';
 
 const ToolOutputPanel = ({ outputData, setOutputData, workflow = null, tool = null, inputData, page, rows = 8 }) => {
     const [selectedOutput, setSelectedOutput] = useState('');
@@ -49,7 +49,7 @@ const ToolOutputPanel = ({ outputData, setOutputData, workflow = null, tool = nu
         }
 
         if (outputData.kind == "binary") {
-            setDisplayedOutput(`[binary ${outputData.data.length ?? 0} bytes - use Save to download]`)
+            setDisplayedOutput(dataValueToString(outputData))
         }
         else if (outputData.kind == "text") {
             setDisplayedOutput(outputData.data)

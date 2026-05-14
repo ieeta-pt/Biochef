@@ -18,7 +18,7 @@ import { detectDataType, detectAllDataTypes } from '../utils/detectDataType';
 import FileExplorer from './FileExplorer';
 import { TourContext } from '../contexts/TourContext';
 import CLIInputPanel from './CLIInputPanel';
-import { makeTextDataValue } from '../utils/dataValue';
+import { dataValueToString, makeTextDataValue } from '../utils/dataValue';
 
 const InputPanel = ({
   inputData, setInputData,
@@ -87,7 +87,7 @@ const InputPanel = ({
         <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
           {tabIndex === 0 && (
             <CLIInputPanel
-              inputData={inputData ? inputData.kind == "binary" ? `[binary ${inputData.data.length ?? 0} bytes]` : inputData.data : ""}
+              inputData={dataValueToString(inputData)}
               setInputData={(newInputData) => {
                 setInputData(makeTextDataValue(newInputData))
               }}
