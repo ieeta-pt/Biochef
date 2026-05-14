@@ -143,7 +143,7 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
 
   const onNodesDelete = useCallback((nodes) => {
     for (const node of nodes) {
-      if (node.id == selectedNode.id) {
+      if (node.id == selectedNode?.id) {
         setSelectedNode(null)
       }
     }

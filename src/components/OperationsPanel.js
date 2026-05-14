@@ -25,6 +25,7 @@ import { ValidationErrorsContext } from '../contexts/ValidationErrorsContext';
 import { TourContext } from '../contexts/TourContext';
 import { getToolsByCategory, getTool } from '../utils/toolUtils';
 import { detectAllDataTypes } from '../utils/detectDataType';
+import { isValidConnection } from '../utils/workflowUtils';
 
 const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoading, insertAtIndex, setInsertAtIndex, addingATool, setAddingATool, filteredTools, setFilteredTools, selectedFiles, tabIndex, workflow, selectedNode }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -83,8 +84,7 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
         op.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         op.description.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesType =
-        op.inputTypes?.some((type) => selectedNodeTypes.includes(type));
+      const matchesType = isValidConnection(selectedNodeTypes, op.inputTypes)
 
       const isSearching = searchTerm !== "";
       const hasNodeSelected = selectedNode && selectedNode.type != "outputWorkflowNode";
@@ -292,9 +292,8 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
                     const hasNoInput = toolInputTypes.length == 0
 
                     const matchesType =
-                      operation.inputTypes?.some((type) =>
-                        selectedNodeTypes.includes(type)
-                      ) && selectedNode?.type !== "outputWorkflowNode";
+                      isValidConnection(selectedNodeTypes, operation.inputTypes) 
+                      && selectedNode?.type !== "outputWorkflowNode";
 
                     const isDisabled = !hasNoInput && (!selectedNode || !matchesType);
 

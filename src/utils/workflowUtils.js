@@ -1,5 +1,6 @@
 import { getTool } from "./toolUtils";
 import { detectAllDataTypes } from "./detectDataType";
+import { isTypeBinary } from "./typeDefinitions";
 
 export function sanitizeWorkflowNodes(nodes) {
   return nodes.map(node => {
@@ -28,6 +29,23 @@ export function sanitizeWorkflowNodes(nodes) {
   });
 }
 
+export function isValidConnection(sourceTypes, targetTypes) {
+  let _sourceTypes = [...sourceTypes];
+
+  // here we add TEXT as a sourceType if any of the current sourceTypes are not binary
+  // this is so that we can have tools like GREP only have the TEXT type and still work
+  for (const type of _sourceTypes) {
+    if (!_sourceTypes.includes("TEXT") && !isTypeBinary(type)) {
+      _sourceTypes.push("TEXT")
+      break
+    }
+  }
+
+  return _sourceTypes.some((type) =>
+    targetTypes.includes(type)
+  );
+}
+
 export function isValidWorkflowConnection(sourceNode, sourceHandle, targetNode, targetHandle) {
   if (!sourceNode || !targetNode) return false;
 
@@ -50,9 +68,7 @@ export function isValidWorkflowConnection(sourceNode, sourceHandle, targetNode, 
   }
   if (!targetTypes) return false
 
-  return sourceTypes.some((type) =>
-    targetTypes.includes(type)
-  );
+  return isValidConnection(sourceTypes, targetTypes)
 };
 
 export function getNodeHandles(node) {
