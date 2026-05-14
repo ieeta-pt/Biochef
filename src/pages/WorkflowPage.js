@@ -25,19 +25,19 @@ const WorkflowPage = () => {
 
   const [toolIndexLoaded, setToolIndexLoaded] = useState(false);
 
-  const [inputTabIndex, setInputTabIndex] = useState({})
-  const [selectedFileManagerFiles, setSelectedFileManagerFiles] = useState({});
-  const [inputFileManagerTree, setInputFileManagerTree] = useState({});
-
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-
   const getInitialTree = () => ({
     id: 'root',
     name: 'Root',
     type: 'folder',
     children: [],
   });
+
+  const [inputTabIndex, setInputTabIndex] = useState({})
+  const [selectedFileManagerFiles, setSelectedFileManagerFiles] = useState({});
+  const [inputFileManagerTree, setInputFileManagerTree] = useState(getInitialTree());
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const [selectedNode, setSelectedNode] = useState(null);
   const selectedNodeData = useMemo(() => {
@@ -281,16 +281,11 @@ const WorkflowPage = () => {
                   }
                   inputData={selectedNodeData.outputs?.["out"] ?? ""}
                   setInputData={handleUpdateSelectedInputNode}
-                  tree={inputFileManagerTree?.[selectedNode.id] ?? getInitialTree()}
+                  tree={inputFileManagerTree ?? getInitialTree()}
                   setTree={(updater) =>
-                    setInputFileManagerTree(prev => {
-                      const currentTree = prev[selectedNode.id] || {}
-                      const newTree = typeof updater === "function" ? updater(currentTree) : updater;
-                      return {
-                        ...prev,
-                        [selectedNode.id]: newTree,
-                      };
-                    })
+                    setInputFileManagerTree(prev =>
+                      typeof updater === "function" ? updater(prev) : updater
+                    )
                   }
                 />
               )}
