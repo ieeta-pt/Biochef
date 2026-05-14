@@ -602,58 +602,59 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
     )
   }
 
-  async function runWorkflowAgent(url) {
-    let fileData = {}
-    for (const node of nodes) {
-      if (node.type == "inputWorkflowNode") {
-        fileData[node.id + "-out" + ".txt"] = node.data.outputs["out"]
-      }
-    }
+  // TODO
+  // async function runWorkflowAgent(url) {
+  //   let fileData = {}
+  //   for (const node of nodes) {
+  //     if (node.type == "inputWorkflowNode") {
+  //       fileData[node.id + "-out" + ".txt"] = node.data.outputs["out"]
+  //     }
+  //   }
 
-    const formData = new FormData();
+  //   const formData = new FormData();
 
-    const flow = toObject();
-    flow.nodes = sanitizeWorkflowNodes(flow.nodes);
-    formData.append("biochef_workflow", JSON.stringify(flow));
+  //   const flow = toObject();
+  //   flow.nodes = sanitizeWorkflowNodes(flow.nodes);
+  //   formData.append("biochef_workflow", JSON.stringify(flow));
 
-    for (const [filename, content] of Object.entries(fileData)) {
-      const file = new File([content], filename, { type: "text/plain" });
-      formData.append("files", file);
-    }
+  //   for (const [filename, content] of Object.entries(fileData)) {
+  //     const file = new File([content], filename, { type: "text/plain" });
+  //     formData.append("files", file);
+  //   }
 
-    let response = null
-    try {
-      response = await fetch(url, {
-        method: "POST",
-        body: formData
-      });
-    }
-    catch {
-      logger.error("Could not send request to agent")
-      showNotification("Agent could not be reached", "error")
-      return
-    }
+  //   let response = null
+  //   try {
+  //     response = await fetch(url, {
+  //       method: "POST",
+  //       body: formData
+  //     });
+  //   }
+  //   catch {
+  //     logger.error("Could not send request to agent")
+  //     showNotification("Agent could not be reached", "error")
+  //     return
+  //   }
 
-    if (!response) {
-      logger.error("Did not get a response from agent agent")
-      showNotification("Agent did not responde", "error")
-      return
-    }
+  //   if (!response) {
+  //     logger.error("Did not get a response from agent agent")
+  //     showNotification("Agent did not responde", "error")
+  //     return
+  //   }
 
-    let data = null
-    try {
-      data = await response.json();
-    }
-    catch {
-      logger.error("Could not process response from agent")
-      showNotification("Invalid reponse from agent", "error")
-      return
-    }
+  //   let data = null
+  //   try {
+  //     data = await response.json();
+  //   }
+  //   catch {
+  //     logger.error("Could not process response from agent")
+  //     showNotification("Invalid reponse from agent", "error")
+  //     return
+  //   }
 
-    for (const [node_id, outputs] of Object.entries(data)) {
-      updateNodeData(node_id, { outputs })
-    }
-  }
+  //   for (const [node_id, outputs] of Object.entries(data)) {
+  //     updateNodeData(node_id, { outputs })
+  //   }
+  // }
 
   const WorkflowButton = ({ children, ...props }) => (
     <Button
