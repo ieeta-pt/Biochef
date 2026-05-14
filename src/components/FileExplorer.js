@@ -436,12 +436,8 @@ const FileExplorer = ({ selectedFiles, setSelectedFiles, tree, setTree }) => {
                 if (newSet.has(file) && !isFolder) {
                     newSet.delete(file);
                 } else {
-                    const currentType = getCurrentSelectedType();
-                    if (!currentType || currentType === file.fileType) {
-                        newSet.add(file);
-                    } else {
-                        showNotification("Selected files must have the same type.", "error");
-                    }
+                    newSet.clear();
+                    newSet.add(file);
                 }
             };
 
