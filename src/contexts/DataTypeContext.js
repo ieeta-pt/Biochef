@@ -171,6 +171,33 @@ export const DataTypeProvider = ({ children }) => {
         }
         return isGFFValid;
 
+      case 'VCF':
+        const vcfLines = trimmedData.split(/\r?\n/);
+        let vcfHeaderFound = false;
+        const isVCFValid = vcfLines.every(line => {
+          if (line.startsWith('##')) return true;
+
+          if (line.startsWith('#CHROM')) {
+            vcfHeaderFound = true;
+            return line.trim().split(/\s+/).length >= 8;
+          }
+
+          if (!vcfHeaderFound) return false;
+
+          const fields = line.trim().split(/\s+/);
+          if (fields.length < 8) return false;
+
+          const [, pos, , ref, alt, qual] = fields;
+          return /^\d+$/.test(pos) &&
+            /^[ACGTN]+$/i.test(ref) &&
+            alt.split(',').every(a => /^[ACGTN]+$/i.test(a)) &&
+            (qual === '.' || /^\d+(\.\d+)?$/.test(qual));
+        }) && vcfHeaderFound;
+        if (!isVCFValid) {
+          console.error('VCF validation failed.');
+        }
+        return isVCFValid;
+
       case 'LIST':
         const listLines = trimmedData.split(/\r?\n/);
         const isLISTValid = listLines.every(line => {

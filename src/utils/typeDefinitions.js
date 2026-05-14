@@ -125,6 +125,15 @@ export const typeDefinitions = [
     example: 'seq\t.\tgene\t1\t30\t.\t+\t.\tID=gene1\nseq\t.\tmRNA\t1\t30\t.\t+\t.\tID=tx1;Parent=gene1\nseq\t.\texon\t1\t30\t.\t+\t.\tParent=tx1\nseq\t.\tCDS\t1\t30\t.\t+\t0\tParent=tx1',
   },
   {
+    id: 'VCF',
+    validator: 'vcf',
+    defaultExtension: '.vcf',
+    scriptExtension: 'vcf',
+    uploadExtensions: ['.vcf'],
+    edgeColor: '#6c5ce7',
+    example: '##fileformat=VCFv4.2\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\nchr1\t11\t.\tA\tG\t42\tPASS\t.\nchr1\t36\t.\tT\tC\t18\tPASS\t.',
+  },
+  {
     id: 'LIST',
     validator: 'list',
     defaultExtension: '.lst',

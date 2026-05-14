@@ -129,6 +129,35 @@ function validateGff(content) {
   });
 }
 
+function validateVcf(content) {
+  if (!content) return false;
+  const lines = content.trim().split(/\r?\n/);
+  let headerFound = false;
+
+  for (const line of lines) {
+    if (line.startsWith('##')) continue;
+
+    if (line.startsWith('#CHROM')) {
+      headerFound = true;
+      if (line.trim().split(/\s+/).length < 8) return false;
+      continue;
+    }
+
+    if (!headerFound) return false;
+
+    const fields = line.trim().split(/\s+/);
+    if (fields.length < 8) return false;
+
+    const [, pos, , ref, alt, qual] = fields;
+    if (!/^\d+$/.test(pos)) return false;
+    if (!/^[ACGTN]+$/i.test(ref)) return false;
+    if (!alt.split(',').every(a => /^[ACGTN]+$/i.test(a))) return false;
+    if (qual !== '.' && !/^\d+(\.\d+)?$/.test(qual)) return false;
+  }
+
+  return headerFound;
+}
+
 function validateList(content) {
   if (!content.trim()) return false;
   const lines = content.split('\n');
@@ -253,6 +282,7 @@ const validators = {
   aminoAcids: validateAminoAcids,
   bed: validateBed,
   gff: validateGff,
+  vcf: validateVcf,
   list: validateList,
   sam: validateSam,
   bam: validateBam,
