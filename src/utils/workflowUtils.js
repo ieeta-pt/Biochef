@@ -1,31 +1,49 @@
 import { getTool } from "./toolUtils";
 import { detectAllDataTypes } from "./detectDataType";
 import { isTypeBinary } from "./typeDefinitions";
+import { makeReferenceDataValue } from "./dataValue";
+import { putBlob } from "./blobStore"
 
-export function sanitizeWorkflowNodes(nodes) {
+function sanitizeWorkflowNodes(nodes, { keepBinaryAsReference = false } = {}) {
   return nodes.map(node => {
-
-    const newData = {
-      ...node.data,
-      outputs: {}, 
-      output: {},
-      toolMessages: {},
-      is_running: false,
-      runCalled: false
-    };
+    const outputs = {};
 
     if (node.type === "inputWorkflowNode") {
       for (const [key, value] of Object.entries(node.data.outputs || {})) {
-        if (value?.kind == "text") {
-          newData.outputs[key] = value;
+        if (value?.kind === "text") {
+          outputs[key] = value;
+        }
+        else if (value?.kind === "binary" && keepBinaryAsReference) {
+          const blobId = node.id + key
+          putBlob(blobId, value.data, "binary")
+          outputs[key] = makeReferenceDataValue(blobId);
         }
       }
     }
 
     return {
       ...node,
-      data: newData
+      data: {
+        ...node.data,
+        outputs,
+        output: {},
+        toolMessages: {},
+        is_running: false,
+        runCalled: false
+      }
     };
+  });
+}
+
+export function prepareWorkflowNodesForLocalStorage(nodes) {
+  return sanitizeWorkflowNodes(nodes, {
+    keepBinaryAsReference: true
+  });
+}
+
+export function prepareWorkflowNodesForExport(nodes) {
+  return sanitizeWorkflowNodes(nodes, {
+    keepBinaryAsReference: false
   });
 }
 
@@ -52,7 +70,7 @@ export function isValidWorkflowConnection(sourceNode, sourceHandle, targetNode, 
   if (targetNode.type == "outputWorkflowNode") return true;
 
   let sourceTypes = null;
-  if (sourceNode.type == "inputWorkflowNode"){
+  if (sourceNode.type == "inputWorkflowNode") {
     sourceTypes = detectAllDataTypes(sourceNode.data.outputs?.["out"])
   }
   else if (sourceNode.type === "workflowNode") {

@@ -8,9 +8,11 @@ import { InputWorkflowNode } from './nodes/InputWorkflowNode';
 import { WorkflowEdge } from './nodes/WorkflowEdge';
 import { loadTool, getTool, runTools } from '../utils/toolUtils';
 import { NotificationContext } from '../contexts/NotificationContext';
-import { getNodeHandles, isValidWorkflowConnection, sanitizeWorkflowNodes } from '../utils/workflowUtils';
+import { getNodeHandles, isValidWorkflowConnection, prepareWorkflowNodesForExport, prepareWorkflowNodesForLocalStorage } from '../utils/workflowUtils';
 import logger from '../utils/logger';
 import { resolveCollisions } from '../utils/resolveNodeCollisions';
+import { getBlob, removeUnreferencedBlobs } from '../utils/blobStore';
+import { makeBinaryDataValue } from '../utils/dataValue';
 
 const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClicked, indexLoaded }, ref) => {
   const [nodes, setNodes] = useNodesState([]);
@@ -38,12 +40,24 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
       if (flow) {
         const { nodes: savedNodes = [], edges: savedEdges = [], viewport = {} } = flow;
 
+        let blobsToKeep = []
         for (const node of savedNodes) {
           if (node.type === 'workflowNode') {
             const result = await loadTool(node.data.label);
             if (!result) return
           }
+
+          if (node.type === 'inputWorkflowNode') {
+            for (const [key, value] of Object.entries(node.data.outputs || {})) {
+              if (value?.kind === "reference") {
+                const blob = await getBlob(value.data)
+                blobsToKeep.push(value.data)
+                node.data.outputs[key] = makeBinaryDataValue(blob?.bytes ?? new Uint8Array)
+              }
+            }
+          }          
         }
+        removeUnreferencedBlobs(blobsToKeep)
 
         setNodes(savedNodes);
         setEdges(savedEdges);
@@ -77,7 +91,7 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
     if (!workflowLoaded) return;
 
     const flow = toObject();
-    flow.nodes = sanitizeWorkflowNodes(flow.nodes)
+    flow.nodes = prepareWorkflowNodesForLocalStorage(flow.nodes)
 
     localStorage.setItem('workflow', JSON.stringify(flow));
   }, [nodes, edges]);
@@ -287,7 +301,7 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
     if (nodes.length === 0) return;
 
     const flow = toObject();
-    flow.nodes = sanitizeWorkflowNodes(flow.nodes);
+    flow.nodes = prepareWorkflowNodesForExport(flow.nodes);
     const fileContent = JSON.stringify(flow, null, 2);
 
     const blob = new Blob([fileContent], { type: 'application/json' });

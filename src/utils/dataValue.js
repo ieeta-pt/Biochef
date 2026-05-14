@@ -6,6 +6,10 @@ export function makeBinaryDataValue(data) {
   return { kind: "binary", data };
 }
 
+export function makeReferenceDataValue(data) {
+  return { kind: "reference", data };
+}
+
 export function isDataValue(value) {
   return value && typeof value === "object" && "kind" in value && "data" in value;
 }
