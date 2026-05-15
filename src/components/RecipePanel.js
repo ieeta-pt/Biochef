@@ -6,7 +6,7 @@ import { WorkflowNode } from './nodes/WorkflowNode';
 import { OutputWorkflowNode } from './nodes/OutputWorkflowNode';
 import { InputWorkflowNode } from './nodes/InputWorkflowNode';
 import { WorkflowEdge } from './nodes/WorkflowEdge';
-import { loadTool, getTool, runTools } from '../utils/toolUtils';
+import { loadTool, toolHasNoInputs, getTool, runTools } from '../utils/toolUtils';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { getNodeHandles, isValidWorkflowConnection, prepareWorkflowNodesForExport, prepareWorkflowNodesForLocalStorage } from '../utils/workflowUtils';
 import logger from '../utils/logger';
@@ -55,7 +55,7 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, indexLoaded }, 
                 node.data.outputs[key] = makeBinaryDataValue(blob?.bytes ?? new Uint8Array)
               }
             }
-          }          
+          }
         }
         removeUnreferencedBlobs(blobsToKeep)
 
@@ -260,7 +260,7 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, indexLoaded }, 
 
   const addWorkflowNode = (toolDefinition) => {
     let initialParamValues = {};
-    let toolMessages = {"Parameter":{}}
+    let toolMessages = { "Parameter": {} }
 
     toolDefinition.parameters.forEach(param => {
       initialParamValues[param.name] = {
@@ -799,8 +799,17 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, indexLoaded }, 
       <ViewportPortal>
         {renderWorklowBoxes && getWorklowComponents().map((component, idx) => {
           const bounds = getComponentBounds(component);
-          if (!component.some((n) => getNode(n)?.type === "workflowNode")) {
-            return
+          const componentNodes = component.map((n) => getNode(n)).filter(Boolean);
+
+          const hasWorkflowNode = componentNodes.some((n) => n.type === "workflowNode");
+
+          const hasInputNode = componentNodes.some((n) =>
+            n.type === "inputWorkflowNode" ||
+            (n.type === "workflowNode" && toolHasNoInputs(n.data?.label))
+          );
+
+          if (!hasWorkflowNode || !hasInputNode) {
+            return;
           }
 
           return (

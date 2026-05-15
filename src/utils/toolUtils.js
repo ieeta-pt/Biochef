@@ -457,3 +457,10 @@ export function getToolOutputByName(toolName, outputName) {
 
   return getTool(toolName)?.io?.outputs?.find(o => o.name == outputName)?.types || null;
 }
+
+export function toolHasNoInputs(toolName) {
+  const tool = getTool(toolName);
+  if (!tool) return true;
+
+  return !tool.io?.inputs || tool.io.inputs.length === 0;
+}
