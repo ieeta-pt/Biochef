@@ -87,7 +87,6 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
         op.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         op.description.toLowerCase().includes(searchTerm.toLowerCase());
 
-      console.log(selectedNodeTypes)
       const matchesType = isValidConnection(selectedNodeTypes, op.inputTypes)
 
       const isSearching = searchTerm !== "";

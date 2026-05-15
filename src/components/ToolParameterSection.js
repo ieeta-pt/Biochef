@@ -50,7 +50,7 @@ const ToolParameterSection = ({ toolConfig, parameters, validationErrors, helpMe
           }
           label={
             <Tooltip
-              title={flagHelpMessages[paramName] || 'Loading help message...'}
+              // title={flagHelpMessages[paramName] || 'Loading help message...'}
               arrow
               componentsProps={{
                 tooltip: {
