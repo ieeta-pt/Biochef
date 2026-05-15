@@ -332,6 +332,7 @@ export async function runTools(
   for (const invocation of toolInvocations) {
     const toolDefinition = getTool(invocation.toolName)
     let args = invocation.toolArguments
+    let lastArgs = [] // arguments that must appear after all flagged arguments.
 
     for (const inputDefinition of toolDefinition.io.inputs) {
       if (!invocation.inputs[inputDefinition.name]) continue
@@ -361,8 +362,13 @@ export async function runTools(
       }
 
       if (inputDefinition.mode === "file") {
-        if (inputDefinition.flag) args.push(inputDefinition.flag)
-        args.push(inputFileName)
+        if (inputDefinition.flag) {
+          args.push(inputDefinition.flag)
+          args.push(inputFileName)
+        }
+        else {
+          lastArgs.push(inputFileName)
+        }
       }
       else if (inputDefinition.mode === "stdin") {
         CLI.stdin = stdinValue
@@ -373,9 +379,16 @@ export async function runTools(
       if (outputDefinition.mode !== "file") continue
 
       const outputTarget = outputDefinition.filename ?? `${invocation.uniqueId}-${outputDefinition.name}.txt`
-      if (outputDefinition.flag) args.push(outputDefinition.flag)
-      args.push(outputTarget)
+      if (outputDefinition.flag) {
+        args.push(outputDefinition.flag)
+        args.push(outputTarget)
+      }
+      else {
+        lastArgs.push(outputTarget)
+      }
     }
+    
+    args = [...args, ...lastArgs]
 
     // 2. Run the tool
     const { stdout, stderr } = await CLI.exec(invocation.toolName, args)
