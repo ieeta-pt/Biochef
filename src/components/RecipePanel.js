@@ -259,7 +259,8 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, indexLoaded }, 
   };
 
   const addWorkflowNode = (toolDefinition) => {
-    const initialParamValues = {};
+    let initialParamValues = {};
+    let toolMessages = {"Parameter":{}}
 
     toolDefinition.parameters.forEach(param => {
       initialParamValues[param.name] = {
@@ -267,6 +268,14 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, indexLoaded }, 
         value: param.default !== undefined ? param.default : '',
       };
     });
+
+    const missingRequiredParameters = toolDefinition.parameters.some(param =>
+      param.required && param.type != "flag" && !initialParamValues?.[param.name]?.value
+    );
+
+    if (missingRequiredParameters) {
+      toolMessages["Parameter"].error = ["Missing Required Parameters"]
+    }
 
     return addNode({
       id: `${toolDefinition.id}-${Date.now()}`,
@@ -277,6 +286,7 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, indexLoaded }, 
         output: "",
         repo: toolDefinition.repo,
         paramValues: initialParamValues,
+        toolMessages
       },
     });
   };

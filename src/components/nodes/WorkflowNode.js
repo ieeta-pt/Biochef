@@ -11,7 +11,7 @@ import { detectDataType } from '../../utils/detectDataType';
 import ToolMessageIcons from '../ToolMessageIcons';
 
 export const WorkflowNode = memo(({ id, data }) => {
-  const { label, paramValues, outputs, repo } = data;
+  const { label, paramValues, outputs } = data;
 
   const { updateNodeData } = useReactFlow();
 
