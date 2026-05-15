@@ -235,6 +235,10 @@ function validateBai(content) {
   return validateBinWithMagic(content, BINARY_MAGIC.BAI)
 }
 
+function validateMmi(content) {
+  return validateBinWithMagic(content, BINARY_MAGIC.MMI)
+}
+
 function validateJson(content) {
   if (!content?.trim()) return false;
 
@@ -288,6 +292,7 @@ const validators = {
   bam: validateBam,
   cram: validateCram,
   bai: validateBai,
+  mmi: validateMmi,
   fai: validateFai,
   json: validateJson,
   text: () => true, // Default fallback for TEXT

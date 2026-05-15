@@ -175,6 +175,14 @@ export const typeDefinitions = [
     format: 'binary'
   },
   {
+    id: 'MMI',
+    validator: 'mmi',
+    defaultExtension: '.mmi',
+    uploadExtensions: ['.mmi'],
+    edgeColor: '#c7ba43',
+    format: 'binary'
+  },
+  {
     id: 'FAI',
     validator: 'fai',
     defaultExtension: '.fai',
