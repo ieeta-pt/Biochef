@@ -51,6 +51,9 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
       if (outputs && "out" in outputs) {
         setSelectedNodeTypes(detectAllDataTypes(outputs["out"]))
       }
+      else {
+        setSelectedNodeTypes([])
+      }
     }
     else if (selectedNode?.type == "workflowNode") {
       const toolName = selectedNode?.data?.label
@@ -84,6 +87,7 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
         op.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         op.description.toLowerCase().includes(searchTerm.toLowerCase());
 
+      console.log(selectedNodeTypes)
       const matchesType = isValidConnection(selectedNodeTypes, op.inputTypes)
 
       const isSearching = searchTerm !== "";

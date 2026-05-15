@@ -28,7 +28,10 @@ const InputPanel = ({
   const [tabIndex, setTabIndex] = useState(0)
 
   useEffect(() => {
-    if (!inputData) return
+    if (!inputData) {
+      setInputDataTypes([])
+      return
+    }
     const detectedTypes = detectAllDataTypes(inputData);
     setInputDataTypes(detectedTypes);
   }, [inputData]);
