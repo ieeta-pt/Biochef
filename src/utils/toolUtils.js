@@ -376,15 +376,16 @@ export async function runTools(
     };
 
     for (const outputDefinition of toolDefinition.io.outputs) {
-      if (outputDefinition.mode !== "file") continue
+      if (outputDefinition.mode !== "file" || outputDefinition.flag == undefined) continue
 
       const outputTarget = outputDefinition.filename ?? `${invocation.uniqueId}-${outputDefinition.name}.txt`
-      if (outputDefinition.flag) {
-        args.push(outputDefinition.flag)
-        args.push(outputTarget)
+
+      if (outputDefinition.flag == "") {
+        lastArgs.push(outputTarget)
       }
       else {
-        lastArgs.push(outputTarget)
+        args.push(outputDefinition.flag)
+        args.push(outputTarget)
       }
     }
     
