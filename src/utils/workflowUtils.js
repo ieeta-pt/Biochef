@@ -1,17 +1,67 @@
 import { getTool } from "./toolUtils";
 import { detectAllDataTypes } from "./detectDataType";
+import { isTypeBinary } from "./typeDefinitions";
+import { makeReferenceDataValue } from "./dataValue";
+import { putBlob } from "./blobStore"
 
-export function sanitizeWorkflowNodes(nodes) {
-  return nodes.map(node => ({
-    ...node,
-    data: {
-      ...node.data,
-      outputs: node.type == "inputWorkflowNode" ? node.data.outputs : {},
-      toolMessages: {},
-      is_running: false,
-      runCalled: false
-    },
-  }));
+function sanitizeWorkflowNodes(nodes, { keepBinaryAsReference = false } = {}) {
+  return nodes.map(node => {
+    const outputs = {};
+
+    if (node.type === "inputWorkflowNode") {
+      for (const [key, value] of Object.entries(node.data.outputs || {})) {
+        if (value?.kind === "text") {
+          outputs[key] = value;
+        }
+        else if (value?.kind === "binary" && keepBinaryAsReference) {
+          const blobId = node.id + key
+          putBlob(blobId, value.data, "binary")
+          outputs[key] = makeReferenceDataValue(blobId);
+        }
+      }
+    }
+
+    return {
+      ...node,
+      data: {
+        ...node.data,
+        outputs,
+        output: {},
+        toolMessages: {},
+        is_running: false,
+        runCalled: false
+      }
+    };
+  });
+}
+
+export function prepareWorkflowNodesForLocalStorage(nodes) {
+  return sanitizeWorkflowNodes(nodes, {
+    keepBinaryAsReference: true
+  });
+}
+
+export function prepareWorkflowNodesForExport(nodes) {
+  return sanitizeWorkflowNodes(nodes, {
+    keepBinaryAsReference: false
+  });
+}
+
+export function isValidConnection(sourceTypes, targetTypes) {
+  let _sourceTypes = [...sourceTypes];
+
+  // here we add TEXT as a sourceType if any of the current sourceTypes are not binary
+  // this is so that we can have tools like GREP only have the TEXT type and still work
+  for (const type of _sourceTypes) {
+    if (!_sourceTypes.includes("TEXT") && !isTypeBinary(type)) {
+      _sourceTypes.push("TEXT")
+      break
+    }
+  }
+
+  return _sourceTypes.some((type) =>
+    targetTypes.includes(type)
+  );
 }
 
 export function isValidWorkflowConnection(sourceNode, sourceHandle, targetNode, targetHandle) {
@@ -20,7 +70,7 @@ export function isValidWorkflowConnection(sourceNode, sourceHandle, targetNode, 
   if (targetNode.type == "outputWorkflowNode") return true;
 
   let sourceTypes = null;
-  if (sourceNode.type == "inputWorkflowNode"){
+  if (sourceNode.type == "inputWorkflowNode") {
     sourceTypes = detectAllDataTypes(sourceNode.data.outputs?.["out"])
   }
   else if (sourceNode.type === "workflowNode") {
@@ -36,9 +86,7 @@ export function isValidWorkflowConnection(sourceNode, sourceHandle, targetNode, 
   }
   if (!targetTypes) return false
 
-  return sourceTypes.some((type) =>
-    targetTypes.includes(type)
-  );
+  return isValidConnection(sourceTypes, targetTypes)
 };
 
 export function getNodeHandles(node) {

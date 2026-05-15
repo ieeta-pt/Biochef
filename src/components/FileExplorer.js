@@ -436,12 +436,8 @@ const FileExplorer = ({ selectedFiles, setSelectedFiles, tree, setTree }) => {
                 if (newSet.has(file) && !isFolder) {
                     newSet.delete(file);
                 } else {
-                    const currentType = getCurrentSelectedType();
-                    if (!currentType || currentType === file.fileType) {
-                        newSet.add(file);
-                    } else {
-                        showNotification("Selected files must have the same type.", "error");
-                    }
+                    newSet.clear();
+                    newSet.add(file);
                 }
             };
 
@@ -624,7 +620,7 @@ const FileExplorer = ({ selectedFiles, setSelectedFiles, tree, setTree }) => {
                         }
                         />
                         <ListItemSecondaryAction>
-                            {node.type === 'file' && (
+                            {node.type === 'file' && node.content?.kind == "text" && (
                                 <IconButton edge="end" onClick={() => handleViewContent(node)} style={{ marginRight: '8px' }}>
                                     <Visibility fontSize="small" />
                                 </IconButton>
@@ -952,7 +948,7 @@ const FileExplorer = ({ selectedFiles, setSelectedFiles, tree, setTree }) => {
                                 wordBreak: 'break-all'
                             }}
                         >
-                            {activeNode?.content || 'No content available'}
+                            {activeNode?.content?.data || 'No content available'}
                         </Typography>
                     </Paper>
                 </DialogContent>

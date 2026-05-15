@@ -8,9 +8,11 @@ import { InputWorkflowNode } from './nodes/InputWorkflowNode';
 import { WorkflowEdge } from './nodes/WorkflowEdge';
 import { loadTool, getTool, runTools } from '../utils/toolUtils';
 import { NotificationContext } from '../contexts/NotificationContext';
-import { getNodeHandles, isValidWorkflowConnection, sanitizeWorkflowNodes } from '../utils/workflowUtils';
+import { getNodeHandles, isValidWorkflowConnection, prepareWorkflowNodesForExport, prepareWorkflowNodesForLocalStorage } from '../utils/workflowUtils';
 import logger from '../utils/logger';
 import { resolveCollisions } from '../utils/resolveNodeCollisions';
+import { getBlob, removeUnreferencedBlobs } from '../utils/blobStore';
+import { makeBinaryDataValue } from '../utils/dataValue';
 
 const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClicked, indexLoaded }, ref) => {
   const [nodes, setNodes] = useNodesState([]);
@@ -38,12 +40,24 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
       if (flow) {
         const { nodes: savedNodes = [], edges: savedEdges = [], viewport = {} } = flow;
 
+        let blobsToKeep = []
         for (const node of savedNodes) {
           if (node.type === 'workflowNode') {
             const result = await loadTool(node.data.label);
             if (!result) return
           }
+
+          if (node.type === 'inputWorkflowNode') {
+            for (const [key, value] of Object.entries(node.data.outputs || {})) {
+              if (value?.kind === "reference") {
+                const blob = await getBlob(value.data)
+                blobsToKeep.push(value.data)
+                node.data.outputs[key] = makeBinaryDataValue(blob?.bytes ?? new Uint8Array)
+              }
+            }
+          }          
         }
+        removeUnreferencedBlobs(blobsToKeep)
 
         setNodes(savedNodes);
         setEdges(savedEdges);
@@ -77,7 +91,7 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
     if (!workflowLoaded) return;
 
     const flow = toObject();
-    flow.nodes = sanitizeWorkflowNodes(flow.nodes)
+    flow.nodes = prepareWorkflowNodesForLocalStorage(flow.nodes)
 
     localStorage.setItem('workflow', JSON.stringify(flow));
   }, [nodes, edges]);
@@ -143,7 +157,7 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
 
   const onNodesDelete = useCallback((nodes) => {
     for (const node of nodes) {
-      if (node.id == selectedNode.id) {
+      if (node.id == selectedNode?.id) {
         setSelectedNode(null)
       }
     }
@@ -287,7 +301,7 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
     if (nodes.length === 0) return;
 
     const flow = toObject();
-    flow.nodes = sanitizeWorkflowNodes(flow.nodes);
+    flow.nodes = prepareWorkflowNodesForExport(flow.nodes);
     const fileContent = JSON.stringify(flow, null, 2);
 
     const blob = new Blob([fileContent], { type: 'application/json' });
@@ -557,17 +571,18 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
 
     const { outputs, errors } = await runTools(
       toolInvocations,
-      (nodeId, outputs, error) => {
+      (nodeId, outputs, errors) => {
         const messages = {
           ...(getNode(nodeId).data.toolMessages ?? {}),
           "Output": {},
         };
 
+        const error = errors.join("\n")
         if (error) {
           const stderrLines = error.split('\n').map(line => line.trim()).filter(Boolean);
 
           const hasOutput = Object.values(outputs).some(
-            value => value !== undefined && value !== null && value !== ''
+            value => value !== undefined && value !== null && value.data !== ''
           );
           const failed = error && !hasOutput
 
@@ -587,58 +602,59 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
     )
   }
 
-  async function runWorkflowAgent(url) {
-    let fileData = {}
-    for (const node of nodes) {
-      if (node.type == "inputWorkflowNode") {
-        fileData[node.id + "-out" + ".txt"] = node.data.outputs["out"]
-      }
-    }
+  // TODO
+  // async function runWorkflowAgent(url) {
+  //   let fileData = {}
+  //   for (const node of nodes) {
+  //     if (node.type == "inputWorkflowNode") {
+  //       fileData[node.id + "-out" + ".txt"] = node.data.outputs["out"]
+  //     }
+  //   }
 
-    const formData = new FormData();
+  //   const formData = new FormData();
 
-    const flow = toObject();
-    flow.nodes = sanitizeWorkflowNodes(flow.nodes);
-    formData.append("biochef_workflow", JSON.stringify(flow));
+  //   const flow = toObject();
+  //   flow.nodes = sanitizeWorkflowNodes(flow.nodes);
+  //   formData.append("biochef_workflow", JSON.stringify(flow));
 
-    for (const [filename, content] of Object.entries(fileData)) {
-      const file = new File([content], filename, { type: "text/plain" });
-      formData.append("files", file);
-    }
+  //   for (const [filename, content] of Object.entries(fileData)) {
+  //     const file = new File([content], filename, { type: "text/plain" });
+  //     formData.append("files", file);
+  //   }
 
-    let response = null
-    try {
-      response = await fetch(url, {
-        method: "POST",
-        body: formData
-      });
-    }
-    catch {
-      logger.error("Could not send request to agent")
-      showNotification("Agent could not be reached", "error")
-      return
-    }
+  //   let response = null
+  //   try {
+  //     response = await fetch(url, {
+  //       method: "POST",
+  //       body: formData
+  //     });
+  //   }
+  //   catch {
+  //     logger.error("Could not send request to agent")
+  //     showNotification("Agent could not be reached", "error")
+  //     return
+  //   }
 
-    if (!response) {
-      logger.error("Did not get a response from agent agent")
-      showNotification("Agent did not responde", "error")
-      return
-    }
+  //   if (!response) {
+  //     logger.error("Did not get a response from agent agent")
+  //     showNotification("Agent did not responde", "error")
+  //     return
+  //   }
 
-    let data = null
-    try {
-      data = await response.json();
-    }
-    catch {
-      logger.error("Could not process response from agent")
-      showNotification("Invalid reponse from agent", "error")
-      return
-    }
+  //   let data = null
+  //   try {
+  //     data = await response.json();
+  //   }
+  //   catch {
+  //     logger.error("Could not process response from agent")
+  //     showNotification("Invalid reponse from agent", "error")
+  //     return
+  //   }
 
-    for (const [node_id, outputs] of Object.entries(data)) {
-      updateNodeData(node_id, { outputs })
-    }
-  }
+  //   for (const [node_id, outputs] of Object.entries(data)) {
+  //     updateNodeData(node_id, { outputs })
+  //   }
+  // }
 
   const WorkflowButton = ({ children, ...props }) => (
     <Button

@@ -181,7 +181,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
 
             // Verify if the input data is compatible with the tool
             for (const [key, value] of Object.entries(inputData)) {
-                const inputDataType = detectDataType(value);
+                const inputDataType = detectDataType(value, toolConfig.io.inputs.find((i)=>i.name == key).types);
 
                 if (!inputFormats.includes(inputDataType)) {
                     showNotification(
@@ -218,7 +218,7 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
             // Execute the tool
             const {outputs, errors} = await runTools([toolInvocation]);
             setOutputData(outputs[tool.name])
-            const error = errors[tool.name]
+            const error = errors[tool.name].join("\n")
 
             // TODO: code below is very much hardcoded for how GTO works with the ERROR: at the start
             // maybe this should be removed or altered to always show as an error since it wont work on other tools

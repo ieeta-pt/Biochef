@@ -25,6 +25,7 @@ import { ValidationErrorsContext } from '../contexts/ValidationErrorsContext';
 import { TourContext } from '../contexts/TourContext';
 import { getToolsByCategory, getTool } from '../utils/toolUtils';
 import { detectAllDataTypes } from '../utils/detectDataType';
+import { isValidConnection } from '../utils/workflowUtils';
 
 const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoading, insertAtIndex, setInsertAtIndex, addingATool, setAddingATool, filteredTools, setFilteredTools, selectedFiles, tabIndex, workflow, selectedNode }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -83,8 +84,7 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
         op.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         op.description.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesType =
-        op.inputTypes?.some((type) => selectedNodeTypes.includes(type));
+      const matchesType = isValidConnection(selectedNodeTypes, op.inputTypes)
 
       const isSearching = searchTerm !== "";
       const hasNodeSelected = selectedNode && selectedNode.type != "outputWorkflowNode";
@@ -288,12 +288,12 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
               <Collapse in={expandedCategories[category] || searchTerm !== ''} timeout="auto" unmountOnExit>
                 <List component="div" disablePadding>
                   {filteredOps.map((operation) => {
-                    const hasNoInput = getTool(operation.name).inputTypes.length == 0
+                    const toolInputTypes = getTool(operation.name).inputTypes
+                    const hasNoInput = toolInputTypes.length == 0
 
                     const matchesType =
-                      operation.inputTypes?.some((type) =>
-                        selectedNodeTypes.includes(type)
-                      ) && selectedNode?.type !== "outputWorkflowNode";
+                      isValidConnection(selectedNodeTypes, operation.inputTypes) 
+                      && selectedNode?.type !== "outputWorkflowNode";
 
                     const isDisabled = !hasNoInput && (!selectedNode || !matchesType);
 
@@ -302,10 +302,10 @@ const OperationsPanel = ({ onAddOperation, isWorkflowEmpty, isLoading, setIsLoad
                       tooltipContent = "";
                     }
                     else if (!selectedNode || selectedNode.type === "outputWorkflowNode") {
-                      tooltipContent = "Please select a node to be able to add new tools to the workflow";
+                      tooltipContent = `Please select a node to be able to add new tools to the workflow (this tool requires: ${toolInputTypes})`;
                     }
                     else if (!matchesType) {
-                      tooltipContent = "This tool is not compatible with the selected node";
+                      tooltipContent = `This tool is not compatible with the selected node (this tool requires: ${toolInputTypes})`;
                     }
                     else {
                       tooltipContent = operation.description;
