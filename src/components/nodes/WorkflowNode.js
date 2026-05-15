@@ -18,28 +18,6 @@ export const WorkflowNode = memo(({ id, data }) => {
   const toolData = getTool(label)
   const { inputs: toolInputs = [], outputs: toolOutputs = [] } = toolData.io ?? {};
 
-  const [invalidOutputType, setInvalidOutputType] = useState(false);
-  const [missingRequiredParameters, setMissingRequiredParameters] = useState(false)
-
-  // init
-  useEffect(() => {
-    if (!paramValues) {
-      const initialParamValues = {};
-
-      toolData.parameters?.forEach(param => {
-        initialParamValues[param.name] = {
-          enabled: param.required,
-          value: param.default !== undefined ? param.default : '',
-        };
-      });
-
-      updateNodeData(id, { paramValues: initialParamValues });
-    }
-    if (!repo) {
-      updateNodeData(id, { repo: toolData.repo });
-    }
-  }, []);
-
   // check if required parameters are not filled in
   useEffect(() => {
     const missingRequiredParameters = toolData.parameters?.some(param =>

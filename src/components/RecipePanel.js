@@ -14,7 +14,7 @@ import { resolveCollisions } from '../utils/resolveNodeCollisions';
 import { getBlob, removeUnreferencedBlobs } from '../utils/blobStore';
 import { makeBinaryDataValue } from '../utils/dataValue';
 
-const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClicked, indexLoaded }, ref) => {
+const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, indexLoaded }, ref) => {
   const [nodes, setNodes] = useNodesState([]);
   const [edges, setEdges] = useEdgesState([]);
 
@@ -258,14 +258,25 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, handleNodeClick
     return id;
   };
 
-  const addWorkflowNode = (tool) => {
+  const addWorkflowNode = (toolDefinition) => {
+    const initialParamValues = {};
+
+    toolDefinition.parameters.forEach(param => {
+      initialParamValues[param.name] = {
+        enabled: param.required ?? false,
+        value: param.default !== undefined ? param.default : '',
+      };
+    });
+
     return addNode({
-      id: `${tool.id}-${Date.now()}`,
+      id: `${toolDefinition.id}-${Date.now()}`,
       type: "workflowNode",
       data: {
-        label: tool.name,
+        label: toolDefinition.name,
         outputs: {},
         output: "",
+        repo: toolDefinition.repo,
+        paramValues: initialParamValues,
       },
     });
   };

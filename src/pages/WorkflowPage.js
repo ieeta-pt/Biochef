@@ -61,10 +61,6 @@ const WorkflowPage = () => {
     fetchToolIndex()
   }, []);
 
-  const handleNodeClicked = (node) => {
-    setSelectedNode(node)
-  }
-
   const handleAddOperation = async (toolName) => {
     await loadTool(toolName)
     const tool = getTool(toolName)
@@ -228,7 +224,6 @@ const WorkflowPage = () => {
                 ref={recipePanelRef}
                 selectedNode={selectedNode}
                 setSelectedNode={setSelectedNode}
-                handleNodeClicked={handleNodeClicked}
                 indexLoaded={toolIndexLoaded}
               />
             </Grid>
