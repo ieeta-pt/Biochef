@@ -131,7 +131,7 @@ export const typeDefinitions = [
     scriptExtension: 'vcf',
     uploadExtensions: ['.vcf'],
     edgeColor: '#6c5ce7',
-    example: '##fileformat=VCFv4.2\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\nchr1\t11\t.\tA\tG\t42\tPASS\t.\nchr1\t36\t.\tT\tC\t18\tPASS\t.',
+    example: '##fileformat=VCFv4.2\n##contig=<ID=chr1,length=1000000>\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\nchr1\t11\t.\tA\tG\t42\tPASS\t.\nchr1\t36\t.\tT\tC\t18\tPASS\t.',
   },
   {
     id: 'LIST',
@@ -180,6 +180,22 @@ export const typeDefinitions = [
     defaultExtension: '.mmi',
     uploadExtensions: ['.mmi'],
     edgeColor: '#c7ba43',
+    format: 'binary'
+  },
+  {
+    id: 'CSI',
+    validator: 'csi',
+    defaultExtension: '.csi',
+    uploadExtensions: ['.csi'],
+    edgeColor: '#c75743',
+    format: 'binary'
+  },
+  {
+    id: 'BCF',
+    validator: 'bcf',
+    defaultExtension: '.bcf',
+    uploadExtensions: ['.bcf'],
+    edgeColor: '#059400',
     format: 'binary'
   },
   {
@@ -254,5 +270,5 @@ export function getEdgeColor(typeId) {
 }
 
 export function isTypeBinary(typeId) {
-  return getTypeDefinition(typeId).format == "binary"
+  return getTypeDefinition(typeId)?.format == "binary"
 }

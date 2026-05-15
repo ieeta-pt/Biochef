@@ -3,11 +3,13 @@ import logger from './logger';
 import { getTypeDefinitions, isTypeBinary } from './typeDefinitions';
 
 const BINARY_MAGIC = {
-  BGZF: [0x1f, 0x8b, 0x08, 0x04],   // BAM, BCF, .gz/.bgz, .tbi all start here
-  BAI: [0x42, 0x41, 0x49, 0x01],   // "BAI\x01"
-  CSI: [0x43, 0x53, 0x49, 0x01],   // "CSI\x01"
+  BGZF: [0x1f, 0x8b, 0x08, 0x04],   // gzip compressed
+  BAM:  [0x42, 0x41, 0x4d, 0x01],   // "BAM\x01" (uncompressed)
+  BCF:  [0x42, 0x43, 0x46, 0x02],   // "BCF\x02" (uncompressed)
+  BAI:  [0x42, 0x41, 0x49, 0x01],   // "BAI\x01" (index for BAM)
+  CSI:  [0x43, 0x53, 0x49, 0x01],   // "CSI\x01" (index for BCF/VCF)
   CRAM: [0x43, 0x52, 0x41, 0x4d],   // "CRAM"
-  MMI: [0x4d, 0x4d, 0x49, 0x02],   // "MMI\x02"
+  MMI:  [0x4d, 0x4d, 0x49, 0x02],   // "MMI\x02" (minimap2 index)
 };
 
 function validateFasta(content) {
@@ -224,7 +226,7 @@ function validateBinWithMagic(content, magic) {
 }
 
 function validateBam(content) {
-  return validateBinWithMagic(content, BINARY_MAGIC.BGZF)
+  return validateBinWithMagic(content, BINARY_MAGIC.BAM) || validateBinWithMagic(content, BINARY_MAGIC.BGZF)
 }
 
 function validateCram(content) {
@@ -237,6 +239,14 @@ function validateBai(content) {
 
 function validateMmi(content) {
   return validateBinWithMagic(content, BINARY_MAGIC.MMI)
+}
+
+function validateCsi(content) {
+  return validateBinWithMagic(content, BINARY_MAGIC.CSI) || validateBinWithMagic(content, BINARY_MAGIC.BGZF)
+}
+
+function validateBcf(content) {
+  return validateBinWithMagic(content, BINARY_MAGIC.BCF) || validateBinWithMagic(content, BINARY_MAGIC.BGZF)
 }
 
 function validateJson(content) {
@@ -293,6 +303,8 @@ const validators = {
   cram: validateCram,
   bai: validateBai,
   mmi: validateMmi,
+  csi: validateCsi,
+  bcf: validateBcf,
   fai: validateFai,
   json: validateJson,
   text: () => true, // Default fallback for TEXT
