@@ -306,20 +306,25 @@ export async function runTools(
   // prepare tools to be loaded by aioli
   let aioliTools = []
   for (const invocation of toolInvocations) {
-    const toolAlreadyAdded = aioliTools.some((t) => t.program == invocation.toolName)
+    const toolAlreadyAdded = aioliTools.some((t) => t.tool == invocation.toolName)
     if (toolAlreadyAdded) continue
 
     const [wasmBlob, jsBlob] = await getToolBlobs(invocation.toolName)
 
+    const needsReinit = invocation.toolName.includes("GTO")
+
     aioliTools.push({
       // TODO(andrade) look again into what each argument does
-      program: invocation.toolName,
+      tool: invocation.toolName,
       scriptUrl: jsBlob,
       wasmUrl: wasmBlob,
       loading: "lazy",
-      reinit: false,
+      reinit: needsReinit,
     })
   }
+
+  const hasNonReinitTool = aioliTools.some((t) => t.reinit === false);
+  if (!hasNonReinitTool) aioliTools.push("base/1.0.0")
 
   // load tools
   const CLI = await new Aioli(aioliTools, {

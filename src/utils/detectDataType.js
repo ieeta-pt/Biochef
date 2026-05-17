@@ -357,16 +357,21 @@ function matchType(dataValue, { allowed = [], returnAll = false }) {
 }
 
 export function detectIsBinaryFile(bytes) {
-  function startsWith(bytes, magic) {
-    if (!bytes || bytes.length < magic.length) return false;
-    for (let i = 0; i < magic.length; i++) if (bytes[i] !== magic[i]) return false;
-    return true;
+  if (!bytes || !bytes.length) return false;
+
+  for (const magic of Object.values(BINARY_MAGIC)) {
+    if (bytes.length < magic.length) continue;
+
+    let matches = true;
+    for (let i = 0; i < magic.length; i++) {
+      if (bytes[i] !== magic[i]) {
+        matches = false;
+        break;
+      }
+    }
+
+    if (matches) return true;
   }
 
-  if (startsWith(bytes, BINARY_MAGIC.BAI)) return true
-  if (startsWith(bytes, BINARY_MAGIC.CSI)) return true
-  if (startsWith(bytes, BINARY_MAGIC.CRAM)) return true
-  if (startsWith(bytes, BINARY_MAGIC.MMI)) return true
-  if (startsWith(bytes, BINARY_MAGIC.BGZF)) return true
-  return false
+  return false;
 }
