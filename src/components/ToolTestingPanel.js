@@ -220,25 +220,19 @@ const ToolTestingPanel = ({ tool, inputData, setOutputData, setIsLoading }) => {
             setOutputData(outputs[tool.name])
             const error = errors[tool.name].join("\n")
 
-            // TODO: code below is very much hardcoded for how GTO works with the ERROR: at the start
-            // maybe this should be removed or altered to always show as an error since it wont work on other tools
-
-            // Handle messages in stderr 
             if (error) {
-                const stderrLines = error.split('\n');
-                let infoMessages = []; // Accumulate all informational messages
+                const stderrLines = error.split('\n').map(line => line.trim()).filter(Boolean);
+                
+                const hasOutput = Object.values(outputs[tool.name]).some(
+                    value => value !== undefined && value !== null && value.data !== ''
+                );
+                
+                const failed = error && !hasOutput
 
-                stderrLines.forEach((line) => {
-                    if (line.trim().startsWith('ERROR:')) {
-                        throw new Error(line.trim()); // Treat as an error
-                    } else if (line.trim()) {
-                        infoMessages.push(line.trim()); // Accumulate info messages
-                    }
-                });
-
-                // Display all accumulated informational messages together
-                if (infoMessages.length > 0) {
-                    showNotification(infoMessages.join('\n'), 'info');
+                if (failed) {
+                    showNotification(stderrLines, "error")
+                } else {
+                    showNotification(stderrLines, "info")
                 }
             }
 
