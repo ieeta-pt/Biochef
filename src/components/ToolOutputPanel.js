@@ -40,18 +40,21 @@ const ToolOutputPanel = ({ outputData, setOutputData, workflow = null, tool = nu
 
         // if it has multiple outputs, get the one for the currently selected output
         if (!isDataValue(outputData) && typeof outputData === 'object') {
-            let file = selectedOutput
-            if (!file) {
-                file = Object.keys(outputData)[0]
-                setSelectedOutput(file)
+            let outputToSelect = selectedOutput
+            if (!outputToSelect || !Object.hasOwn(outputData, outputToSelect)) {
+                outputToSelect = Object.keys(outputData)[0]
+                setSelectedOutput(outputToSelect)
             }
-            outputData = outputData[file]
+            outputData = outputData[outputToSelect]
+        }
+        else {
+            setSelectedOutput(Object.keys(outputData)[0])
         }
 
-        if (outputData.kind == "binary") {
+        if (outputData?.kind == "binary") {
             setDisplayedOutput(dataValueToString(outputData))
         }
-        else if (outputData.kind == "text") {
+        else if (outputData?.kind == "text") {
             setDisplayedOutput(outputData.data)
         }
     }, [outputData, selectedOutput]);
@@ -82,7 +85,7 @@ const ToolOutputPanel = ({ outputData, setOutputData, workflow = null, tool = nu
         }
         else {
             let content
-            if (outputData.kind == "binary") {
+            if (outputData?.kind == "binary") {
                 content = outputData.data
             }
             else {
