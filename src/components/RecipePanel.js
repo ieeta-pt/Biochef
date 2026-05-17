@@ -6,13 +6,16 @@ import { WorkflowNode } from './nodes/WorkflowNode';
 import { OutputWorkflowNode } from './nodes/OutputWorkflowNode';
 import { InputWorkflowNode } from './nodes/InputWorkflowNode';
 import { WorkflowEdge } from './nodes/WorkflowEdge';
-import { loadTool, toolHasNoInputs, getTool, runTools } from '../utils/toolUtils';
+import { loadTool, toolHasNoInputs, getTool, runTools, getToolRuntimes } from '../utils/toolUtils';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { getNodeHandles, isValidWorkflowConnection, prepareWorkflowNodesForExport, prepareWorkflowNodesForLocalStorage } from '../utils/workflowUtils';
 import logger from '../utils/logger';
 import { resolveCollisions } from '../utils/resolveNodeCollisions';
 import { getBlob, removeUnreferencedBlobs } from '../utils/blobStore';
 import { makeBinaryDataValue } from '../utils/dataValue';
+import { detectIsBinaryFile } from '../utils/detectDataType';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import PlayCircleFilledIcon from '@mui/icons-material/PlayCircleFilled';
 
 const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, indexLoaded }, ref) => {
   const [nodes, setNodes] = useNodesState([]);
@@ -26,7 +29,9 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, indexLoaded }, 
   const showNotification = useContext(NotificationContext);
 
   const [agentUrl, setAgentUrl] = useState("http://localhost:8000/convert");
-  const [openDialog, setOpenDialog] = useState(false);
+  const [openRunAgentDialog, setOpenRunAgentDialog] = useState(false);
+  const [selectedComponent, setSelectedComponent] = useState([])
+
   const [renderWorklowBoxes, setRenderWorklowBoxes] = useState(true);
 
   const [workflowLoaded, setWorkflowLoaded] = useState(false);
@@ -623,59 +628,92 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, indexLoaded }, 
     )
   }
 
-  // TODO
-  // async function runWorkflowAgent(url) {
-  //   let fileData = {}
-  //   for (const node of nodes) {
-  //     if (node.type == "inputWorkflowNode") {
-  //       fileData[node.id + "-out" + ".txt"] = node.data.outputs["out"]
-  //     }
-  //   }
+  async function runWorkflowWithAgent(component, url) {
+    let fileData = {}
+    for (const node of nodes) {
+      if (!component.includes(node.id)) continue
+      if (node.type == "inputWorkflowNode") {
+        fileData[node.id + "-out"] = node.data.outputs["out"]
+      }
+      else if (node.type == "workflowNode") {
+        updateNodeData(node.id, { outputs: {}, isRunning: true })
+      }
+    }
 
-  //   const formData = new FormData();
+    const formData = new FormData();
 
-  //   const flow = toObject();
-  //   flow.nodes = sanitizeWorkflowNodes(flow.nodes);
-  //   formData.append("biochef_workflow", JSON.stringify(flow));
+    const flow = toObject();
 
-  //   for (const [filename, content] of Object.entries(fileData)) {
-  //     const file = new File([content], filename, { type: "text/plain" });
-  //     formData.append("files", file);
-  //   }
+    flow.nodes = flow.nodes.filter(node => component.includes(node.id));
+    flow.edges = flow.edges.filter(
+      edge => component.includes(edge.source) && component.includes(edge.target)
+    );
 
-  //   let response = null
-  //   try {
-  //     response = await fetch(url, {
-  //       method: "POST",
-  //       body: formData
-  //     });
-  //   }
-  //   catch {
-  //     logger.error("Could not send request to agent")
-  //     showNotification("Agent could not be reached", "error")
-  //     return
-  //   }
+    flow.nodes = prepareWorkflowNodesForExport(flow.nodes);
+    formData.append("biochef_workflow", JSON.stringify(flow));
 
-  //   if (!response) {
-  //     logger.error("Did not get a response from agent agent")
-  //     showNotification("Agent did not responde", "error")
-  //     return
-  //   }
+    for (const [filename, dataValue] of Object.entries(fileData)) {
+      const content = dataValue.data;
 
-  //   let data = null
-  //   try {
-  //     data = await response.json();
-  //   }
-  //   catch {
-  //     logger.error("Could not process response from agent")
-  //     showNotification("Invalid reponse from agent", "error")
-  //     return
-  //   }
+      const mimeType =
+        dataValue.kind === "binary"
+          ? "application/octet-stream"
+          : "text/plain";
 
-  //   for (const [node_id, outputs] of Object.entries(data)) {
-  //     updateNodeData(node_id, { outputs })
-  //   }
-  // }
+      const file =
+        dataValue.kind === "binary"
+          ? new File([content], filename, { type: mimeType })
+          : new File([String(content)], filename, { type: mimeType });
+
+      formData.append("files", file);
+    }
+
+    let response = null
+    try {
+      response = await fetch(url, {
+        method: "POST",
+        body: formData
+      });
+    }
+    catch {
+      logger.error("Could not send request to agent")
+      showNotification("Agent could not be reached", "error")
+      for (const nodeId of component) updateNodeData(nodeId, { isRunning: false });
+      return
+    }
+
+    if (!response) {
+      logger.error("Did not get a response from agent agent")
+      showNotification("Agent did not responde", "error")
+      for (const nodeId of component) updateNodeData(nodeId, { isRunning: false });
+      return
+    }
+
+    let data = null
+    try {
+      data = await response.json();
+    }
+    catch {
+      logger.error("Could not process response from agent")
+      showNotification("Invalid reponse from agent", "error")
+      for (const nodeId of component) updateNodeData(nodeId, { isRunning: false });
+      return
+    }
+
+    for (const [node_id, outputs] of Object.entries(data)) {
+      const processedOutputs = {};
+
+      for (const [name, base64data] of Object.entries(outputs)) {
+        const bytes = Uint8Array.from(atob(base64data), c => c.charCodeAt(0));
+
+        processedOutputs[name] = detectIsBinaryFile(bytes)
+          ? { kind: "binary", data: bytes }
+          : { kind: "text", data: new TextDecoder().decode(bytes) };
+      }
+
+      updateNodeData(node_id, { outputs: processedOutputs, isRunning: false });
+    }
+  }
 
   const WorkflowButton = ({ children, ...props }) => (
     <Button
@@ -763,15 +801,10 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, indexLoaded }, 
           <WorkflowButton onClick={() => setRenderWorklowBoxes(!renderWorklowBoxes)} >
             Toggle Workflow Groups
           </WorkflowButton>
-          {/* {process.env.NODE_ENV === 'development' && (
-            <WorkflowButton onClick={() => setOpenDialog(true)}>
-              Run Workflow with Agent
-            </WorkflowButton>
-          )} */}
         </Panel>
 
       </ReactFlow>
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+      <Dialog open={openRunAgentDialog} onClose={() => setOpenRunAgentDialog(false)}>
         <DialogTitle>Enter Agent URL</DialogTitle>
         <DialogContent>
           <TextField
@@ -784,11 +817,11 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, indexLoaded }, 
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
+          <Button onClick={() => setOpenRunAgentDialog(false)}>Cancel</Button>
           <Button
             onClick={async () => {
-              setOpenDialog(false);
-              await runWorkflowAgent(agentUrl);
+              setOpenRunAgentDialog(false);
+              await runWorkflowWithAgent(selectedComponent, agentUrl);
             }}
           >
             Run
@@ -812,6 +845,11 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, indexLoaded }, 
             return;
           }
 
+          const canRunInAgent = componentNodes.every((n) =>
+            n.type === "inputWorkflowNode" || n.type === "outputWorkflowNode" ||
+            (n.type === "workflowNode" && getToolRuntimes(n.data?.label).includes("native"))
+          );
+
           return (
             <React.Fragment key={idx}>
               <div
@@ -833,22 +871,41 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, indexLoaded }, 
                   left: bounds.x - 30,
                   top: bounds.y - 30,
                   pointerEvents: 'all',
-                  // transform: 'translateX(-50%)',
                 }}
               >
-                <Button
-                  variant="contained"
-                  sx={{
-                    minWidth: 24,
-                    width: 24,
-                    height: 24,
-                    padding: 0,
-                    fontSize: 10,
-                  }}
-                  onClick={() => runWorkflow(component)}
-                >
-                  ▶
-                </Button>
+                <Box display="flex" gap={0.5} alignItems="center">
+                  <Button
+                    variant="contained"
+                    sx={{
+                      minWidth: 24,
+                      width: 24,
+                      height: 24,
+                      padding: 0,
+                      fontSize: 10,
+                    }}
+                    onClick={() => runWorkflow(component)}
+                  >
+                    <PlayArrowIcon fontSize="small" />
+                  </Button>
+                  {
+                    canRunInAgent && (
+                      <Button
+                        variant="contained"
+                        color="secondary"
+                        sx={{
+                          minWidth: 24,
+                          width: 24,
+                          height: 24,
+                          padding: 0,
+                          fontSize: 10,
+                        }}
+                        onClick={() => { setSelectedComponent(component); setOpenRunAgentDialog(true) }}
+                      >
+                        <PlayArrowIcon fontSize="small" />
+                      </Button>
+                    )
+                  }
+                </Box>
               </div>
             </React.Fragment>
           );
