@@ -245,7 +245,7 @@ const ToolsPage = () => {
                                 <ToolOutputPanel outputData={outputData} setOutputData={setOutputData} tool={selectedTool} inputData={inputData} page={'ToolPage'} />
                             </Box>
                         </Grid>
-                        <Button
+                        {/* <Button
                             variant="outlined"
                             size="small"
                             onClick={handleRerunTour}
@@ -257,7 +257,7 @@ const ToolsPage = () => {
                             }}
                         >
                             Re-run tour
-                        </Button>
+                        </Button> */}
                     </Grid>
                 )}
             </Container>
