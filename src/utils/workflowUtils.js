@@ -28,7 +28,7 @@ function sanitizeWorkflowNodes(nodes, { keepBinaryAsReference = false } = {}) {
         outputs,
         output: {},
         toolMessages: {},
-        is_running: false,
+        isRunning: false,
         runCalled: false
       }
     };

@@ -351,15 +351,40 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, indexLoaded }, 
         const flow = JSON.parse(text);
 
         const { nodes: importedNodes = [], edges: importedEdges = [], viewport = {} } = flow;
+        const invalidNodeIds = new Set();
 
         for (const node of importedNodes) {
           if (node.type === 'workflowNode') {
-            await loadTool(node.data.label); // TODO check if exists
+            // TODO tool versions
+            const result = await loadTool(node.data.label);
+            if (result == false) {
+              invalidNodeIds.add(node.id);
+              showNotification(`Tool "${node.data.label}" from imported workflow not available`, "error")
+            }
           }
         }
 
-        setNodes(importedNodes);
-        setEdges(importedEdges);
+        if (invalidNodeIds.size === 0) {
+          showNotification("Workflow imported successfully", "info");
+        }
+        else {
+          showNotification(
+            `Workflow imported with ${invalidNodeIds.size} missing tools`,
+            "info"
+          );
+        }
+        const filteredNodes = importedNodes.filter(
+          (node) => !invalidNodeIds.has(node.id)
+        );
+
+        const filteredEdges = importedEdges.filter(
+          (edge) =>
+            !invalidNodeIds.has(edge.source) &&
+            !invalidNodeIds.has(edge.target)
+        );
+
+        setNodes(filteredNodes);
+        setEdges(filteredEdges);
 
         if (viewport && typeof viewport === 'object') {
           setViewport(viewport);
