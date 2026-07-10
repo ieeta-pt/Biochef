@@ -16,7 +16,8 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - registry-data:/var/lib/registry
+      - biochef-registry:/var/lib/registry
+      - ./registry-config.yml:/etc/docker/registry/config.yml:ro
 
 volumes:
-  registry-data:
+  biochef-registry:
