@@ -1,4 +1,4 @@
-import Aioli from "./aioli-custom/aioli"
+import Aioli from "@biowasm/aioli";
 import logger from "./logger";
 import { detectIsBinaryFile } from "./detectDataType";
 import { makeBinaryDataValue, makeTextDataValue } from './dataValue'
@@ -469,4 +469,11 @@ export function toolHasNoInputs(toolName) {
   if (!tool) return true;
 
   return !tool.io?.inputs || tool.io.inputs.length === 0;
+}
+
+export function getToolRuntimes(toolName) {
+  const tool = getTool(toolName);
+  if (!tool) return;
+
+  return tool.runtime?.modes
 }
