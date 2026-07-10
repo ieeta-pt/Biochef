@@ -1,0 +1,23 @@
+services:
+  frontend:
+    image: node:26-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /app/node_modules
+    env_file:
+      - example.env
+    command: sh -c "npm install && npm start"
+    ports:
+      - "8082:8082"
+
+  registry:
+    image: registry:2
+    ports:
+      - "5000:5000"
+    volumes:
+      - biochef-registry:/var/lib/registry
+      - ./registry-config.yml:/etc/docker/registry/config.yml:ro
+
+volumes:
+  biochef-registry:
