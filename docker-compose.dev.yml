@@ -19,5 +19,24 @@ services:
       - biochef-registry:/var/lib/registry
       - ./registry-config.yml:/etc/docker/registry/config.yml:ro
 
+  hub:
+    profiles:
+      - tools
+    image: ${BIOCHEF_HUB_IMAGE:-biochef-hub-dev:local}
+    build:
+      context: .
+      dockerfile: Dockerfile.hub.dev
+      args:
+        BIOCHEF_HUB_REPOSITORY: ${BIOCHEF_HUB_REPOSITORY:-https://github.com/ieeta-pt/biochef-hub.git}
+        BIOCHEF_HUB_REF: ${BIOCHEF_HUB_REF:-master}
+    working_dir: /work
+    volumes:
+      - ${BIOCHEF_RECIPES_ROOT:-.}:/recipes:ro
+      - biochef-hub-work:/work
+    network_mode: service:registry
+    depends_on:
+      - registry
+
 volumes:
   biochef-registry:
+  biochef-hub-work:
