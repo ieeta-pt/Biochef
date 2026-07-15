@@ -1,0 +1,51 @@
+FROM ubuntu:24.04
+
+ARG EMSDK_VERSION=4.0.18
+ARG BIOCHEF_HUB_REPOSITORY=https://github.com/ieeta-pt/biochef-hub.git
+ARG BIOCHEF_HUB_REF=master
+
+ENV EMSDK=/opt/emsdk \
+    EMSDK_VERSION=${EMSDK_VERSION} \
+    VIRTUAL_ENV=/opt/biochef-venv \
+    PATH=/opt/biochef-venv/bin:/opt/emsdk:/opt/emsdk/upstream/emscripten:${PATH}
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        autoconf \
+        automake \
+        autopoint \
+        bison \
+        build-essential \
+        ca-certificates \
+        cmake \
+        curl \
+        git \
+        gettext \
+        gperf \
+        help2man \
+        pkg-config \
+        python3 \
+        python3-pip \
+        python3-venv \
+        rsync \
+        sudo \
+        texinfo \
+        wget
+
+RUN python3 -m venv "$VIRTUAL_ENV" \
+    && pip install --no-cache-dir --upgrade pip
+
+RUN git clone https://github.com/emscripten-core/emsdk.git "$EMSDK" \
+    && "$EMSDK/emsdk" install "$EMSDK_VERSION" \
+    && "$EMSDK/emsdk" activate "$EMSDK_VERSION" \
+    && printf '%s\n' \
+        'export EMSDK_QUIET=1' \
+        '. /opt/emsdk/emsdk_env.sh >/dev/null' \
+        "export EMSDK_VERSION=$EMSDK_VERSION" \
+        > /etc/profile.d/emsdk.sh
+
+RUN git clone "$BIOCHEF_HUB_REPOSITORY" /hub \
+    && git -C /hub checkout "$BIOCHEF_HUB_REF" \
+    && pip install --no-cache-dir -r /hub/hub/requirements.txt
+
+WORKDIR /work
