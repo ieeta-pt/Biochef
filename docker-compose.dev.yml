@@ -33,6 +33,8 @@ services:
     volumes:
       - ${BIOCHEF_RECIPES_ROOT:-.}:/recipes:ro
       - biochef-hub-work:/work
+      # Share the host Docker daemon with the container so it can use the biowasm docker image.
+      - /var/run/docker.sock:/var/run/docker.sock
     network_mode: service:registry
     depends_on:
       - registry
