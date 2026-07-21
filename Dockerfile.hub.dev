@@ -9,6 +9,7 @@ ENV EMSDK=/opt/emsdk \
     VIRTUAL_ENV=/opt/biochef-venv \
     PATH=/opt/biochef-venv/bin:/opt/emsdk:/opt/emsdk/upstream/emscripten:${PATH}
 
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         autoconf \
@@ -31,7 +32,7 @@ RUN apt-get update \
         sudo \
         texinfo \
         wget
-
+        
 RUN python3 -m venv "$VIRTUAL_ENV" \
     && pip install --no-cache-dir --upgrade pip
 
