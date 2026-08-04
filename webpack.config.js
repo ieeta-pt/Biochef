@@ -70,6 +70,28 @@ module.exports = {
             ignore: ['**/index.html'],
           },
         },
+        // The webR runtime, served from this origin rather than left to load
+        // from webR's public CDN. Every other artifact the app executes is
+        // pulled from the registry and checked against a digest recorded in a
+        // recipe; fetching ~20 MB of R at run time from a third party would sit
+        // outside that entirely, and would make R operations fail whenever that
+        // host is unavailable. Only the files the runtime actually requests are
+        // copied -- not the REPL, tests or source maps that share the package.
+        {
+          from: 'node_modules/webr/dist',
+          to: 'webr',
+          globOptions: {
+            ignore: [
+              '**/repl/**',
+              '**/tests/**',
+              '**/*.map',
+              '**/*.d.ts',
+              '**/webr.cjs',
+              '**/webr.mjs',
+              '**/webr.js',
+            ],
+          },
+        },
       ],
     }),
     new webpack.DefinePlugin({

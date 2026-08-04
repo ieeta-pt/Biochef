@@ -6,6 +6,32 @@ import logger from "./logger";
 // so a recipe's io definitions mean the same thing under either runtime.
 const WORK_DIR = "/biochef";
 
+/**
+ * Where the webR runtime is served from.
+ *
+ * Left unset, webR fetches around 20 MB of R.js, R.wasm and its support files
+ * from https://webr.r-wasm.org at run time. Everything else the app executes
+ * comes from the registry and is checked against a digest recorded in a recipe,
+ * so that would be the one component arriving from a third party, unpinned, and
+ * the one whose availability nothing here controls. The build copies those
+ * files alongside the app instead (see the CopyWebpackPlugin entry for
+ * node_modules/webr/dist) and this points at them.
+ *
+ * __webpack_public_path__ is rewritten by webpack to wherever the bundle was
+ * served from, which is what makes this work under the /Biochef/ prefix the
+ * deployed site uses as well as at the root in development. The fallback only
+ * applies outside a webpack bundle, such as when a script exercises this module
+ * directly under Node.
+ */
+function runtimeBaseUrl() {
+  const publicPath =
+    typeof __webpack_public_path__ === "string" && __webpack_public_path__
+      ? __webpack_public_path__
+      : "/";
+
+  return `${publicPath.endsWith("/") ? publicPath : `${publicPath}/`}webr/`;
+}
+
 // Evaluated by captureR to run one operation. It is a fixed string: the script
 // path and the argument vector are bound as R variables rather than
 // interpolated, so nothing a recipe or a user supplies is ever parsed as code.
@@ -68,12 +94,15 @@ export default class RRuntime {
    * build, each an object of { data, metadata } URLs. They carry the compiled
    * R packages; without them only base R is available.
    */
-  static async create({ libraryImages = [], webrVersion = null } = {}) {
+  static async create({ libraryImages = [], webrVersion = null, baseUrl = null } = {}) {
     // The worker is spawned by the constructor, not by init(), so everything
     // from here on has to be able to close it again. Without that a failed
     // start leaks a worker, and the natural response -- pressing Run again --
     // leaks another.
-    const webR = new WebR({ interactive: false });
+    const webR = new WebR({
+      interactive: false,
+      baseUrl: baseUrl ?? runtimeBaseUrl(),
+    });
 
     try {
       // The packages in a library image are only loadable by the webR release
