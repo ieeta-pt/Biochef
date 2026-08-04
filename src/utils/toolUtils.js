@@ -495,7 +495,10 @@ export async function runTools(
     const { stdout, stderr } = isR
       ? await runtime.exec(rScript, args)
       : await runtime.exec(invocation.toolName, args)
-    errors[invocation.uniqueId] = [stderr]
+    // Appended rather than assigned: preparing the inputs can already have
+    // recorded a problem against this invocation, and assigning here would
+    // discard it.
+    errors[invocation.uniqueId] = [...(errors[invocation.uniqueId] ?? []), stderr]
 
     logger.log("[runMultipleTools]", invocation.toolName, {
       args,
