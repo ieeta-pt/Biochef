@@ -69,19 +69,39 @@ export default class RRuntime {
    * R packages; without them only base R is available.
    */
   static async create({ libraryImages = [], webrVersion = null } = {}) {
+    // The worker is spawned by the constructor, not by init(), so everything
+    // from here on has to be able to close it again. Without that a failed
+    // start leaks a worker, and the natural response -- pressing Run again --
+    // leaks another.
     const webR = new WebR({ interactive: false });
 
-    // The packages in a library image are only loadable by the webR release
-    // they were compiled against, and the recipe records which that was. A
-    // mismatch otherwise surfaces as a load error inside the worker with
-    // nothing to attribute it to, most likely after a routine dependency bump
-    // here rather than any change to the recipe.
-    if (webrVersion && webR.version !== webrVersion) {
-      throw new Error(
-        `R package library was built for webR ${webrVersion}, but this build runs webR ${webR.version}`
-      );
-    }
+    try {
+      // The packages in a library image are only loadable by the webR release
+      // they were compiled against, and the recipe records which that was. A
+      // mismatch otherwise surfaces as a load error inside the worker with
+      // nothing to attribute it to, most likely after a routine dependency
+      // bump here rather than any change to the recipe.
+      if (webrVersion && webR.version !== webrVersion) {
+        throw new Error(
+          `R package library was built for webR ${webrVersion}, but this build runs webR ${webR.version}`
+        );
+      }
 
+      return await RRuntime.start(webR, libraryImages);
+    } catch (err) {
+      // try/catch rather than .catch(): close() returns undefined rather than a
+      // promise when the worker never initialised, and calling .catch on that
+      // throws a TypeError that replaces the error actually being reported.
+      try {
+        await webR.close();
+      } catch (closeErr) {
+        logger.warn("[RRuntime.create] Failed to close a webR worker after a failed start", closeErr);
+      }
+      throw err;
+    }
+  }
+
+  static async start(webR, libraryImages) {
     await webR.init();
 
     try {
@@ -159,8 +179,13 @@ export default class RRuntime {
     const info = await this.webR.FS.analyzePath(`${WORK_DIR}/${name}`);
     if (!info?.exists) return false;
 
-    const bytes = await this.webR.FS.readFile(`${WORK_DIR}/${name}`);
-    return { size: bytes.length };
+    // Stat rather than read: read() follows immediately afterwards, and
+    // reading here to report a length would copy every output across the
+    // worker boundary twice.
+    const size = await this.webR.evalRNumber("file.size(p)", {
+      env: { p: `${WORK_DIR}/${name}` },
+    });
+    return { size };
   }
 
   /** Reads a file back as bytes. */
@@ -192,7 +217,15 @@ export default class RRuntime {
     // array carries nothing to infer from: it raises "Cannot convert undefined
     // or null to object" inside the worker, which would make every operation
     // that takes no arguments fail to run at all.
-    await globalEnv.bind("argv", await new this.webR.RCharacter(args.map(String)));
+    // Allocated from the shelter, not globally: an object created with
+    // new webR.RCharacter belongs to the global shelter and would survive
+    // purge(), leaking one vector per invocation. The empty case is built in R
+    // rather than converted from an empty JS array, which webR cannot infer a
+    // type from.
+    const argv = args.length
+      ? await this.shelter.evalR("as.character(x)", { env: { x: args.map(String) } })
+      : await this.shelter.evalR("character(0)");
+    await globalEnv.bind("argv", argv);
     await globalEnv.bind("stdin", this.stdin ?? "");
 
     const capture = await this.shelter.captureR(RUN_OPERATION, {
@@ -203,12 +236,20 @@ export default class RRuntime {
       captureConditions: false,
     });
 
-    let stdout = "";
-    let stderr = "";
+    // webR reports one event per line with the terminator stripped, so the
+    // lines are rejoined rather than each having one appended: appending would
+    // add a trailing newline to output that never had one.
+    const out = [];
+    const err = [];
     for (const line of capture.output) {
-      if (line.type === "stdout") stdout += `${line.data}\n`;
-      else stderr += `${line.data}\n`;
+      (line.type === "stdout" ? out : err).push(line.data);
     }
+    const stdout = out.join("\n");
+    let stderr = err.length ? `${err.join("\n")}\n` : "";
+
+    // Consumed, as aioli's worker does when its buffer drains. Left in place it
+    // would be delivered again to the next operation, which never asked for it.
+    this.stdin = "";
 
     const failure = await capture.result.toString();
     await this.shelter.purge();

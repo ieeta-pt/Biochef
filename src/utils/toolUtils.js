@@ -354,6 +354,16 @@ export async function runTools(
   let outputs = {}
   let errors = {}
 
+  // isROperation reads the bundle, which exists only once loadTool has run. An
+  // unloaded tool would answer "not R", be treated as an aioli tool, and fail
+  // on the next line dereferencing a wasm digest it has no bundle for. Checked
+  // before anything reads a runtime, so the message names the real problem.
+  for (const invocation of toolInvocations) {
+    if (!getTool(invocation.toolName)?.runtime) {
+      throw new Error(`Tool ${invocation.toolName} was not loaded before running`)
+    }
+  }
+
   // prepare tools to be loaded by aioli
   let aioliTools = []
   for (const invocation of toolInvocations) {
@@ -428,12 +438,6 @@ export async function runTools(
   // 1. Prepare the inputs
   for (const invocation of toolInvocations) {
     const toolDefinition = getTool(invocation.toolName)
-    // isROperation reads the bundle, which only exists once loadTool has run.
-    // Without this an unloaded tool would answer "not R" and be routed to
-    // aioli, failing later on a missing wasm digest rather than here.
-    if (!toolDefinition?.runtime) {
-      throw new Error(`Tool ${invocation.toolName} was not loaded before running`)
-    }
     const isR = isROperation(invocation.toolName)
     // Each invocation runs against whichever runtime owns it. The two have
     // separate filesystems, so this is also which filesystem its files live in.
@@ -474,6 +478,10 @@ export async function runTools(
             errors[invocation.uniqueId].push(
               `Input "${inputDefinition.name}" expected output "${sourceOutput}" of ${source}, which was not produced`
             )
+            // Nothing was mounted, so passing the name on would only make the
+            // operation fail again inside R on a file that is not there,
+            // burying the error that actually explains it.
+            continue
           } else {
             await runtime.mount({
               name: inputFileName,
@@ -569,7 +577,7 @@ export async function runTools(
       // An R operation's results are invisible to the aioli worker, so a
       // subsequent C tool reading `${uniqueId}-${name}.txt` would not find
       // them. Copy them across while the bytes are to hand.
-      if (isR && CLI) {
+      if (isR && CLI && result) {
         await CLI.mount({
           name: outputFileName,
           data: result.kind === "binary" ? new Blob([result.data]) : result.data,

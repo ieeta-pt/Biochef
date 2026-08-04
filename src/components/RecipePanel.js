@@ -615,9 +615,16 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, indexLoaded }, 
       }
     }
 
-    const { outputs, errors } = await runTools(
-      toolInvocations,
-      (nodeId, outputs, errors) => {
+    // isRunning is cleared per node as each invocation finishes, so a run that
+    // throws before reaching a node leaves it spinning with no error and no way
+    // back except a reload. The wasm path rarely threw -- a failed blob fetch
+    // returns null -- but loading an R operation can fail outright: a blob that
+    // will not fetch, a library image that will not read, a webR version that
+    // does not match the one the packages were built for.
+    try {
+      await runTools(
+        toolInvocations,
+        (nodeId, outputs, errors) => {
         const messages = {
           ...(getNode(nodeId).data.toolMessages ?? {}),
           "Output": {},
@@ -644,8 +651,19 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, indexLoaded }, 
           toolMessages: messages,
           isRunning: false
         })
+        }
+      )
+    } catch (err) {
+      logger.error("[runWorkflow] the run failed", err)
+      showNotification(`Workflow run failed: ${err.message}`, "error")
+    } finally {
+      // Whatever happened, no node is still running.
+      for (const nodeId of component) {
+        if (getNode(nodeId).type == "workflowNode") {
+          updateNodeData(nodeId, { isRunning: false })
+        }
       }
-    )
+    }
   }
 
   // TODO
