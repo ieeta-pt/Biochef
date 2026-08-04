@@ -68,8 +68,20 @@ export default class RRuntime {
    * build, each an object of { data, metadata } URLs. They carry the compiled
    * R packages; without them only base R is available.
    */
-  static async create({ libraryImages = [] } = {}) {
+  static async create({ libraryImages = [], webrVersion = null } = {}) {
     const webR = new WebR({ interactive: false });
+
+    // The packages in a library image are only loadable by the webR release
+    // they were compiled against, and the recipe records which that was. A
+    // mismatch otherwise surfaces as a load error inside the worker with
+    // nothing to attribute it to, most likely after a routine dependency bump
+    // here rather than any change to the recipe.
+    if (webrVersion && webR.version !== webrVersion) {
+      throw new Error(
+        `R package library was built for webR ${webrVersion}, but this build runs webR ${webR.version}`
+      );
+    }
+
     await webR.init();
 
     try {

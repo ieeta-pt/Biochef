@@ -160,7 +160,14 @@ export async function loadToolIndex() {
   const indexJson = await fetchBlob(base_url, "biochef-plugins-index", digest, authorization, "application/vnd.oci.image.manifest.v1+json");
 
   for (const [key, plugin] of Object.entries(indexJson)) {
+    // Merged over whatever is already known about the tool rather than
+    // replacing it. The index carries only six fields and not `runtime`, so
+    // overwriting would strip that from a tool loadTool had already resolved.
+    // This runs on every mount of the tools and workflow pages, and losing
+    // `runtime` makes isROperation answer "not R" for an R operation, which
+    // routes it to aioli and asks for a wasm binary that does not exist.
     const bundle = {
+      ...toolMap.get(plugin.name),
       ...plugin,
       repo: key
     };
@@ -265,21 +272,24 @@ async function fetchToolBytes(base_url, repo, digest, authorization) {
  * to be handed to webR as bytes so it can be inflated and mounted, and the
  * script has to be handed over as source.
  */
-async function getRToolBlobs(toolName) {
+async function getRToolBlobs(toolName, { withLibrary = true } = {}) {
   const toolConfig = getTool(toolName)
   const { authorization, base_url } = await getAuthorizationAndBaseUrl(toolConfig.repo)
   const { library_digest, metadata_digest, script_digest } = toolConfig.runtime.r
 
   const [library, metadataBytes, scriptBytes] = await Promise.all([
-    fetchToolBytes(base_url, toolConfig.repo, library_digest, authorization),
-    fetchToolBytes(base_url, toolConfig.repo, metadata_digest, authorization),
+    // Skipped when this library is already mounted. Every operation in a
+    // recipe ships the same library, and each lives in its own registry repo,
+    // so nothing below this would deduplicate the download.
+    withLibrary ? fetchToolBytes(base_url, toolConfig.repo, library_digest, authorization) : null,
+    withLibrary ? fetchToolBytes(base_url, toolConfig.repo, metadata_digest, authorization) : null,
     fetchToolBytes(base_url, toolConfig.repo, script_digest, authorization),
   ])
 
   const decoder = new TextDecoder("utf-8")
   return {
     library,
-    metadata: JSON.parse(decoder.decode(metadataBytes)),
+    metadata: metadataBytes ? JSON.parse(decoder.decode(metadataBytes)) : null,
     script: decoder.decode(scriptBytes),
   }
 }
@@ -387,14 +397,27 @@ export async function runTools(
   // download than any single tool's wasm, and most runs never touch R.
   let R = null
   const rScripts = new Map()
+  // Keyed by library digest, not by tool. Every operation in a recipe ships the
+  // same library, so a three-operation workflow would otherwise fetch and mount
+  // three identical copies and hold each decompressed in the worker.
+  const rLibraries = new Map()
   async function loadROperation(toolName) {
     if (rScripts.has(toolName)) return rScripts.get(toolName)
 
-    const { library, metadata, script } = await getRToolBlobs(toolName)
-    const image = { mountPoint: `/lib-${rScripts.size}`, data: library, metadata }
+    const { webr_version, library_digest } = getTool(toolName).runtime.r
+    const alreadyMounted = rLibraries.has(library_digest)
+    const { library, metadata, script } = await getRToolBlobs(toolName, { withLibrary: !alreadyMounted })
 
-    if (!R) R = await RRuntime.create({ libraryImages: [image] })
-    else await R.mountLibrary(image)
+    if (!alreadyMounted) {
+      const image = {
+        mountPoint: `/lib-${rLibraries.size}`,
+        data: library,
+        metadata,
+      }
+      if (!R) R = await RRuntime.create({ libraryImages: [image], webrVersion: webr_version })
+      else await R.mountLibrary(image)
+      rLibraries.set(library_digest, image.mountPoint)
+    }
 
     rScripts.set(toolName, script)
     return script
@@ -405,6 +428,12 @@ export async function runTools(
   // 1. Prepare the inputs
   for (const invocation of toolInvocations) {
     const toolDefinition = getTool(invocation.toolName)
+    // isROperation reads the bundle, which only exists once loadTool has run.
+    // Without this an unloaded tool would answer "not R" and be routed to
+    // aioli, failing later on a missing wasm digest rather than here.
+    if (!toolDefinition?.runtime) {
+      throw new Error(`Tool ${invocation.toolName} was not loaded before running`)
+    }
     const isR = isROperation(invocation.toolName)
     // Each invocation runs against whichever runtime owns it. The two have
     // separate filesystems, so this is also which filesystem its files live in.
