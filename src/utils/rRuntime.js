@@ -80,44 +80,52 @@ export default class RRuntime {
       if (!existing?.exists) throw err;
     }
 
-    for (const image of libraryImages) {
-      await webR.FS.mkdir(image.mountPoint);
-      await webR.FS.mount(
-        "WORKERFS",
-        {
-          packages: [
-            { blob: new Blob([await inflate(image.data)]), metadata: image.metadata },
-          ],
-        },
-        image.mountPoint
-      );
-      // R only searches libraries listed in .libPaths(), so mounting is not
-      // enough on its own.
-      await webR.evalRVoid(".libPaths(c(libpath, .libPaths()))", {
-        env: { libpath: image.mountPoint },
-      });
-
-      // Mounting an image whose bytes R cannot read does not fail. The mount
-      // succeeds, the directory is empty, and the first symptom is
-      // "there is no package called 'x'" from whichever operation runs first,
-      // which points at the recipe rather than at the image. Check here
-      // instead, while there is still something useful to say.
-      const mounted = await webR.evalRNumber("length(list.files(dir))", {
-        env: { dir: image.mountPoint },
-      });
-      if (mounted === 0) {
-        throw new Error(
-          `R package library mounted at ${image.mountPoint} is empty; the filesystem image could not be read`
-        );
-      }
-    }
-
     const shelter = await new webR.Shelter();
     const runtime = new RRuntime(webR, shelter);
+
+    for (const image of libraryImages) {
+      await runtime.mountLibrary(image);
+    }
 
     await webR.evalRVoid("setwd(dir)", { env: { dir: WORK_DIR } });
 
     return runtime;
+  }
+
+  /**
+   * Mounts a package library and puts it on the R library search path.
+   *
+   * Separate from create() because a run can involve more than one R operation,
+   * each bringing its own library, and booting a second webR for the second
+   * operation would mean paying for the runtime twice.
+   */
+  async mountLibrary({ mountPoint, data, metadata }) {
+    await this.webR.FS.mkdir(mountPoint);
+    await this.webR.FS.mount(
+      "WORKERFS",
+      { packages: [{ blob: new Blob([await inflate(data)]), metadata }] },
+      mountPoint
+    );
+
+    // R only searches libraries listed in .libPaths(), so mounting alone is not
+    // enough.
+    await this.webR.evalRVoid(".libPaths(c(libpath, .libPaths()))", {
+      env: { libpath: mountPoint },
+    });
+
+    // Mounting an image whose bytes R cannot read does not fail. The mount
+    // succeeds, the directory is empty, and the first symptom is
+    // "there is no package called 'x'" from whichever operation runs first,
+    // which points at the recipe rather than at the image. Check here instead,
+    // while there is still something useful to say.
+    const mounted = await this.webR.evalRNumber("length(list.files(dir))", {
+      env: { dir: mountPoint },
+    });
+    if (mounted === 0) {
+      throw new Error(
+        `R package library mounted at ${mountPoint} is empty; the filesystem image could not be read`
+      );
+    }
   }
 
   /** Writes a file into the run's working directory. */
