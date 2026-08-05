@@ -626,7 +626,9 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, indexLoaded }, 
         toolInvocations,
         (nodeId, outputs, errors) => {
         const messages = {
-          ...(getNode(nodeId).data.toolMessages ?? {}),
+          // Also guarded: the node may have been deleted while its invocation
+          // was running.
+          ...(getNode(nodeId)?.data?.toolMessages ?? {}),
           "Output": {},
         };
 
@@ -657,9 +659,14 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, indexLoaded }, 
       logger.error("[runWorkflow] the run failed", err)
       showNotification(`Workflow run failed: ${err.message}`, "error")
     } finally {
-      // Whatever happened, no node is still running.
+      // Whatever happened, no node is still running. `component` is a snapshot
+      // taken before the run, and a node can be deleted while it is in flight,
+      // so getNode may return undefined here. Left unguarded the sweep throws
+      // from inside the finally, masking the original error and leaving the
+      // remaining nodes spinning -- the exact failure this block exists to
+      // prevent. updateNodeData on a missing id is a no-op.
       for (const nodeId of component) {
-        if (getNode(nodeId).type == "workflowNode") {
+        if (getNode(nodeId)?.type == "workflowNode") {
           updateNodeData(nodeId, { isRunning: false })
         }
       }

@@ -4,6 +4,7 @@ const webpack = require("webpack");
 const dotenv = require("dotenv");
 dotenv.config();
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = {
   entry: './src/index.js',
@@ -77,6 +78,12 @@ module.exports = {
         // outside that entirely, and would make R operations fail whenever that
         // host is unavailable. Only the files the runtime actually requests are
         // copied -- not the REPL, tests or source maps that share the package.
+        // R and webR are GPL-licensed, and this ships their binaries.
+        {
+          from: 'node_modules/webr/LICENSE.md',
+          to: 'webr/LICENSE.md',
+          toType: 'file',
+        },
         {
           from: 'node_modules/webr/dist',
           to: 'webr',
@@ -130,6 +137,16 @@ module.exports = {
     open: true,
   },
   optimization: {
+    minimizer: [
+      // The default minimizer, with the copied webR runtime excluded. Those
+      // files are shipped verbatim so they can be compared against the ones in
+      // the package they came from; re-minifying them changes every byte and
+      // makes that impossible, which was half the point of serving them
+      // ourselves. Everything else is minified exactly as before.
+      new TerserPlugin({
+        exclude: /^webr\//,
+      }),
+    ],
     splitChunks: {
       chunks: 'all',
     },

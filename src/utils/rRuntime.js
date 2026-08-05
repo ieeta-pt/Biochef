@@ -19,24 +19,32 @@ const WORK_DIR = "/biochef";
  *
  * __webpack_public_path__ is rewritten by webpack to wherever the bundle was
  * served from, which is what makes this work under the /Biochef/ prefix the
- * deployed site uses as well as at the root in development. The fallback only
- * applies outside a webpack bundle, such as when a script exercises this module
- * directly under Node.
+ * deployed site uses as well as at the root in development.
+ *
+ * Returns null outside a webpack bundle -- a script exercising this module
+ * under Node -- so that webR falls back to its own default rather than to a
+ * guessed path that would not resolve. Every browser build goes through
+ * webpack, so the copied runtime is always what the app itself loads.
  */
 function runtimeBaseUrl() {
-  const publicPath =
-    typeof __webpack_public_path__ === "string" && __webpack_public_path__
-      ? __webpack_public_path__
-      : "/";
+  if (typeof __webpack_public_path__ !== "string" || !__webpack_public_path__) {
+    return null;
+  }
 
-  return `${publicPath.endsWith("/") ? publicPath : `${publicPath}/`}webr/`;
+  const publicPath = __webpack_public_path__.endsWith("/")
+    ? __webpack_public_path__
+    : `${__webpack_public_path__}/`;
+
+  return `${publicPath}webr/`;
 }
 
 // Evaluated by captureR to run one operation. It is a fixed string: the script
 // path and the argument vector are bound as R variables rather than
 // interpolated, so nothing a recipe or a user supplies is ever parsed as code.
 //
-// It returns "" on success or the error message on failure. That indirection is
+// It returns a zero-length vector on success and the error message on failure --
+// length rather than content, because stop() with no arguments gives an empty
+// conditionMessage, so "" cannot also stand for success. That indirection is
 // necessary rather than stylistic. captureR either surfaces R errors as a
 // JavaScript throw and discards everything the script printed, or keeps the
 // streams and swallows errors entirely, depending on captureConditions. Neither
@@ -49,7 +57,7 @@ const RUN_OPERATION = `local({
     source(.biochef_script, echo = FALSE, local = FALSE),
     error = function(e) .biochef_error <<- conditionMessage(e)
   )
-  if (is.null(.biochef_error)) "" else .biochef_error
+  if (is.null(.biochef_error)) character(0) else as.character(.biochef_error)
 })`;
 
 /**
@@ -99,9 +107,11 @@ export default class RRuntime {
     // from here on has to be able to close it again. Without that a failed
     // start leaks a worker, and the natural response -- pressing Run again --
     // leaks another.
+    const resolvedBaseUrl = baseUrl ?? runtimeBaseUrl();
     const webR = new WebR({
       interactive: false,
-      baseUrl: baseUrl ?? runtimeBaseUrl(),
+      // Omitted rather than passed as null, which webR would take literally.
+      ...(resolvedBaseUrl ? { baseUrl: resolvedBaseUrl } : {}),
     });
 
     try {
@@ -160,7 +170,16 @@ export default class RRuntime {
    * each bringing its own library, and booting a second webR for the second
    * operation would mean paying for the runtime twice.
    */
-  async mountLibrary({ mountPoint, data, metadata }) {
+  async mountLibrary({ mountPoint, data, metadata, webrVersion = null }) {
+    // Checked here too, not only at create(): a run can involve two recipes,
+    // and the second mounts into the session the first started. Without this
+    // only the first library's version is ever verified.
+    if (webrVersion && this.webR.version !== webrVersion) {
+      throw new Error(
+        `R package library was built for webR ${webrVersion}, but this build runs webR ${this.webR.version}`
+      );
+    }
+
     await this.webR.FS.mkdir(mountPoint);
     await this.webR.FS.mount(
       "WORKERFS",
@@ -257,37 +276,49 @@ export default class RRuntime {
     await globalEnv.bind("argv", argv);
     await globalEnv.bind("stdin", this.stdin ?? "");
 
-    const capture = await this.shelter.captureR(RUN_OPERATION, {
-      withAutoprint: false,
-      captureStreams: true,
-      // See RUN_OPERATION: errors are reported through the return value so that
-      // the streams survive them.
-      captureConditions: false,
-    });
+    let stdout = "";
+    let stderr = "";
+    let failure = null;
 
-    // webR reports one event per line with the terminator stripped, so the
-    // lines are rejoined rather than each having one appended: appending would
-    // add a trailing newline to output that never had one.
-    const out = [];
-    const err = [];
-    for (const line of capture.output) {
-      (line.type === "stdout" ? out : err).push(line.data);
+    try {
+      const capture = await this.shelter.captureR(RUN_OPERATION, {
+        withAutoprint: false,
+        captureStreams: true,
+        // See RUN_OPERATION: errors are reported through the return value so
+        // that the streams survive them.
+        captureConditions: false,
+      });
+
+      // webR reports one event per line with the terminator stripped, and does
+      // so identically whether or not the output ended in one: cat("x\n") and
+      // cat("x") both arrive as a single "x". The terminator cannot be
+      // recovered, so one is appended per line, which reconstructs the
+      // overwhelmingly common case of newline-terminated output and invents one
+      // only for output that deliberately omitted it.
+      for (const line of capture.output) {
+        if (line.type === "stdout") stdout += `${line.data}\n`;
+        else stderr += `${line.data}\n`;
+      }
+
+      // Read before the shelter is purged, which would invalidate it.
+      const result = await capture.result.toJs();
+      failure = result.values.length ? String(result.values[0] ?? "") : null;
+    } finally {
+      // Both belong here rather than on the success path. captureR can reject
+      // outright -- a wasm trap is not an R condition -- and leaving stdin set
+      // would deliver this operation's input to the next one, which never asked
+      // for it, exactly as aioli's worker clears its buffer once drained.
+      this.stdin = "";
+      await this.shelter.purge();
     }
-    const stdout = out.join("\n");
-    let stderr = err.length ? `${err.join("\n")}\n` : "";
 
-    // Consumed, as aioli's worker does when its buffer drains. Left in place it
-    // would be delivered again to the next operation, which never asked for it.
-    this.stdin = "";
-
-    const failure = await capture.result.toString();
-    await this.shelter.purge();
-
-    if (failure) {
+    if (failure !== null) {
       // Surfaced as stderr rather than thrown, so that a failing R operation
       // behaves like a failing command line tool: the pipeline records the
       // error against the invocation and keeps whatever was produced.
-      stderr += `${failure}\n`;
+      // stop() with no arguments gives an empty message, which would otherwise
+      // add a bare newline and say nothing.
+      stderr += `${failure || "the operation failed without reporting a reason"}\n`;
       logger.warn("[RRuntime.exec] R operation failed", failure);
     }
 

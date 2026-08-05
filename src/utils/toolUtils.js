@@ -200,8 +200,10 @@ export async function loadTool(toolName) {
   );
 
   if (!bundleLayer) {
-    console.error(`No bundle.json layer found for ${repo}`);
-    return;
+    // false, not undefined: callers test `result == false`, so returning
+    // undefined here reads as a successful load and the tool is used anyway.
+    logger.error(`No bundle.json layer found for ${repo}`);
+    return false;
   }
 
   var bundle = await fetchBlob(base_url, repo, bundleLayer.digest, authorization, "application/vnd.oci.image.manifest.v1+json");
@@ -423,6 +425,7 @@ export async function runTools(
         mountPoint: `/lib-${rLibraries.size}`,
         data: library,
         metadata,
+        webrVersion: webr_version,
       }
       if (!R) R = await RRuntime.create({ libraryImages: [image], webrVersion: webr_version })
       else await R.mountLibrary(image)
@@ -478,10 +481,11 @@ export async function runTools(
             errors[invocation.uniqueId].push(
               `Input "${inputDefinition.name}" expected output "${sourceOutput}" of ${source}, which was not produced`
             )
-            // Nothing was mounted, so passing the name on would only make the
-            // operation fail again inside R on a file that is not there,
-            // burying the error that actually explains it.
-            continue
+            // The name is still passed on below. Skipping it would drop a
+            // positional argument and shift every later one into the wrong
+            // slot, so the operation would read some other file rather than
+            // fail: a silent misread is worse than a missing-file error, and
+            // the message recorded here survives to explain it.
           } else {
             await runtime.mount({
               name: inputFileName,
@@ -491,7 +495,17 @@ export async function runTools(
           }
         }
         else if (inputDefinition.mode === "stdin") {
+          // Returns undefined when the file is not there, which happens when
+          // the upstream output never materialised. Dereferencing it would
+          // replace a recordable problem with a TypeError.
           const fileData = await aioliReadFileHelper(CLI, inputFileName)
+          if (!fileData) {
+            errors[invocation.uniqueId] ??= []
+            errors[invocation.uniqueId].push(
+              `Input "${inputDefinition.name}" expected output "${sourceOutput}" of ${source}, which was not produced`
+            )
+            continue
+          }
           stdinValue = fileData.data
         }
       }
