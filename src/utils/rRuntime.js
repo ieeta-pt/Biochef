@@ -309,7 +309,16 @@ export default class RRuntime {
       // would deliver this operation's input to the next one, which never asked
       // for it, exactly as aioli's worker clears its buffer once drained.
       this.stdin = "";
-      await this.shelter.purge();
+
+      // Guarded, because the case where captureR rejected is also the case
+      // where the worker may be in no state to purge. An exception thrown from
+      // a finally replaces the one being propagated, which would hide the
+      // failure that actually matters.
+      try {
+        await this.shelter.purge();
+      } catch (purgeErr) {
+        logger.warn("[RRuntime.exec] Failed to purge the R shelter", purgeErr);
+      }
     }
 
     if (failure !== null) {
