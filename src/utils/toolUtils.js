@@ -504,9 +504,13 @@ export async function runTools(
             errors[invocation.uniqueId].push(
               `Input "${inputDefinition.name}" expected output "${sourceOutput}" of ${source}, which was not produced`
             )
-            continue
+            // Falls through with an empty value rather than skipping. Skipping
+            // would leave stdin holding whatever the previous invocation set,
+            // feeding this operation input it never asked for.
+            stdinValue = ""
+          } else {
+            stdinValue = fileData.data
           }
-          stdinValue = fileData.data
         }
       }
 

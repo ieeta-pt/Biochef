@@ -10,10 +10,12 @@ const WORK_DIR = "/biochef";
  * Where the webR runtime is served from.
  *
  * Left unset, webR fetches around 20 MB of R.js, R.wasm and its support files
- * from https://webr.r-wasm.org at run time. Everything else the app executes
- * comes from the registry and is checked against a digest recorded in a recipe,
- * so that would be the one component arriving from a third party, unpinned, and
- * the one whose availability nothing here controls. The build copies those
+ * from https://webr.r-wasm.org at run time. Everything else the app executes is
+ * addressed by a digest recorded in a recipe and served from our own registry,
+ * so that would be the one component arriving from a third party, identified by
+ * nothing, and the one whose availability nothing here controls. (The digest
+ * addresses the blob; this code does not itself verify the bytes it receives
+ * against it.) The build copies those
  * files alongside the app instead (see the CopyWebpackPlugin entry for
  * node_modules/webr/dist) and this points at them.
  *

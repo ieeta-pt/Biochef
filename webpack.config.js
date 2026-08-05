@@ -73,7 +73,7 @@ module.exports = {
         },
         // The webR runtime, served from this origin rather than left to load
         // from webR's public CDN. Every other artifact the app executes is
-        // pulled from the registry and checked against a digest recorded in a
+        // pulled from our own registry, addressed by a digest recorded in a
         // recipe; fetching ~20 MB of R at run time from a third party would sit
         // outside that entirely, and would make R operations fail whenever that
         // host is unavailable. Only the files the runtime actually requests are
