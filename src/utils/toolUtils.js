@@ -403,6 +403,8 @@ export async function runTools(
     debug: false,
   });
 
+  try {
+
   // 1. Prepare the inputs
   for (const invocation of toolInvocations) {
     const toolDefinition = getTool(invocation.toolName)
@@ -518,6 +520,18 @@ export async function runTools(
   logger.log("[runMultipleTools] Results", outputs, errors);
 
   return { "outputs": outputs, "errors": errors }
+  } finally {
+    // Each run builds its own Aioli instance, and each owns a Web Worker holding
+    // the loaded tools and their wasm heaps. Without this they accumulate for the
+    // lifetime of the page, one per run, including when a run throws part way.
+    // Every output is materialised as a DataValue before this point, so nothing
+    // reads the worker's filesystem afterwards.
+    try {
+      await CLI.close()
+    } catch (err) {
+      logger.warn("[runMultipleTools] Failed to close the Aioli worker", err)
+    }
+  }
 }
 
 export function getToolInputByName(toolName, inputName) {
