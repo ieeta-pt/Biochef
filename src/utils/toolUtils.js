@@ -313,6 +313,40 @@ async function getToolBlobs(toolName) {
   return [wasmBlob, jsBlob]
 }
 
+// aioli mounts every file flat into the shared data directory and symlinks it
+// from the working directory, so a mount name must be a single path component.
+// A name containing a separator makes the symlink step throw ENOENT and takes
+// down the whole worker.
+function isSafeMountName(name) {
+  if (typeof name !== "string") return false
+  if (name.length === 0 || name.length > 255) return false
+  if (name.includes("/") || name.includes("\\") || name.includes("\0")) return false
+  if (name === "." || name === "..") return false
+
+  return true
+}
+
+// Resolve the name an input file is mounted under.
+//
+// Recipes may set io.inputs[].filename when a tool dispatches on the file
+// extension, or needs to locate a sibling file by name. The declared name is
+// appended to the per-invocation prefix rather than replacing it, so the
+// extension and any sibling relationship survive while names stay unique
+// between nodes. Inputs that declare nothing keep the previous name.
+export function resolveInputFileName(uniqueId, inputDefinition) {
+  const fallback = `input-${uniqueId}-${inputDefinition.name}.txt`
+  const declared = inputDefinition.filename
+
+  if (declared === undefined) return fallback
+
+  if (!isSafeMountName(declared)) {
+    logger.warn(`[resolveInputFileName] Ignoring unusable filename "${declared}" on input "${inputDefinition.name}"`)
+    return fallback
+  }
+
+  return `input-${uniqueId}-${declared}`
+}
+
 async function aioliReadFileHelper(CLI, fileName) {
   const stat = await CLI.ls(fileName)
 
@@ -418,7 +452,7 @@ export async function runTools(
 
       if (mode === "text") {
         if (inputDefinition.mode === "file") {
-          inputFileName = `input-${invocation.uniqueId}-${inputDefinition.name}.txt`
+          inputFileName = resolveInputFileName(invocation.uniqueId, inputDefinition)
           const fileContent = value.kind === "binary" ? new Blob([value.data]) : value.data;
           await CLI.mount({ name: inputFileName, data: fileContent })
         }
@@ -428,11 +462,36 @@ export async function runTools(
       }
       else if (mode === "output") {
         const [source, sourceOutput] = value
-        inputFileName = `${source}-${sourceOutput}.txt`
+        const producedFileName = `${source}-${sourceOutput}.txt`
+        inputFileName = producedFileName
 
         if (inputDefinition.mode === "stdin") {
-          const fileData = await aioliReadFileHelper(CLI, inputFileName)
-          stdinValue = fileData.data
+          // Always read the name the producing node actually wrote. Renaming
+          // before this point would read a file that does not exist yet.
+          const fileData = await aioliReadFileHelper(CLI, producedFileName)
+
+          if (!fileData) {
+            logger.warn(`[runTools] Input "${inputDefinition.name}" expected "${producedFileName}" from an earlier step, which was not produced`)
+          }
+
+          stdinValue = fileData?.data
+        }
+        else if (inputDefinition.mode === "file" && inputDefinition.filename !== undefined) {
+          // The producing node named the file after its own output. Re-mount it
+          // under the name this tool expects to see.
+          const desiredFileName = resolveInputFileName(invocation.uniqueId, inputDefinition)
+
+          if (desiredFileName !== producedFileName) {
+            const fileData = await aioliReadFileHelper(CLI, producedFileName)
+
+            if (fileData) {
+              await CLI.mount({
+                name: desiredFileName,
+                data: fileData.kind === "binary" ? new Blob([fileData.data]) : fileData.data,
+              })
+              inputFileName = desiredFileName
+            }
+          }
         }
       }
 
