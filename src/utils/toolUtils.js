@@ -540,3 +540,10 @@ export function toolHasNoInputs(toolName) {
 
   return !tool.io?.inputs || tool.io.inputs.length === 0;
 }
+
+export function getToolRuntimes(toolName) {
+  const tool = getTool(toolName);
+  if (!tool) return;
+
+  return tool.runtime?.modes
+}
