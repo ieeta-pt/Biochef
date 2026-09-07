@@ -64,13 +64,16 @@ const ToolsPage = () => {
 
     const handleToolClick = async (tool) => {
         setLoadingTool(true);
-        await loadTool(tool.name);
-        setSelectedTool(tool);
-        setLoadingTool(false);
-        if(tourIsActive) tourMoveNext();
-
-        if (isMobile) {
-            setTab(2)
+        try {
+            const loaded = await loadTool(tool.name);
+            if (!loaded) return;
+            setSelectedTool(tool);
+            if(tourIsActive) tourMoveNext();
+            if (isMobile) setTab(2);
+        } catch (error) {
+            console.error("Tool loading failed", error);
+        } finally {
+            setLoadingTool(false);
         }
     };
 
@@ -245,7 +248,7 @@ const ToolsPage = () => {
                                 <ToolOutputPanel outputData={outputData} setOutputData={setOutputData} tool={selectedTool} inputData={inputData} page={'ToolPage'} />
                             </Box>
                         </Grid>
-                        <Button
+                        {/* <Button
                             variant="outlined"
                             size="small"
                             onClick={handleRerunTour}
@@ -257,7 +260,7 @@ const ToolsPage = () => {
                             }}
                         >
                             Re-run tour
-                        </Button>
+                        </Button> */}
                     </Grid>
                 )}
             </Container>

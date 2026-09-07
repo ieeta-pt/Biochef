@@ -2,6 +2,13 @@ import Aioli from "./aioli-custom/aioli"
 import logger from "./logger";
 import { detectIsBinaryFile } from "./detectDataType";
 import { makeBinaryDataValue, makeTextDataValue } from './dataValue'
+import { verifySha256Digest } from "./artifactIntegrity";
+import {
+  DEFAULT_CATALOG_PACKAGE,
+  DEFAULT_CATALOG_PUBLIC_JWK,
+  validateCatalogEntry,
+  verifySignedCatalog,
+} from "./catalogTrust";
 
 const toolMap = new Map();
 const blobMap = new Map();
@@ -9,8 +16,17 @@ const REGISTRY_URL = process.env.REGISTRY_URL;
 const REPO_OWNER = process.env.REPO_OWNER;
 const REGISTRY_USERNAME = process.env.REGISTRY_USERNAME;
 const REGISTRY_PASSWORD = process.env.REGISTRY_PASSWORD;
+const CATALOG_PACKAGE = process.env.BIOCHEF_CATALOG_PACKAGE || DEFAULT_CATALOG_PACKAGE;
+const CATALOG_PUBLIC_JWK = process.env.BIOCHEF_CATALOG_PUBLIC_JWK || DEFAULT_CATALOG_PUBLIC_JWK;
+const ALLOW_UNSIGNED_LOCAL_CATALOG =
+  process.env.NODE_ENV === "development" &&
+  process.env.BIOCHEF_ALLOW_UNSIGNED_LOCAL_CATALOG === "true";
 
 const IS_GHCR = REGISTRY_URL?.includes("ghcr.io") || false;
+
+function authorizationHeaders(authorization) {
+  return authorization ? { Authorization: authorization } : {};
+}
 
 // TODO: use ID instead of tool name
 export function getTool(toolName) {
@@ -93,7 +109,9 @@ async function getAuthorizationAndBaseUrl(repo) {
     };
   } else {
     return {
-      authorization: "Basic " + btoa(`${REGISTRY_USERNAME}:${REGISTRY_PASSWORD}`),
+      authorization: REGISTRY_USERNAME && REGISTRY_PASSWORD
+        ? "Basic " + btoa(`${REGISTRY_USERNAME}:${REGISTRY_PASSWORD}`)
+        : null,
       base_url: `${REGISTRY_URL}/v2`,
     };
   }
@@ -104,7 +122,7 @@ async function fetchManifest(base_url, repo, tag, authorization) {
     const res = await fetch(`${base_url}/${repo}/manifests/${tag}`, {
       headers: {
         Accept: "application/vnd.oci.image.manifest.v1+json",
-        Authorization: authorization,
+        ...authorizationHeaders(authorization),
       },
     });
 
@@ -122,11 +140,17 @@ async function fetchManifest(base_url, repo, tag, authorization) {
 }
 
 async function fetchBlob(base_url, repo, digest, authorization, accept) {
+  const arrayBuffer = await fetchBlobBytes(base_url, repo, digest, authorization, accept);
+  if (!arrayBuffer) return false;
+  return JSON.parse(new TextDecoder("utf-8").decode(arrayBuffer));
+}
+
+async function fetchBlobBytes(base_url, repo, digest, authorization, accept) {
   try {
     const res = await fetch(`${base_url}/${repo}/blobs/${digest}`, {
       headers: {
         Accept: accept,
-        Authorization: authorization,
+        ...authorizationHeaders(authorization),
       },
     });
 
@@ -140,7 +164,7 @@ async function fetchBlob(base_url, repo, digest, authorization, accept) {
 
       return false;
     }
-    return await res.json();
+    return await res.arrayBuffer();
 
   } catch (err) {
     logger.error(`fetchBlob network error for ${repo}@${digest}`, err);
@@ -148,21 +172,127 @@ async function fetchBlob(base_url, repo, digest, authorization, accept) {
   }
 }
 
-export async function loadToolIndex() {
-  const { authorization, base_url } = await getAuthorizationAndBaseUrl("biochef-plugins-index");
-  if (!authorization || !base_url) return false
+function findLayer(manifest, mediaType, fileName) {
+  const matchingLayers = manifest.layers?.filter(
+    layer =>
+      layer.mediaType === mediaType &&
+      layer.annotations?.["org.opencontainers.image.title"] === fileName
+  );
+  return matchingLayers?.length === 1 ? matchingLayers[0] : null;
+}
 
-  const manifest = await fetchManifest(base_url, "biochef-plugins-index", "index", authorization);
+function digestFromReference(digestReference) {
+  const digest = digestReference?.split("@").pop();
+  if (!digest?.startsWith("sha256:")) {
+    throw new Error(`Invalid immutable digest reference: ${digestReference}`);
+  }
+  return digest;
+}
+
+function isLoopbackRegistry(registryUrl) {
+  try {
+    const hostname = new URL(registryUrl).hostname;
+    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
+  } catch {
+    return false;
+  }
+}
+
+function requireLocalDevelopmentConfiguration() {
+  if (!isLoopbackRegistry(REGISTRY_URL)) {
+    throw new Error("Unsigned development catalogs require a loopback registry");
+  }
+  if (CATALOG_PACKAGE !== "biochef-dev-plugins-index") {
+    throw new Error("Unsigned development catalogs require the dedicated development package");
+  }
+}
+
+async function loadLocalToolIndex(base_url, authorization) {
+  requireLocalDevelopmentConfiguration();
+
+  const manifest = await fetchManifest(base_url, CATALOG_PACKAGE, "index", authorization);
+  if (!manifest) return false;
+  if (
+    manifest.annotations?.["biochef.index.environment"] !== "development" ||
+    manifest.annotations?.["biochef.index.signed"] !== "false"
+  ) {
+    logger.error("Unsigned development index annotations are missing or invalid");
+    return false;
+  }
+
+  const indexLayer = findLayer(manifest, "application/json", "index.json");
+  if (!indexLayer) {
+    logger.error("Unsigned development index layer is missing");
+    return false;
+  }
+
+  const indexJson = await fetchBlob(
+    base_url,
+    CATALOG_PACKAGE,
+    indexLayer.digest,
+    authorization,
+    "application/json",
+  );
+  if (!indexJson || typeof indexJson !== "object" || Array.isArray(indexJson)) return false;
+
+  const developmentTools = [];
+  for (const [repo, plugin] of Object.entries(indexJson)) {
+    if (!plugin || typeof plugin.name !== "string" || !plugin.name) {
+      throw new Error(`Invalid unsigned development index entry for ${repo}`);
+    }
+    developmentTools.push({
+      ...plugin,
+      repo,
+      localDevelopment: true,
+    });
+  }
+
+  toolMap.clear();
+  for (const bundle of developmentTools) {
+    toolMap.set(bundle.name, bundle);
+  }
+
+  logger.warn("Loaded an unsigned catalog from the loopback development registry");
+  return true;
+}
+
+export async function loadToolIndex() {
+  const { authorization, base_url } = await getAuthorizationAndBaseUrl(CATALOG_PACKAGE);
+  if (!base_url) return false
+
+  if (ALLOW_UNSIGNED_LOCAL_CATALOG) {
+    return loadLocalToolIndex(base_url, authorization);
+  }
+
+  const manifest = await fetchManifest(base_url, CATALOG_PACKAGE, "latest", authorization);
   if (!manifest) return false
 
-  const digest = manifest.layers[0].digest;
-  const indexJson = await fetchBlob(base_url, "biochef-plugins-index", digest, authorization, "application/vnd.oci.image.manifest.v1+json");
+  const catalogLayer = findLayer(manifest, "application/vnd.biochef.verified-catalog+json", "index.json");
+  const signatureLayer = findLayer(manifest, "application/vnd.biochef.catalog-signature+json", "index.sig.json");
+  if (!catalogLayer || !signatureLayer) {
+    logger.error("Verified catalog or catalog signature layer is missing");
+    return false;
+  }
 
-  for (const [key, plugin] of Object.entries(indexJson)) {
-    const bundle = {
+  const catalogBytes = await fetchBlobBytes(base_url, CATALOG_PACKAGE, catalogLayer.digest, authorization, "application/vnd.biochef.verified-catalog+json");
+  const signatureDocument = await fetchBlob(base_url, CATALOG_PACKAGE, signatureLayer.digest, authorization, "application/vnd.biochef.catalog-signature+json");
+  if (!catalogBytes || !signatureDocument) return false
+
+  const catalog = await verifySignedCatalog(catalogBytes, signatureDocument, CATALOG_PUBLIC_JWK, REGISTRY_URL, REPO_OWNER);
+
+  const verifiedTools = [];
+  for (const [key, plugin] of Object.entries(catalog.packages)) {
+    validateCatalogEntry(plugin);
+    verifiedTools.push({
       ...plugin,
-      repo: key
-    };
+      repo: plugin.package || key,
+      catalogEntry: plugin,
+    });
+  }
+
+  // Replace the visible catalogue only after every entry has passed validation.
+  toolMap.clear();
+  for (const bundle of verifiedTools) {
     toolMap.set(bundle.name, bundle);
   }
 
@@ -180,53 +310,89 @@ export async function loadTool(toolName) {
 
   const repo = bundleEntry.repo;
   const { authorization, base_url } = await getAuthorizationAndBaseUrl(repo);
-  if (!authorization || !base_url) return false;
+  if (!base_url) return false;
 
-  const manifest = await fetchManifest(base_url, repo, "latest", authorization);
+  const localDevelopment =
+    ALLOW_UNSIGNED_LOCAL_CATALOG && bundleEntry.localDevelopment === true;
+  if (localDevelopment) {
+    requireLocalDevelopmentConfiguration();
+  } else {
+    validateCatalogEntry(bundleEntry.catalogEntry || bundleEntry);
+  }
+
+  const manifestReference = localDevelopment
+    ? "latest"
+    : digestFromReference(bundleEntry.digest_reference);
+  const manifest = await fetchManifest(base_url, repo, manifestReference, authorization);
   if (!manifest) return false;
 
-  const bundleLayer = manifest.layers.find(
-    layer =>
-      layer.mediaType === "application/vnd.biochef.bundle+json" ||
-      layer.annotations?.["org.opencontainers.image.title"] === "bundle.json"
-  );
+  const bundleLayer = findLayer(manifest, "application/vnd.biochef.bundle+json", "bundle.json");
 
   if (!bundleLayer) {
     console.error(`No bundle.json layer found for ${repo}`);
     return;
   }
 
-  var bundle = await fetchBlob(base_url, repo, bundleLayer.digest, authorization, "application/vnd.oci.image.manifest.v1+json");
+  const bundleBytes = await fetchBlobBytes(base_url, repo, bundleLayer.digest, authorization, "application/vnd.biochef.bundle+json");
+  if (!bundleBytes) return false;
+  await verifySha256Digest(
+    bundleBytes,
+    localDevelopment ? bundleLayer.digest : bundleEntry.evidence.bundle_json,
+    `${repo}/bundle.json`,
+  );
+  var bundle = JSON.parse(new TextDecoder("utf-8").decode(bundleBytes));
   if (!bundle) return false
 
-  bundle = { ...toolMap.get(bundle.name), ...bundle }
+  if (localDevelopment) {
+    if (bundle.name !== bundleEntry.name) {
+      logger.error(`Loaded bundle does not match unsigned development index entry for ${repo}`);
+      return false;
+    }
+  } else if (
+    bundle.id !== bundleEntry.id ||
+    bundle.name !== bundleEntry.name ||
+    bundle.version !== bundleEntry.version ||
+    bundle.runtime?.wasm?.wasm_digest !== bundleEntry.runtime.wasm.wasm_digest ||
+    bundle.runtime?.wasm?.js_digest !== bundleEntry.runtime.wasm.js_digest
+  ) {
+    logger.error(`Loaded bundle does not match verified catalog entry for ${repo}`);
+    return false;
+  }
+
+  bundle = { ...bundleEntry, ...bundle }
 
   bundle.repo = repo;
-  toolMap.set(bundle.name, bundle);
+  bundle.localDevelopment = localDevelopment;
+  if (!localDevelopment) {
+    bundle.catalogEntry = bundleEntry.catalogEntry;
+  }
+  toolMap.set(toolName, bundle);
 
   return true
 }
 
-async function generateBlob(url, type, authorization) {
-  if (blobMap.has(url)) return blobMap.get(url);
+async function generateBlob(url, type, authorization, expectedDigest) {
+  const cacheKey = `${url}|${expectedDigest}`;
+  if (blobMap.has(cacheKey)) return blobMap.get(cacheKey);
 
   try {
     const res = await fetch(url, {
       headers: {
-        Authorization: authorization,
-        Accept: type
+        Accept: type,
+        ...authorizationHeaders(authorization),
       },
     });
     if (!res.ok) throw new Error(`Failed to fetch blob: ${res.status} ${res.statusText}`);
 
     const arrayBuffer = await res.arrayBuffer();
+    await verifySha256Digest(arrayBuffer, expectedDigest, url);
     const blob = new Blob([arrayBuffer], { type });
     const blobURL = URL.createObjectURL(blob);
-    blobMap.set(url, blobURL);
+    blobMap.set(cacheKey, blobURL);
     return blobURL;
   } catch (err) {
     console.error("Failed to load authenticated blob:", err);
-    return null;
+    throw err;
   }
 }
 
@@ -237,8 +403,8 @@ async function getToolBlobs(toolName) {
 
   const wasmUrl = `${base_url}/${toolConfig.repo}/blobs/${toolConfig.runtime.wasm.wasm_digest}`
   const jsUrl = `${base_url}/${toolConfig.repo}/blobs/${toolConfig.runtime.wasm.js_digest}`
-  const wasmBlob = await generateBlob(wasmUrl, "application/wasm", authorization)
-  const jsBlob = await generateBlob(jsUrl, "application/javascript", authorization)
+  const wasmBlob = await generateBlob(wasmUrl, "application/wasm", authorization, toolConfig.runtime.wasm.wasm_digest)
+  const jsBlob = await generateBlob(jsUrl, "application/javascript", authorization, toolConfig.runtime.wasm.js_digest)
 
   return [wasmBlob, jsBlob]
 }
