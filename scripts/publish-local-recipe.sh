@@ -92,7 +92,7 @@ for recipe_path in "${recipe_paths[@]}"; do
   container_recipes+=("/recipes/$relative_path")
 done
 
-run_args=(run --rm)
+run_args=(run --rm --volume "$frontend_dir/scripts/publish-local-index.py:/usr/local/bin/publish-local-index.py:ro")
 if [[ -n "$hub_dir" ]]; then
   if [[ -d "$hub_dir" ]]; then
     hub_dir=$(CDPATH= cd -- "$hub_dir" && pwd -P)
@@ -123,9 +123,16 @@ fi
   hub -lc '
     set -euo pipefail
     if [[ "${BIOCHEF_INSTALL_LOCAL_HUB_DEPS:-0}" == "1" ]]; then
+      git config --global --add safe.directory /hub
       pip install --no-cache-dir -r /hub/hub/requirements.txt
     fi
     python3 /hub/hub/hub.py validate "$@"
     python3 /hub/hub/hub.py build
+    # The current Hub publisher requires the SBOM file. Its assurance check belongs to PR CI.
+    python3 /hub/hub/hub.py sbom
     python3 /hub/hub/hub.py publish --registry localhost:5000
+    python3 /usr/local/bin/publish-local-index.py \
+      --registry localhost:5000 \
+      --registry-dir registry \
+      --catalog-package biochef-dev-plugins-index
   ' bash "${container_recipes[@]}"

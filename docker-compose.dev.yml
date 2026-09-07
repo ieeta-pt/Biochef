@@ -5,16 +5,18 @@ services:
     volumes:
       - .:/app
       - /app/node_modules
-    env_file:
-      - example.env
+    environment:
+      REGISTRY_URL: http://localhost:5000
+      BIOCHEF_CATALOG_PACKAGE: biochef-dev-plugins-index
+      BIOCHEF_ALLOW_UNSIGNED_LOCAL_CATALOG: "true"
     command: sh -c "npm install && npm start"
     ports:
-      - "8082:8082"
+      - "127.0.0.1:8082:8082"
 
   registry:
     image: registry:2
     ports:
-      - "5000:5000"
+      - "127.0.0.1:5000:5000"
     volumes:
       - biochef-registry:/var/lib/registry
       - ./registry-config.yml:/etc/docker/registry/config.yml:ro
