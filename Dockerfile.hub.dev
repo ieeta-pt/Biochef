@@ -31,6 +31,13 @@ RUN apt-get update \
         rsync \
         sudo \
         texinfo \
+        libncurses-dev \
+        zlib1g-dev \
+        liblzma-dev \
+        libbz2-dev \
+        libdeflate-dev \
+        libcurl4-openssl-dev \
+        musl-tools
         wget
         
 RUN python3 -m venv "$VIRTUAL_ENV" \

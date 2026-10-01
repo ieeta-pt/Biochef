@@ -39,6 +39,7 @@ def index_entry(bundle):
         "name": bundle.get("name"),
         "description": bundle.get("description"),
         "category": bundle.get("category"),
+        "runtime": bundle.get("runtime"),
         "inputTypes": [kind for item in inputs for kind in item.get("types", [])],
         "outputTypes": [kind for item in outputs for kind in item.get("types", [])],
     }
