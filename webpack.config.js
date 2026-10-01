@@ -79,6 +79,7 @@ module.exports = {
       "process.env.REGISTRY_PASSWORD": JSON.stringify(process.env.REGISTRY_PASSWORD),
       "process.env.BIOCHEF_CATALOG_PACKAGE": JSON.stringify(process.env.BIOCHEF_CATALOG_PACKAGE),
       "process.env.BIOCHEF_CATALOG_PUBLIC_JWK": JSON.stringify(process.env.BIOCHEF_CATALOG_PUBLIC_JWK),
+      "process.env.BIOCHEF_ALLOW_UNSIGNED_LOCAL_CATALOG": JSON.stringify(process.env.BIOCHEF_ALLOW_UNSIGNED_LOCAL_CATALOG),
     }),
   ],
   resolve: {

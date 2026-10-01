@@ -18,6 +18,9 @@ const REGISTRY_USERNAME = process.env.REGISTRY_USERNAME;
 const REGISTRY_PASSWORD = process.env.REGISTRY_PASSWORD;
 const CATALOG_PACKAGE = process.env.BIOCHEF_CATALOG_PACKAGE || DEFAULT_CATALOG_PACKAGE;
 const CATALOG_PUBLIC_JWK = process.env.BIOCHEF_CATALOG_PUBLIC_JWK || DEFAULT_CATALOG_PUBLIC_JWK;
+const ALLOW_UNSIGNED_LOCAL_CATALOG =
+  process.env.NODE_ENV === "development" &&
+  process.env.BIOCHEF_ALLOW_UNSIGNED_LOCAL_CATALOG === "true";
 
 const IS_GHCR = REGISTRY_URL?.includes("ghcr.io") || false;
 
@@ -186,9 +189,80 @@ function digestFromReference(digestReference) {
   return digest;
 }
 
+function isLoopbackRegistry(registryUrl) {
+  try {
+    const hostname = new URL(registryUrl).hostname;
+    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
+  } catch {
+    return false;
+  }
+}
+
+function requireLocalDevelopmentConfiguration() {
+  if (!isLoopbackRegistry(REGISTRY_URL)) {
+    throw new Error("Unsigned development catalogs require a loopback registry");
+  }
+  if (CATALOG_PACKAGE !== "biochef-dev-plugins-index") {
+    throw new Error("Unsigned development catalogs require the dedicated development package");
+  }
+}
+
+async function loadLocalToolIndex(base_url, authorization) {
+  requireLocalDevelopmentConfiguration();
+
+  const manifest = await fetchManifest(base_url, CATALOG_PACKAGE, "index", authorization);
+  if (!manifest) return false;
+  if (
+    manifest.annotations?.["biochef.index.environment"] !== "development" ||
+    manifest.annotations?.["biochef.index.signed"] !== "false"
+  ) {
+    logger.error("Unsigned development index annotations are missing or invalid");
+    return false;
+  }
+
+  const indexLayer = findLayer(manifest, "application/json", "index.json");
+  if (!indexLayer) {
+    logger.error("Unsigned development index layer is missing");
+    return false;
+  }
+
+  const indexJson = await fetchBlob(
+    base_url,
+    CATALOG_PACKAGE,
+    indexLayer.digest,
+    authorization,
+    "application/json",
+  );
+  if (!indexJson || typeof indexJson !== "object" || Array.isArray(indexJson)) return false;
+
+  const developmentTools = [];
+  for (const [repo, plugin] of Object.entries(indexJson)) {
+    if (!plugin || typeof plugin.name !== "string" || !plugin.name) {
+      throw new Error(`Invalid unsigned development index entry for ${repo}`);
+    }
+    developmentTools.push({
+      ...plugin,
+      repo,
+      localDevelopment: true,
+    });
+  }
+
+  toolMap.clear();
+  for (const bundle of developmentTools) {
+    toolMap.set(bundle.name, bundle);
+  }
+
+  logger.warn("Loaded an unsigned catalog from the loopback development registry");
+  return true;
+}
+
 export async function loadToolIndex() {
   const { authorization, base_url } = await getAuthorizationAndBaseUrl(CATALOG_PACKAGE);
   if (!base_url) return false
+
+  if (ALLOW_UNSIGNED_LOCAL_CATALOG) {
+    return loadLocalToolIndex(base_url, authorization);
+  }
 
   const manifest = await fetchManifest(base_url, CATALOG_PACKAGE, "latest", authorization);
   if (!manifest) return false
@@ -238,8 +312,18 @@ export async function loadTool(toolName) {
   const { authorization, base_url } = await getAuthorizationAndBaseUrl(repo);
   if (!base_url) return false;
 
-  validateCatalogEntry(bundleEntry.catalogEntry || bundleEntry);
-  const manifest = await fetchManifest(base_url, repo, digestFromReference(bundleEntry.digest_reference), authorization);
+  const localDevelopment =
+    ALLOW_UNSIGNED_LOCAL_CATALOG && bundleEntry.localDevelopment === true;
+  if (localDevelopment) {
+    requireLocalDevelopmentConfiguration();
+  } else {
+    validateCatalogEntry(bundleEntry.catalogEntry || bundleEntry);
+  }
+
+  const manifestReference = localDevelopment
+    ? "latest"
+    : digestFromReference(bundleEntry.digest_reference);
+  const manifest = await fetchManifest(base_url, repo, manifestReference, authorization);
   if (!manifest) return false;
 
   const bundleLayer = findLayer(manifest, "application/vnd.biochef.bundle+json", "bundle.json");
@@ -251,11 +335,20 @@ export async function loadTool(toolName) {
 
   const bundleBytes = await fetchBlobBytes(base_url, repo, bundleLayer.digest, authorization, "application/vnd.biochef.bundle+json");
   if (!bundleBytes) return false;
-  await verifySha256Digest(bundleBytes, bundleEntry.evidence.bundle_json, `${repo}/bundle.json`);
+  await verifySha256Digest(
+    bundleBytes,
+    localDevelopment ? bundleLayer.digest : bundleEntry.evidence.bundle_json,
+    `${repo}/bundle.json`,
+  );
   var bundle = JSON.parse(new TextDecoder("utf-8").decode(bundleBytes));
   if (!bundle) return false
 
-  if (
+  if (localDevelopment) {
+    if (bundle.name !== bundleEntry.name) {
+      logger.error(`Loaded bundle does not match unsigned development index entry for ${repo}`);
+      return false;
+    }
+  } else if (
     bundle.id !== bundleEntry.id ||
     bundle.name !== bundleEntry.name ||
     bundle.version !== bundleEntry.version ||
@@ -269,7 +362,10 @@ export async function loadTool(toolName) {
   bundle = { ...bundleEntry, ...bundle }
 
   bundle.repo = repo;
-  bundle.catalogEntry = bundleEntry.catalogEntry;
+  bundle.localDevelopment = localDevelopment;
+  if (!localDevelopment) {
+    bundle.catalogEntry = bundleEntry.catalogEntry;
+  }
   toolMap.set(toolName, bundle);
 
   return true
