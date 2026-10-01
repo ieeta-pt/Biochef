@@ -1,4 +1,4 @@
-import { AccountTree, Science } from '@mui/icons-material';
+import { AccountTree, Science, BugReport } from '@mui/icons-material';
 import { AppBar, Box, Button, Toolbar, Tooltip, useTheme } from '@mui/material';
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -69,6 +69,14 @@ const Navbar = () => {
                         startIcon={<AccountTree />}
                     >
                         Workflow Builder
+                    </Button>
+                    <Button
+                        component={Link}
+                        to="/dev"
+                        sx={buttonStyle(isActive('/dev'))}
+                        startIcon={<BugReport />}
+                    >
+                        Dev Page
                     </Button>
                 </Box>
 

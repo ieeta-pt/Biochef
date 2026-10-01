@@ -5,6 +5,7 @@ import Navbar from './components/Navbar';
 import ToolsPage from './pages/ToolsPage';
 import WorkflowPage from './pages/WorkflowPage';
 import AboutPage from './pages/AboutPage';
+import DevPage from './pages/DevPage';
 
 const App = () => {
   return (
@@ -22,6 +23,7 @@ const App = () => {
           }
         />
         <Route path="/about" element={<AboutPage />} />
+        <Route path="/dev" element={<DevPage />} />
       </Routes>
     </Router>
   );

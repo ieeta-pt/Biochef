@@ -366,6 +366,10 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, indexLoaded }, 
               invalidNodeIds.add(node.id);
               showNotification(`Tool "${node.data.label}" from imported workflow not available`, "error")
             }
+
+            if (!node.data?.repo) {
+              node.data.repo = getTool(node.data.label)?.repo;
+            }
           }
         }
 
@@ -695,10 +699,13 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, indexLoaded }, 
 
     let response = null
     try {
+      const startTime = performance.now();      
       response = await fetch(url, {
         method: "POST",
         body: formData
       });
+      const elapsedMs = performance.now() - startTime;
+      logger.log("[runWithAgent]", `Took: ${elapsedMs.toFixed(0)} ms`)
     }
     catch {
       logger.error("Could not send request to agent")

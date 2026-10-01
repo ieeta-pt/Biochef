@@ -563,13 +563,17 @@ export async function runTools(
     args = [...args, ...lastArgs]
 
     // 2. Run the tool
-    const { stdout, stderr } = await CLI.exec(invocation.toolName, args)
+    const startTime = performance.now();
+    var { stdout, stderr } = await CLI.exec(invocation.toolName, args)
+    const elapsedMs = performance.now() - startTime;
+    
     errors[invocation.uniqueId] = [stderr]
 
     logger.log("[runMultipleTools]", invocation.toolName, {
       args,
       stdout,
       stderr,
+      "Took": `${elapsedMs.toFixed(0)} ms`,
     });
     
     // Artificial delay for testing purposes
