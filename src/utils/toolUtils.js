@@ -132,6 +132,12 @@ async function fetchManifest(base_url, repo, tag, authorization) {
       return false
     }
 
+    if (tag.startsWith("sha256:")) {
+      const bytes = await res.arrayBuffer();
+      await verifySha256Digest(bytes, tag, `${repo}/manifest`);
+      return JSON.parse(new TextDecoder("utf-8").decode(bytes));
+    }
+
     return await res.json();
   } catch (err) {
     logger.error(`fetchManifest failed: ${err.message}`);
