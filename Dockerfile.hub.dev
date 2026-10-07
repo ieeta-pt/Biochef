@@ -37,7 +37,7 @@ RUN apt-get update \
         libbz2-dev \
         libdeflate-dev \
         libcurl4-openssl-dev \
-        musl-tools
+        musl-tools \
         wget
         
 RUN python3 -m venv "$VIRTUAL_ENV" \
