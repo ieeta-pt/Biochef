@@ -508,7 +508,9 @@ export async function runTools(
   // 1. Prepare the inputs
   for (const invocation of toolInvocations) {
     const toolDefinition = getTool(invocation.toolName)
-    let args = invocation.toolArguments
+    // Emscripten builds argv with stringToUTF8OnStack, which reads .length:
+    // a number (an untouched recipe default) silently becomes "".
+    let args = invocation.toolArguments.map(String)
     let lastArgs = [] // arguments that must appear after all flagged arguments.
 
     for (const inputDefinition of toolDefinition.io.inputs) {
