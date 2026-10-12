@@ -249,6 +249,69 @@ function validateBcf(content) {
   return validateBinWithMagic(content, BINARY_MAGIC.BCF) || validateBinWithMagic(content, BINARY_MAGIC.BGZF)
 }
 
+function validateNewick(content) {
+  if (typeof content !== 'string') return false;
+  if (content.startsWith('\uFEFF')) content = content.slice(1);
+  if (!content.replace(/[ \t\r\n]/g, '')) return false;
+
+  const tokens = /[ \t\r\n]+|'(?:[^'\r\n]|'')*'|[(),:;]|[^ \t\r\n(),:;\[\]']+/y;
+  const number = /^[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?$/;
+  let pos = 0, depth = 0, trees = 0;
+  let state = 'node', seenNode = false;
+
+  while (pos < content.length) {
+    if (content[pos] === '[') {
+      let comments = 1;
+      pos++;
+      while (pos < content.length && comments) {
+        if (content[pos] === '[') comments++;
+        if (content[pos] === ']') comments--;
+        pos++;
+      }
+      if (comments) return false;
+      continue;
+    }
+    tokens.lastIndex = pos;
+    const match = tokens.exec(content);
+    if (!match) return false;
+    const token = match[0];
+    pos = tokens.lastIndex;
+    if (/^[ \t\r\n]+$/.test(token)) continue;
+
+    if (token === '(') {
+      if (state !== 'node') return false;
+      depth++;
+      seenNode = true;
+    } else if (token === ')') {
+      if (!depth || state === 'length') return false;
+      depth--;
+      state = 'label';
+    } else if (token === ',') {
+      if (!depth || state === 'length') return false;
+      state = 'node';
+    } else if (token === ':') {
+      if (!['node', 'label', 'suffix'].includes(state)) return false;
+      state = 'length';
+      seenNode = true;
+    } else if (token === ';') {
+      if (depth || state === 'length') return false;
+      trees++;
+      state = 'node';
+      seenNode = false;
+    } else if (state === 'length') {
+      if (!number.test(token)) return false;
+      state = 'end';
+    } else if (['node', 'label'].includes(state) &&
+               !/[\p{C}\p{Z}]/u.test(token.replace(/[ \t]/g, ''))) {
+      state = 'suffix';
+      seenNode = true;
+    } else {
+      return false;
+    }
+  }
+  return trees > 0 && depth === 0 && !seenNode;
+}
+
 function validateJson(content) {
   if (!content?.trim()) return false;
 
@@ -305,6 +368,7 @@ const validators = {
   mmi: validateMmi,
   csi: validateCsi,
   bcf: validateBcf,
+  newick: validateNewick,
   fai: validateFai,
   json: validateJson,
   text: () => true, // Default fallback for TEXT
