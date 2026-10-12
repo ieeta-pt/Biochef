@@ -642,3 +642,10 @@ export function toolHasNoInputs(toolName) {
 
   return !tool.io?.inputs || tool.io.inputs.length === 0;
 }
+
+// A flag that ends in "=" (lastz's --format=) takes its value in the same
+// argument; any other flag takes it as the next one.
+export function parameterArguments(flag, value) {
+  if (!flag) return [value];
+  return flag.endsWith("=") ? [flag + value] : [flag, value];
+}
