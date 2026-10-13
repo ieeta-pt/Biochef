@@ -1,4 +1,4 @@
-import { AccountTree, Science } from '@mui/icons-material';
+import { AccountTree, Science, LocalLibrary } from '@mui/icons-material';
 import { AppBar, Box, Button, Toolbar, Tooltip, useTheme } from '@mui/material';
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -74,6 +74,16 @@ const Navbar = () => {
 
                 {/* Right side logos */}
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Button
+                        component="a"
+                        href="https://home.biochef.app/workflows/#tutorials"
+                        target="_blank"
+                        sx={buttonStyle(isActive(false))}
+                        endIcon={<LocalLibrary sx={{ fontSize: 28 }} />}
+                    >
+                        Tutorials
+                    </Button>
+
                     {/* IEETA logo */}
                     <Tooltip title="IEETA">
                         <a
