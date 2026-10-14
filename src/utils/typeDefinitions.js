@@ -230,6 +230,14 @@ export const typeDefinitions = [
     format: 'binary'
   },
   {
+    id: 'FMD',
+    validator: 'fmd',
+    defaultExtension: '.fmd',
+    uploadExtensions: ['.fmd'],
+    edgeColor: '#6d4c41',
+    format: 'binary'
+  },
+  {
     id: 'GTF',
     validator: 'gtf',
     defaultExtension: '.gtf',

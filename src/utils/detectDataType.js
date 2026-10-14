@@ -14,6 +14,7 @@ const BINARY_MAGIC = {
   BIGBED_BE: [0x87, 0x89, 0xf2, 0xeb],
   BIGWIG: [0x26, 0xfc, 0x8f, 0x88], // 0x888FFC26, little-endian
   BIGWIG_BE: [0x88, 0x8f, 0xfc, 0x26],
+  FMD:  [0x52, 0x4c, 0x44, 0x03],   // "RLD\x03" (ropebwt3 fermi-delta index)
 };
 
 function validateFasta(content) {
@@ -339,6 +340,10 @@ function validateBigWig(content) {
   return validateBinWithMagic(content, BINARY_MAGIC.BIGWIG) || validateBinWithMagic(content, BINARY_MAGIC.BIGWIG_BE)
 }
 
+function validateFmd(content) {
+  return validateBinWithMagic(content, BINARY_MAGIC.FMD)
+}
+
 function validateBai(content) {
   return validateBinWithMagic(content, BINARY_MAGIC.BAI)
 }
@@ -409,6 +414,7 @@ const validators = {
   snd: validateSnd,
   bigbed: validateBigBed,
   bigwig: validateBigWig,
+  fmd: validateFmd,
   vcf: validateVcf,
   list: validateList,
   sam: validateSam,
