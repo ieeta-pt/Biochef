@@ -10,6 +10,10 @@ const BINARY_MAGIC = {
   CSI:  [0x43, 0x53, 0x49, 0x01],   // "CSI\x01" (index for BCF/VCF)
   CRAM: [0x43, 0x52, 0x41, 0x4d],   // "CRAM"
   MMI:  [0x4d, 0x4d, 0x49, 0x02],   // "MMI\x02" (minimap2 index)
+  BIGBED: [0xeb, 0xf2, 0x89, 0x87], // 0x8789F2EB, little-endian
+  BIGBED_BE: [0x87, 0x89, 0xf2, 0xeb],
+  BIGWIG: [0x26, 0xfc, 0x8f, 0x88], // 0x888FFC26, little-endian
+  BIGWIG_BE: [0x88, 0x8f, 0xfc, 0x26],
 };
 
 function validateFasta(content) {
@@ -131,6 +135,100 @@ function validateGff(content) {
   });
 }
 
+function validateGtf(content) {
+  if (!content?.trim()) return false;
+
+  for (const line of content.trim().split('\n')) {
+    if (line.startsWith('#') || !line.trim()) continue;
+    const fields = line.split('\t');
+    if (fields.length !== 9) return false;
+    const [, , , start, end, , strand, frame, attributes] = fields;
+    if (!/^\d+$/.test(start) || !/^\d+$/.test(end)) return false;
+    if (!['+', '-', '.'].includes(strand)) return false;
+    if (!['0', '1', '2', '.'].includes(frame)) return false;
+    // GTF attributes are key "value"; pairs that name the gene or transcript
+    if (!attributes.includes('gene_id') && !attributes.includes('transcript_id')) return false;
+  }
+  return true;
+}
+
+function validatePaf(content) {
+  if (!content?.trim()) return false;
+
+  for (const line of content.trim().split('\n')) {
+    if (!line.trim()) continue;
+    const fields = line.split('\t');
+    // 12 mandatory columns, then optional SAM-style tags
+    if (fields.length < 12) return false;
+    for (const i of [1, 2, 3, 6, 7, 8, 9, 10, 11]) {
+      if (!/^-?\d+$/.test(fields[i])) return false;
+    }
+    if (!['+', '-'].includes(fields[4])) return false;
+  }
+  return true;
+}
+
+function validateGfa(content) {
+  if (!content?.trim()) return false;
+
+  let hasSegment = false;
+  for (const line of content.trim().split('\n')) {
+    if (!line.trim()) continue;
+    const fields = line.split('\t');
+    // Every record starts with a one-letter type. GFA1 uses H/S/L/C/P/W/J,
+    // GFA2 adds E/F/G/O/U, and the spec tells readers to skip types they do
+    // not know, which tools rely on: miniasm writes 'a' and 'x' records.
+    if (line[0] !== '#' && !/^[A-Za-z]$/.test(fields[0])) return false;
+    if (fields[0] === 'S') {
+      if (fields.length < 3) return false;
+      hasSegment = true;
+    }
+  }
+  return hasSegment;
+}
+
+function validateClustal(content) {
+  if (!content?.trim()) return false;
+
+  const lines = content.trim().split('\n');
+  // Clustal, MAFFT --clustalout and MAFFT f2cl all open with a CLUSTAL banner
+  if (!lines[0].startsWith('CLUSTAL')) return false;
+
+  let hasSequence = false;
+  for (const line of lines.slice(1)) {
+    if (!line.trim()) continue;
+    if (/^\s/.test(line)) {
+      // conservation line under each block: '*', ':', '.' and spaces
+      if (!/^[\s*:.]*$/.test(line)) return false;
+      continue;
+    }
+    const fields = line.trim().split(/\s+/);
+    if (fields.length !== 2 && fields.length !== 3) return false;
+    if (!/^[A-Za-z*.-]+$/.test(fields[1])) return false;
+    if (fields.length === 3 && !/^\d+$/.test(fields[2])) return false;
+    hasSequence = true;
+  }
+  return hasSequence;
+}
+
+function validateSnd(content) {
+  // bhtsne's SND table: optional '#' header, then one row per sample,
+  // a name followed by tab-separated numbers, every row the same width
+  if (!content?.trim()) return false;
+
+  const number = /^[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?$/;
+  let width = null;
+  for (const line of content.trim().split('\n')) {
+    if (!line.trim() || line.startsWith('#')) continue;
+    const fields = line.replace(/\r$/, '').split('\t');
+    if (fields.length < 2) return false;
+    if (width === null) width = fields.length;
+    else if (fields.length !== width) return false;
+    if (!fields.slice(1).every(value => number.test(value))) return false;
+  }
+  return width !== null;
+}
+
 function validateVcf(content) {
   if (!content) return false;
   const lines = content.trim().split(/\r?\n/);
@@ -233,6 +331,14 @@ function validateCram(content) {
   return validateBinWithMagic(content, BINARY_MAGIC.CRAM)
 }
 
+function validateBigBed(content) {
+  return validateBinWithMagic(content, BINARY_MAGIC.BIGBED) || validateBinWithMagic(content, BINARY_MAGIC.BIGBED_BE)
+}
+
+function validateBigWig(content) {
+  return validateBinWithMagic(content, BINARY_MAGIC.BIGWIG) || validateBinWithMagic(content, BINARY_MAGIC.BIGWIG_BE)
+}
+
 function validateBai(content) {
   return validateBinWithMagic(content, BINARY_MAGIC.BAI)
 }
@@ -296,6 +402,13 @@ const validators = {
   aminoAcids: validateAminoAcids,
   bed: validateBed,
   gff: validateGff,
+  gtf: validateGtf,
+  paf: validatePaf,
+  gfa: validateGfa,
+  clustal: validateClustal,
+  snd: validateSnd,
+  bigbed: validateBigBed,
+  bigwig: validateBigWig,
   vcf: validateVcf,
   list: validateList,
   sam: validateSam,
