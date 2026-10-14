@@ -221,6 +221,15 @@ export const typeDefinitions = [
     edgeColor: '#1aa3fd',
     example: '@HD\tVN:1.6\tSO:queryname\n@SQ\tSN:seq\tLN:98\nread1\t99\tseq\t1\t60\t40M\t=\t59\t98\tTTGCACTGACCTGAAGTCTTGGAGTATGACCGCGGCTCGG\tIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII\nread1\t147\tseq\t59\t60\t40M\t=\t1\t-98\tCTAGCGCTATAGGTGGTGCCGAAGGCGGTCTGTCGTCGTA\tIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII',
   },
+  {
+    id: 'NEWICK',
+    validator: 'newick',
+    defaultExtension: '.nw',
+    scriptExtension: 'nw',
+    uploadExtensions: ['.nw', '.newick', '.tre', '.tree'],
+    edgeColor: '#00897b',
+    example: '((A:0.1,B:0.1)100:0.2,(C:0.1,D:0.1)100:0.2);\n((A:0.2,B:0.2)95:0.3,(C:0.2,D:0.2)95:0.3);\n((A:0.3,C:0.3)90:0.4,(B:0.3,D:0.3)90:0.4);',
+  },
 ];
 
 export function getTypeDefinitions() {
