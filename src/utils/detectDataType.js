@@ -15,6 +15,8 @@ const BINARY_MAGIC = {
   BIGWIG: [0x26, 0xfc, 0x8f, 0x88], // 0x888FFC26, little-endian
   BIGWIG_BE: [0x88, 0x8f, 0xfc, 0x26],
   FMD:  [0x52, 0x4c, 0x44, 0x03],   // "RLD\x03" (ropebwt3 fermi-delta index)
+  YAK:  [0x59, 0x41, 0x4b, 0x02],   // "YAK\x02" (yak k-mer hash table)
+  KRAKEN2_TAXONOMY: [0x4b, 0x32, 0x54, 0x41, 0x58, 0x44, 0x41, 0x54], // "K2TAXDAT"
 };
 
 function validateFasta(content) {
@@ -344,6 +346,46 @@ function validateFmd(content) {
   return validateBinWithMagic(content, BINARY_MAGIC.FMD)
 }
 
+function validateYak(content) {
+  return validateBinWithMagic(content, BINARY_MAGIC.YAK)
+}
+
+function readUint64(content, offset) {
+  let value = 0;
+  for (let i = 7; i >= 0; i--) {
+    value = value * 256 + content[offset + i];
+  }
+  return value;
+}
+
+// The Kraken2 hash table and options files have no magic number. Both are
+// raw structs with 64-bit little-endian fields, so they are recognised by
+// their layout instead.
+function validateKraken2Hash(content) {
+  if (!content || content.length < 32) return false;
+
+  const capacity = readUint64(content, 0);
+  const size = readUint64(content, 8);
+  const keyBits = readUint64(content, 16);
+  const valueBits = readUint64(content, 24);
+
+  return keyBits + valueBits === 32 && valueBits > 0 && size <= capacity
+    && content.length === 32 + 4 * capacity;
+}
+
+function validateKraken2Options(content) {
+  if (!content || content.length !== 64) return false;
+
+  const k = readUint64(content, 0);
+  const l = readUint64(content, 8);
+
+  return l >= 1 && l <= 31 && k >= l && k <= 256 && content[32] <= 1;
+}
+
+function validateKraken2Taxonomy(content) {
+  return validateBinWithMagic(content, BINARY_MAGIC.KRAKEN2_TAXONOMY)
+}
+
 function validateBai(content) {
   return validateBinWithMagic(content, BINARY_MAGIC.BAI)
 }
@@ -478,6 +520,10 @@ const validators = {
   bigbed: validateBigBed,
   bigwig: validateBigWig,
   fmd: validateFmd,
+  yak: validateYak,
+  kraken2Hash: validateKraken2Hash,
+  kraken2Options: validateKraken2Options,
+  kraken2Taxonomy: validateKraken2Taxonomy,
   vcf: validateVcf,
   list: validateList,
   sam: validateSam,
@@ -541,6 +587,8 @@ function matchType(dataValue, { allowed = [], returnAll = false }) {
 
 export function detectIsBinaryFile(bytes) {
   if (!bytes || !bytes.length) return false;
+
+  if (validateKraken2Hash(bytes) || validateKraken2Options(bytes)) return true;
 
   for (const magic of Object.values(BINARY_MAGIC)) {
     if (bytes.length < magic.length) continue;

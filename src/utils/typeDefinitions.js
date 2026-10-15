@@ -238,6 +238,38 @@ export const typeDefinitions = [
     format: 'binary'
   },
   {
+    id: 'YAK',
+    validator: 'yak',
+    defaultExtension: '.yak',
+    uploadExtensions: ['.yak'],
+    edgeColor: '#5d4037',
+    format: 'binary'
+  },
+  {
+    id: 'KRAKEN2_HASH',
+    validator: 'kraken2Hash',
+    defaultExtension: '.hash.k2d',
+    uploadExtensions: ['.k2d'],
+    edgeColor: '#7b1fa2',
+    format: 'binary'
+  },
+  {
+    id: 'KRAKEN2_OPTIONS',
+    validator: 'kraken2Options',
+    defaultExtension: '.opts.k2d',
+    uploadExtensions: ['.k2d'],
+    edgeColor: '#9c27b0',
+    format: 'binary'
+  },
+  {
+    id: 'KRAKEN2_TAXONOMY',
+    validator: 'kraken2Taxonomy',
+    defaultExtension: '.taxo.k2d',
+    uploadExtensions: ['.k2d'],
+    edgeColor: '#ba68c8',
+    format: 'binary'
+  },
+  {
     id: 'GTF',
     validator: 'gtf',
     defaultExtension: '.gtf',
