@@ -214,6 +214,70 @@ export const typeDefinitions = [
     format: 'binary'
   },
   {
+    id: 'BIGBED',
+    validator: 'bigbed',
+    defaultExtension: '.bb',
+    uploadExtensions: ['.bb', '.bigbed'],
+    edgeColor: '#8d6e63',
+    format: 'binary'
+  },
+  {
+    id: 'BIGWIG',
+    validator: 'bigwig',
+    defaultExtension: '.bw',
+    uploadExtensions: ['.bw', '.bigwig'],
+    edgeColor: '#5c6bc0',
+    format: 'binary'
+  },
+  {
+    id: 'FMD',
+    validator: 'fmd',
+    defaultExtension: '.fmd',
+    uploadExtensions: ['.fmd'],
+    edgeColor: '#6d4c41',
+    format: 'binary'
+  },
+  {
+    id: 'GTF',
+    validator: 'gtf',
+    defaultExtension: '.gtf',
+    uploadExtensions: ['.gtf'],
+    edgeColor: '#ab47bc',
+    example: 'seq\tStringTie\ttranscript\t1\t30\t1000\t+\t.\tgene_id "gene1"; transcript_id "tx1"; FPKM "12.34";\nseq\tStringTie\texon\t1\t30\t1000\t+\t.\tgene_id "gene1"; transcript_id "tx1"; exon_number "1";',
+  },
+  {
+    id: 'PAF',
+    validator: 'paf',
+    defaultExtension: '.paf',
+    uploadExtensions: ['.paf'],
+    edgeColor: '#26a69a',
+    example: 'queryA\t500\t10\t490\t+\ttargetA\t1000\t100\t580\t470\t480\t60\nqueryB\t300\t0\t300\t-\ttargetA\t1000\t650\t950\t290\t300\t60',
+  },
+  {
+    id: 'GFA',
+    validator: 'gfa',
+    defaultExtension: '.gfa',
+    uploadExtensions: ['.gfa'],
+    edgeColor: '#ef6c00',
+    example: 'H\tVN:Z:1.0\nS\ts1\tACGTACGTACGT\nS\ts2\tTTACGTACGTAC\nL\ts1\t+\ts2\t+\t4M\nP\tp1\ts1+,s2+\t*',
+  },
+  {
+    id: 'CLUSTAL',
+    validator: 'clustal',
+    defaultExtension: '.aln',
+    uploadExtensions: ['.aln', '.clustal', '.clw'],
+    edgeColor: '#7cb342',
+    example: 'CLUSTAL format alignment by MAFFT (v7.526)\n\n\nseq1            ACGTACGTAC-GTACGT\nseq2            ACGTACGAACTGTACGT\nseq3            ACGTACGTAC-GTACGA\n                ******* ** ***** \n',
+  },
+  {
+    id: 'SND',
+    validator: 'snd',
+    defaultExtension: '.snd',
+    uploadExtensions: ['.snd'],
+    edgeColor: '#ec407a',
+    example: '#sample\tgene1\tgene2\tgene3\ncellA\t0.95\t0\t1.2\ncellB\t0\t0.31\t0.8\ncellC\t1.1\t0.07\t0',
+  },
+  {
     id: 'SAM',
     validator: 'sam',
     defaultExtension: '.sam',
