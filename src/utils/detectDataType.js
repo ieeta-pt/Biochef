@@ -344,6 +344,30 @@ function validateFmd(content) {
   return validateBinWithMagic(content, BINARY_MAGIC.FMD)
 }
 
+function readInt32(content, offset) {
+  return content[offset] | content[offset + 1] << 8 | content[offset + 2] << 16 | content[offset + 3] << 24;
+}
+
+// psmc's CpG counts (cntcpg) have no magic number: a little-endian int32
+// with the number of counts per bin, then, for each sequence, an int32 with
+// its number of bins followed by that many bins of counts. They are
+// recognised by that layout ending exactly at the end of the file.
+function validatePsmcCpg(content) {
+  if (!content || content.length < 8) return false;
+
+  const nCounts = readInt32(content, 0);
+  if (nCounts < 1 || nCounts > 64) return false;
+
+  let offset = 4;
+  while (offset < content.length) {
+    if (offset + 4 > content.length) return false;
+    const bins = readInt32(content, offset);
+    if (bins < 0) return false;
+    offset += 4 + 4 * nCounts * bins;
+  }
+  return offset === content.length;
+}
+
 function validateBai(content) {
   return validateBinWithMagic(content, BINARY_MAGIC.BAI)
 }
@@ -478,6 +502,7 @@ const validators = {
   bigbed: validateBigBed,
   bigwig: validateBigWig,
   fmd: validateFmd,
+  psmcCpg: validatePsmcCpg,
   vcf: validateVcf,
   list: validateList,
   sam: validateSam,
@@ -541,6 +566,8 @@ function matchType(dataValue, { allowed = [], returnAll = false }) {
 
 export function detectIsBinaryFile(bytes) {
   if (!bytes || !bytes.length) return false;
+
+  if (validatePsmcCpg(bytes)) return true;
 
   for (const magic of Object.values(BINARY_MAGIC)) {
     if (bytes.length < magic.length) continue;

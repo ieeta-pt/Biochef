@@ -238,6 +238,14 @@ export const typeDefinitions = [
     format: 'binary'
   },
   {
+    id: 'PSMC_CPG',
+    validator: 'psmcCpg',
+    defaultExtension: '.cpg',
+    uploadExtensions: ['.cpg'],
+    edgeColor: '#a1887f',
+    format: 'binary'
+  },
+  {
     id: 'GTF',
     validator: 'gtf',
     defaultExtension: '.gtf',
