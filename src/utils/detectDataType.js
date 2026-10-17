@@ -269,6 +269,27 @@ function validateList(content) {
   });
 }
 
+// psmc's result: lines tagged with two capital letters (CC, MM, RD, RS,
+// PA...), with // after each round.
+function validatePsmc(content) {
+  if (!content || !content.trim()) return false;
+
+  const lines = content.trim().split(/\r?\n/);
+  if (!lines[0].startsWith('CC')) return false;
+  if (!lines.every(line => line === '//' || /^[A-Z]{2}(\t.*)?$/.test(line))) return false;
+  return lines.some(line => line.startsWith('RD\t'));
+}
+
+// psmc's parameters (-i), as on a PA line of its result: the pattern, then
+// numbers.
+function validatePsmcParams(content) {
+  if (!content) return false;
+
+  const fields = content.trim().split(/\s+/);
+  if (fields.length < 5 || !/^\d+(\*\d+)?(\+\d+(\*\d+)?)*$/.test(fields[0])) return false;
+  return fields.slice(1).every(field => /^[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?$/.test(field));
+}
+
 function validateSam(content) {
   if (!content) {
     return false;
@@ -504,6 +525,8 @@ const validators = {
   fmd: validateFmd,
   psmcCpg: validatePsmcCpg,
   vcf: validateVcf,
+  psmc: validatePsmc,
+  psmcParams: validatePsmcParams,
   list: validateList,
   sam: validateSam,
   bam: validateBam,
