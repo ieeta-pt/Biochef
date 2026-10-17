@@ -503,6 +503,72 @@ function validateNewick(content) {
   return trees > 0 && depth === 0 && !seenNode;
 }
 
+// A HISAT2 index: a tar holding exactly the eight files hisat2-build
+// writes, named as BioChef's hisat2 operations name them.
+const HISAT2_INDEX_MEMBERS = [1, 2, 3, 4, 5, 6, 7, 8].map(n => `ref.${n}.ht2`);
+
+function validateHisat2Index(content) {
+  const names = tarMembers(content);
+  return !!names && names.length === HISAT2_INDEX_MEMBERS.length
+    && HISAT2_INDEX_MEMBERS.every(member => names.includes(member));
+}
+
+// The data lines of a HISAT2 annotation file, split at tabs, when each has
+// the given number of fields. hisat2 skips lines that start with #.
+function hisat2Rows(content, columns) {
+  if (!content || !content.trim()) return null;
+  const rows = [];
+  for (const raw of content.trim().split('\n')) {
+    const line = raw.replace(/\r$/, '');
+    if (!line || line.startsWith('#')) continue;
+    const fields = line.split('\t');
+    if (fields.length !== columns || !fields.every(field => /^\S+$/.test(field))) return null;
+    rows.push(fields);
+  }
+  return rows.length ? rows : null;
+}
+
+// A 0-based position, which hisat2 reads as a 32-bit number
+function hisat2Position(text) {
+  return /^\d+$/.test(text) && Number(text) < 2 ** 32;
+}
+
+// Splice sites: sequence, the last base of the exon before the intron, the
+// first base of the exon after it, strand
+function validateHisat2Ss(content) {
+  const rows = hisat2Rows(content, 4);
+  return !!rows && rows.every(([, left, right, strand]) =>
+    hisat2Position(left) && hisat2Position(right) && Number(left) < Number(right) && (strand === '+' || strand === '-'));
+}
+
+// Exons: sequence, first base, last base, strand
+function validateHisat2Exon(content) {
+  const rows = hisat2Rows(content, 4);
+  return !!rows && rows.every(([, left, right, strand]) =>
+    hisat2Position(left) && hisat2Position(right) && Number(left) <= Number(right) && (strand === '+' || strand === '-'));
+}
+
+// SNPs: ID, type, sequence, position, then the other base (single), the
+// length deleted (deletion) or the bases inserted (insertion)
+function validateHisat2Snp(content) {
+  const rows = hisat2Rows(content, 5);
+  return !!rows && rows.every(([, kind, , position, data]) => {
+    if (!hisat2Position(position)) return false;
+    if (kind === 'single') return /^[ACGTacgt]$/.test(data);
+    if (kind === 'deletion') return /^\d+$/.test(data) && Number(data) > 0 && Number(data) < 2 ** 32;
+    if (kind === 'insertion') return /^[ACGTacgt]{1,32}$/.test(data);
+    return false;
+  });
+}
+
+// Haplotypes: ID, sequence, first base, last base, SNP IDs separated by
+// commas
+function validateHisat2Haplotype(content) {
+  const rows = hisat2Rows(content, 5);
+  return !!rows && rows.every(([, , left, right, snps]) =>
+    hisat2Position(left) && hisat2Position(right) && Number(left) <= Number(right) && /^[^,]+(,[^,]+)*$/.test(snps));
+}
+
 function validateJson(content) {
   if (!content?.trim()) return false;
 
@@ -570,6 +636,11 @@ const validators = {
   csi: validateCsi,
   bcf: validateBcf,
   newick: validateNewick,
+  hisat2Index: validateHisat2Index,
+  hisat2Ss: validateHisat2Ss,
+  hisat2Exon: validateHisat2Exon,
+  hisat2Snp: validateHisat2Snp,
+  hisat2Haplotype: validateHisat2Haplotype,
   fai: validateFai,
   json: validateJson,
   text: () => true, // Default fallback for TEXT

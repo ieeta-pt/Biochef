@@ -310,6 +310,46 @@ export const typeDefinitions = [
     edgeColor: '#00897b',
     example: '((A:0.1,B:0.1)100:0.2,(C:0.1,D:0.1)100:0.2);\n((A:0.2,B:0.2)95:0.3,(C:0.2,D:0.2)95:0.3);\n((A:0.3,C:0.3)90:0.4,(B:0.3,D:0.3)90:0.4);',
   },
+  {
+    id: 'HISAT2_INDEX',
+    validator: 'hisat2Index',
+    defaultExtension: '.ht2',
+    uploadExtensions: ['.ht2', '.tar'],
+    edgeColor: '#0d47a1',
+    format: 'binary'
+  },
+  {
+    id: 'HISAT2_SS',
+    validator: 'hisat2Ss',
+    defaultExtension: '.ss',
+    uploadExtensions: ['.ss'],
+    edgeColor: '#1e88e5',
+    example: 'seq\t29\t60\t+',
+  },
+  {
+    id: 'HISAT2_EXON',
+    validator: 'hisat2Exon',
+    defaultExtension: '.exon',
+    uploadExtensions: ['.exon'],
+    edgeColor: '#0288d1',
+    example: 'seq\t10\t29\t+\nseq\t60\t89\t+',
+  },
+  {
+    id: 'HISAT2_SNP',
+    validator: 'hisat2Snp',
+    defaultExtension: '.snp',
+    uploadExtensions: ['.snp'],
+    edgeColor: '#00acc1',
+    example: 'rs1\tsingle\tseq\t45\tA',
+  },
+  {
+    id: 'HISAT2_HAPLOTYPE',
+    validator: 'hisat2Haplotype',
+    defaultExtension: '.haplotype',
+    uploadExtensions: ['.haplotype'],
+    edgeColor: '#4dd0e1',
+    example: 'ht1\tseq\t45\t45\trs1',
+  },
 ];
 
 export function getTypeDefinitions() {
