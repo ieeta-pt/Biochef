@@ -254,6 +254,22 @@ export const typeDefinitions = [
     format: 'binary'
   },
   {
+    id: 'BWA_INDEX',
+    validator: 'bwaIndex',
+    defaultExtension: '.bwa',
+    uploadExtensions: ['.bwa', '.tar'],
+    edgeColor: '#bf360c',
+    format: 'binary'
+  },
+  {
+    id: 'SAI',
+    validator: 'sai',
+    defaultExtension: '.sai',
+    uploadExtensions: ['.sai'],
+    edgeColor: '#e64a19',
+    format: 'binary'
+  },
+  {
     id: 'GTF',
     validator: 'gtf',
     defaultExtension: '.gtf',

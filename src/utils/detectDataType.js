@@ -15,6 +15,7 @@ const BINARY_MAGIC = {
   BIGWIG: [0x26, 0xfc, 0x8f, 0x88], // 0x888FFC26, little-endian
   BIGWIG_BE: [0x88, 0x8f, 0xfc, 0x26],
   FMD:  [0x52, 0x4c, 0x44, 0x03],   // "RLD\x03" (ropebwt3 fermi-delta index)
+  SAI:  [0x53, 0x41, 0x49, 0x01],   // "SAI\x01" (bwa aln alignments)
 };
 
 function validateFasta(content) {
@@ -404,6 +405,23 @@ function validateBgt(content) {
     && BGT_MEMBERS.every(member => names.includes(member));
 }
 
+// A bwa index: a tar holding the five files bwa index writes, and ref.alt
+// when some sequences are alternate contigs, named as BioChef's bwa
+// operations name them.
+const BWA_INDEX_MEMBERS = ['ref.amb', 'ref.ann', 'ref.bwt', 'ref.pac', 'ref.sa'];
+
+function validateBwaIndex(content) {
+  const names = tarMembers(content);
+  if (!names || new Set(names).size !== names.length) return false;
+  const extra = names.filter(name => !BWA_INDEX_MEMBERS.includes(name));
+  return BWA_INDEX_MEMBERS.every(member => names.includes(member))
+    && extra.every(name => name === 'ref.alt');
+}
+
+function validateSai(content) {
+  return validateBinWithMagic(content, BINARY_MAGIC.SAI)
+}
+
 function validateBam(content) {
   return validateBinWithMagic(content, BINARY_MAGIC.BAM) || validateBinWithMagic(content, BINARY_MAGIC.BGZF)
 }
@@ -559,6 +577,8 @@ const validators = {
   bigwig: validateBigWig,
   fmd: validateFmd,
   bgt: validateBgt,
+  bwaIndex: validateBwaIndex,
+  sai: validateSai,
   vcf: validateVcf,
   fmf: validateFmf,
   list: validateList,
