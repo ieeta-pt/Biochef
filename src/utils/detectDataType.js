@@ -404,6 +404,28 @@ function validateBgt(content) {
     && BGT_MEMBERS.every(member => names.includes(member));
 }
 
+// A tar of FASTA or FASTQ files, such as cd-hit-div's parts: every file
+// named as one and starting as one
+const SEQUENCE_FILE = /\.(fa|fasta|fna|faa|fq|fastq)$/i;
+
+function validateSequenceTar(content) {
+  const names = tarMembers(content);
+  if (!names || !names.length || !names.every(name => SEQUENCE_FILE.test(name))) return false;
+
+  // tarMembers checked the headers; each file starts after its own, and
+  // starts with '>' or '@', except the ._ files macOS adds
+  let offset = 0;
+  while (offset + 512 <= content.length && content[offset]) {
+    const field = (start, length) => String.fromCharCode(...content.subarray(start, start + length)).replace(/\0.*$/s, '');
+    const size = parseInt(field(offset + 124, 12).trim(), 8);
+    const type = content[offset + 156];
+    const appledouble = !content[offset + 345] && field(offset, 100).startsWith('._');
+    if ((type === 48 || type === 0) && !appledouble && (!size || ![62, 64].includes(content[offset + 512]))) return false;
+    offset += 512 + Math.ceil(size / 512) * 512;
+  }
+  return true;
+}
+
 function validateBam(content) {
   return validateBinWithMagic(content, BINARY_MAGIC.BAM) || validateBinWithMagic(content, BINARY_MAGIC.BGZF)
 }
@@ -438,6 +460,35 @@ function validateCsi(content) {
 
 function validateBcf(content) {
   return validateBinWithMagic(content, BINARY_MAGIC.BCF) || validateBinWithMagic(content, BINARY_MAGIC.BGZF)
+}
+
+// cd-hit's .clstr file: per cluster a line >Cluster N, numbered from 0,
+// then a line per member, numbered from 0 in each cluster, with its length,
+// its name and either * for the representative or its identity to it, after
+// the ends of the alignment (-p 1), the strand (nucleotides) and before the
+// distance (-D)
+const CDHIT_MEMBER = /^(\d+)\t\d+(?:aa|nt), >[ \t]?\S*\.\.\. (\*|at (?:\d+:\d+:\d+:\d+\/)?(?:[+-]\/)?\d+\.\d\d%(?:\/\d+\.\d\d%)?)$/;
+
+function validateCdhitClstr(content) {
+  if (!content) return false;
+  let clusters = -1, members = 0, representatives = 0;
+  for (const raw of content.replace(/\n+$/, '').split('\n')) {
+    const line = raw.replace(/\r$/, '');
+    const cluster = /^>Cluster (\d+)$/.exec(line);
+    if (cluster) {
+      if (clusters >= 0 && (!members || representatives !== 1)) return false;
+      clusters++;
+      if (Number(cluster[1]) !== clusters) return false;
+      members = 0;
+      representatives = 0;
+      continue;
+    }
+    const member = CDHIT_MEMBER.exec(line);
+    if (!member || clusters < 0 || Number(member[1]) !== members) return false;
+    members++;
+    if (member[2] === '*') representatives++;
+  }
+  return clusters >= 0 && members > 0 && representatives === 1;
 }
 
 function validateNewick(content) {
@@ -559,6 +610,8 @@ const validators = {
   bigwig: validateBigWig,
   fmd: validateFmd,
   bgt: validateBgt,
+  sequenceTar: validateSequenceTar,
+  cdhitClstr: validateCdhitClstr,
   vcf: validateVcf,
   fmf: validateFmf,
   list: validateList,
