@@ -440,6 +440,104 @@ function validateBcf(content) {
   return validateBinWithMagic(content, BINARY_MAGIC.BCF) || validateBinWithMagic(content, BINARY_MAGIC.BGZF)
 }
 
+// The lines of a tab-separated table, split, when each has the given number
+// of fields, none empty. Lines that start with # are comments.
+function tabRows(content, columns) {
+  if (!content || !content.trim()) return null;
+  const rows = [];
+  for (const raw of content.trim().split('\n')) {
+    const line = raw.replace(/\r$/, '');
+    if (!line || line.startsWith('#')) continue;
+    const fields = line.split('\t');
+    if (fields.length !== columns || !fields.every(field => field.trim())) return null;
+    rows.push(fields);
+  }
+  return rows.length ? rows : null;
+}
+
+// The lines of an NCBI .dmp file, split at | and trimmed, without the empty
+// field after the last |
+function dmpRows(content) {
+  if (!content || !content.trim()) return null;
+  const rows = [];
+  for (const raw of content.trim().split('\n')) {
+    const line = raw.replace(/\r$/, '');
+    if (!line || line.startsWith('#')) continue;
+    const fields = line.split('|').map(field => field.trim());
+    if (fields.length > 1 && fields[fields.length - 1] === '') fields.pop();
+    rows.push(fields);
+  }
+  return rows.length ? rows : null;
+}
+
+const isDigits = text => /^\d+$/.test(text);
+
+// A sequence ID and a taxonomic ID per line
+function validateTaxidMap(content) {
+  const rows = tabRows(content, 2);
+  return !!rows && rows.every(([id, taxid]) => /^\S+$/.test(id) && isDigits(taxid));
+}
+
+// nodes.dmp: a taxonomic ID, its parent and its rank, then any others
+function validateNcbiNodes(content) {
+  const rows = dmpRows(content);
+  return !!rows && rows.every(row => row.length >= 3 && isDigits(row[0]) && isDigits(row[1]) && !!row[2]);
+}
+
+// names.dmp: a taxonomic ID, a name, a unique form of it, a class
+function validateNcbiNames(content) {
+  const rows = dmpRows(content);
+  return !!rows && rows.every(row => row.length === 4 && isDigits(row[0]) && !!row[1] && !!row[3]);
+}
+
+// A taxonomic ID and a name per line
+function validateTaxidNames(content) {
+  const rows = tabRows(content, 2);
+  return !!rows && rows.every(([taxid]) => isDigits(taxid));
+}
+
+// A taxonomic ID and a genome size per line
+function validateTaxidSizes(content) {
+  const rows = tabRows(content, 2);
+  return !!rows && rows.every(([taxid, size]) => isDigits(taxid) && isDigits(size));
+}
+
+// A Centrifuge index: a tar holding exactly the four files centrifuge-build
+// writes, named as BioChef's centrifuge operations name them.
+const CENTRIFUGE_INDEX_MEMBERS = ['ref.1.cf', 'ref.2.cf', 'ref.3.cf', 'ref.4.cf'];
+
+function validateCentrifugeIndex(content) {
+  const names = tarMembers(content);
+  return !!names && names.length === CENTRIFUGE_INDEX_MEMBERS.length
+    && CENTRIFUGE_INDEX_MEMBERS.every(member => names.includes(member));
+}
+
+const CENTRIFUGE_COLUMNS = ['readID', 'seqID', 'taxID', 'taxLevel', 'taxRank', 'taxName', 'score', '2ndBestScore',
+  'hitLength', 'queryLength', 'numMatches', 'readSeq', 'readQual'];
+
+// Centrifuge's classifications: a header of its columns, then lines with as
+// many fields
+function validateCentrifugeClassification(content) {
+  if (!content || !content.trim()) return false;
+  const lines = content.replace(/^\n+|\n+$/g, '').split('\n').map(line => line.replace(/\r$/, ''));
+  const header = lines[0].split('\t');
+  return header.every(column => CENTRIFUGE_COLUMNS.includes(column))
+    && lines.slice(1).every(line => line.split('\t').length === header.length);
+}
+
+// Centrifuge's report: name, taxID, taxRank, genomeSize, numReads,
+// numUniqueReads, abundance
+function validateCentrifugeReport(content) {
+  if (!content || !content.trim()) return false;
+  const lines = content.replace(/^\n+|\n+$/g, '').split('\n').map(line => line.replace(/\r$/, ''));
+  if (lines[0] !== 'name\ttaxID\ttaxRank\tgenomeSize\tnumReads\tnumUniqueReads\tabundance') return false;
+  return lines.slice(1).every(line => {
+    const f = line.split('\t');
+    return f.length === 7 && [f[1], f[3], f[4], f[5]].every(isDigits)
+      && /^[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?$/.test(f[6]);
+  });
+}
+
 function validateNewick(content) {
   if (typeof content !== 'string') return false;
   if (content.startsWith('\uFEFF')) content = content.slice(1);
@@ -553,6 +651,14 @@ const validators = {
   gtf: validateGtf,
   paf: validatePaf,
   gfa: validateGfa,
+  taxidMap: validateTaxidMap,
+  ncbiNodes: validateNcbiNodes,
+  ncbiNames: validateNcbiNames,
+  taxidNames: validateTaxidNames,
+  taxidSizes: validateTaxidSizes,
+  centrifugeIndex: validateCentrifugeIndex,
+  centrifugeClassification: validateCentrifugeClassification,
+  centrifugeReport: validateCentrifugeReport,
   clustal: validateClustal,
   snd: validateSnd,
   bigbed: validateBigBed,
