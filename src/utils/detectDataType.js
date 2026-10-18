@@ -503,6 +503,61 @@ function validateNewick(content) {
   return trees > 0 && depth === 0 && !seenNode;
 }
 
+// A Kraken 2 database: a tar holding exactly the three files build_db
+// writes, under the names kraken2 reads them by.
+const KRAKEN2_DB_MEMBERS = ['hash.k2d', 'opts.k2d', 'taxo.k2d'];
+
+function validateKraken2Db(content) {
+  const names = tarMembers(content);
+  return !!names && names.length === KRAKEN2_DB_MEMBERS.length
+    && KRAKEN2_DB_MEMBERS.every(member => names.includes(member));
+}
+
+// The lines of a tab-separated Kraken 2 file, split
+function kraken2Lines(content) {
+  if (!content || !content.trim()) return null;
+  return content.replace(/^\n+|\n+$/g, '').split('\n').map(line => line.replace(/\r$/, '').split('\t'));
+}
+
+// classify's line per read: C or U, ID, taxon (an ID, or a name with the
+// ID), length (or both lengths of a pair), and the k-mer taxa
+function validateKraken2Output(content) {
+  const rows = kraken2Lines(content);
+  return !!rows && rows.every(f => f.length === 5 && (f[0] === 'C' || f[0] === 'U') && !!f[1]
+    && /^(\d+|.+ \(taxid \d+\))$/.test(f[2]) && /^\d+(\|\d+)?$/.test(f[3]));
+}
+
+// Per taxon: percentage, reads in its clade, reads assigned to it, (with -K
+// its minimizers and distinct minimizers,) rank code, ID, name
+function validateKraken2Report(content) {
+  const rows = kraken2Lines(content);
+  return !!rows && rows.every(f => (f.length === 6 || f.length === 8)
+    && /^\s*\d+(\.\d+)?$/.test(f[0]) && f.slice(1, f.length - 3).every(c => /^\d+$/.test(c))
+    && /^([URDKPCOFGS]\d*|-)$/.test(f[f.length - 3]) && /^\d+$/.test(f[f.length - 2]));
+}
+
+// Per taxon: its path through the ranks, as d__Bacteria|g__Escherichia, and
+// its reads
+function validateKraken2MpaReport(content) {
+  const rows = kraken2Lines(content);
+  return !!rows && rows.every(f => f.length === 2
+    && /^[a-z]__[^|\t]+(\|[a-z]__[^|\t]+)*$/.test(f[0]) && /^\d+$/.test(f[1]));
+}
+
+// A sequence ID and an accession number per line
+function validateSeqidAccessions(content) {
+  const rows = kraken2Lines(content);
+  return !!rows && rows.every(f => f.length === 2 && f.every(x => /^\S+$/.test(x)));
+}
+
+// NCBI's accession2taxid: a header, then accession, accession.version,
+// taxid and gi per line
+function validateNcbiAccession2taxid(content) {
+  const rows = kraken2Lines(content);
+  return !!rows && rows[0].join('\t') === 'accession\taccession.version\ttaxid\tgi'
+    && rows.slice(1).every(f => f.length === 4 && !!f[0] && !!f[1] && /^\d+$/.test(f[2]));
+}
+
 function validateJson(content) {
   if (!content?.trim()) return false;
 
@@ -572,6 +627,12 @@ const validators = {
   newick: validateNewick,
   fai: validateFai,
   json: validateJson,
+  kraken2Db: validateKraken2Db,
+  kraken2Output: validateKraken2Output,
+  kraken2Report: validateKraken2Report,
+  kraken2MpaReport: validateKraken2MpaReport,
+  seqidAccessions: validateSeqidAccessions,
+  ncbiAccession2taxid: validateNcbiAccession2taxid,
   text: () => true, // Default fallback for TEXT
 };
 
