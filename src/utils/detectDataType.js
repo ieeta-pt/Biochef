@@ -503,6 +503,100 @@ function validateNewick(content) {
   return trees > 0 && depth === 0 && !seenNode;
 }
 
+// velveth's output: a tar holding exactly the two files it writes, under
+// the names velvetg reads them by.
+const VELVET_HASH_MEMBERS = ['Sequences', 'Roadmaps'];
+
+function validateVelvetHash(content) {
+  const names = tarMembers(content);
+  return !!names && names.length === VELVET_HASH_MEMBERS.length
+    && VELVET_HASH_MEMBERS.every(member => names.includes(member));
+}
+
+// The lines of a velvet file, without the newlines at its end
+function velvetLines(content) {
+  if (!content || !content.trim()) return null;
+  return content.replace(/\n+$/, '').split('\n').map(line => line.replace(/\r$/, ''));
+}
+
+// velvetg's stats.txt: a header naming the columns, from ID, lgth, out, in
+// and long_cov, then a row of numbers per node
+function validateVelvetStats(content) {
+  const lines = velvetLines(content);
+  if (!lines) return false;
+  const header = lines[0].split('\t');
+  if (header.slice(0, 5).join('\t') !== 'ID\tlgth\tout\tin\tlong_cov') return false;
+  return lines.slice(1).every(line => {
+    const fields = line.split('\t');
+    return fields.length === header.length && fields.slice(0, 4).every(f => /^\d+$/.test(f))
+      && fields.slice(4).every(f => /^-?(\d+(\.\d*)?|\.\d+)(e[-+]?\d+)?$|^-?(inf|nan)$/i.test(f));
+  });
+}
+
+// velvetg's LastGraph: the numbers of nodes and reads, k (and whether both
+// strands count), then per node a NODE line and its sequence on each
+// strand, and ARC, NR and SEQ lines with the lines of numbers after them
+function validateVelvetGraph(content) {
+  const lines = velvetLines(content);
+  if (!lines) return false;
+  const header = lines[0].split('\t');
+  if ((header.length !== 3 && header.length !== 4) || !header.every(f => /^\d+$/.test(f))) return false;
+  let nodes = 0;
+  for (let i = 1; i < lines.length;) {
+    const fields = lines[i].split('\t');
+    if (fields[0] === 'NODE') {
+      if (fields.length < 4 || !fields.slice(1).every(f => /^-?\d+$/.test(f))) return false;
+      if (i + 2 >= lines.length || !/^[ACGTN]*$/.test(lines[i + 1]) || !/^[ACGTN]*$/.test(lines[i + 2])) return false;
+      nodes++;
+      i += 3;
+    } else if (['ARC', 'NR', 'SEQ'].includes(fields[0]) || /^-?\d+$/.test(fields[0])) {
+      if (fields.length < 2 || !fields.slice(1).every(f => /^-?\d+$/.test(f))) return false;
+      i++;
+    } else {
+      return false;
+    }
+  }
+  return nodes === Number(header[0]);
+}
+
+// An AMOS message file: messages from {XXX to }, which may hold others, with
+// a field per line (name:value) or fields of several lines ending at a line
+// holding a dot
+function validateAfg(content) {
+  const lines = velvetLines(content);
+  if (!lines) return false;
+  let depth = 0, messages = 0, inField = false;
+  for (const line of lines) {
+    if (inField) {
+      inField = line !== '.';
+    } else if (/^\{[A-Z]{3}$/.test(line)) {
+      depth++;
+      messages++;
+    } else if (line === '}') {
+      if (!depth) return false;
+      depth--;
+    } else if (depth && /^[a-z]{3}:/.test(line)) {
+      inField = line.endsWith(':');
+    } else {
+      return false;
+    }
+  }
+  return messages > 0 && depth === 0 && !inField;
+}
+
+// velvetg's contig-alignments.psa: per contig a >contig_ID line, then a line
+// per stretch on a reference: first and last base in the contig, the
+// reference, and first and last base there
+function validateVelvetAlignments(content) {
+  const lines = velvetLines(content);
+  if (!lines || !/^>contig_\d+$/.test(lines[0])) return false;
+  return lines.slice(1).every(line => {
+    if (/^>contig_\d+$/.test(line)) return true;
+    const fields = line.split('\t');
+    return fields.length >= 5 && [...fields.slice(0, 2), ...fields.slice(-2)].every(f => /^-?\d+$/.test(f));
+  });
+}
+
 function validateJson(content) {
   if (!content?.trim()) return false;
 
@@ -572,6 +666,11 @@ const validators = {
   newick: validateNewick,
   fai: validateFai,
   json: validateJson,
+  velvetHash: validateVelvetHash,
+  velvetStats: validateVelvetStats,
+  velvetGraph: validateVelvetGraph,
+  afg: validateAfg,
+  velvetAlignments: validateVelvetAlignments,
   text: () => true, // Default fallback for TEXT
 };
 
