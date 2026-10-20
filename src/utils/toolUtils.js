@@ -359,7 +359,8 @@ export async function loadTool(toolName) {
     bundle.name !== bundleEntry.name ||
     bundle.version !== bundleEntry.version ||
     bundle.runtime?.wasm?.wasm_digest !== bundleEntry.runtime.wasm.wasm_digest ||
-    bundle.runtime?.wasm?.js_digest !== bundleEntry.runtime.wasm.js_digest
+    bundle.runtime?.wasm?.js_digest !== bundleEntry.runtime.wasm.js_digest ||
+    bundle.runtime?.wasm?.data_digest !== bundleEntry.runtime.wasm.data_digest
   ) {
     logger.error(`Loaded bundle does not match verified catalog entry for ${repo}`);
     return false;
@@ -411,8 +412,15 @@ async function getToolBlobs(toolName) {
   const jsUrl = `${base_url}/${toolConfig.repo}/blobs/${toolConfig.runtime.wasm.js_digest}`
   const wasmBlob = await generateBlob(wasmUrl, "application/wasm", authorization, toolConfig.runtime.wasm.wasm_digest)
   const jsBlob = await generateBlob(jsUrl, "application/javascript", authorization, toolConfig.runtime.wasm.js_digest)
+  const runtimeFiles = { [`${toolConfig.bin}.wasm`]: wasmBlob };
 
-  return [wasmBlob, jsBlob]
+  const dataDigest = toolConfig.runtime.wasm.data_digest;
+  if (dataDigest !== undefined) {
+    const dataUrl = `${base_url}/${toolConfig.repo}/blobs/${dataDigest}`;
+    runtimeFiles[`${toolConfig.bin}.data`] = await generateBlob(dataUrl, "application/octet-stream", authorization, dataDigest);
+  }
+
+  return { scriptUrl: jsBlob, runtimeFiles };
 }
 
 async function aioliReadFileHelper(CLI, fileName) {
@@ -481,15 +489,15 @@ export async function runTools(
     const toolAlreadyAdded = aioliTools.some((t) => t.tool == invocation.toolName)
     if (toolAlreadyAdded) continue
 
-    const [wasmBlob, jsBlob] = await getToolBlobs(invocation.toolName)
+    const { scriptUrl, runtimeFiles } = await getToolBlobs(invocation.toolName)
 
     const needsReinit = invocation.toolName.includes("GTO")
 
     aioliTools.push({
       // TODO(andrade) look again into what each argument does
       tool: invocation.toolName,
-      scriptUrl: jsBlob,
-      wasmUrl: wasmBlob,
+      scriptUrl,
+      runtimeFiles,
       loading: "lazy",
       reinit: needsReinit,
     })
