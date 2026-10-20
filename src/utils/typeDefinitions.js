@@ -56,6 +56,14 @@ export const typeDefinitions = [
     example: 'CLUSTAL format alignment by MAFFT (v7.526)\n\n\nseq1            ACGTACGTAC-GTACGT\nseq2            ACGTACGAACTGTACGT\nseq3            ACGTACGTAC-GTACGA\n                ******* ** ***** \n',
   },
   {
+    id: 'VCF_HEADER',
+    validator: 'vcfHeader',
+    defaultExtension: '.hdr',
+    uploadExtensions: ['.hdr', '.txt'],
+    edgeColor: '#a29bfe',
+    example: '##INFO=<ID=TAG,Number=1,Type=Integer,Description="An added tag">',
+  },
+  {
     id: 'GVCF',
     validator: 'gvcf',
     defaultExtension: '.g.vcf',
