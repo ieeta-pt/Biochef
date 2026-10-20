@@ -595,7 +595,7 @@ const RecipePanel = forwardRef(({ selectedNode, setSelectedNode, indexLoaded }, 
         if (param.type === 'flag') {
           args.push(param.flag);
         }
-        else if (value) {
+        else if (value !== undefined && value !== null && value !== '') {
           if (param.flag) args.push(param.flag)
           args.push(value);
         }
