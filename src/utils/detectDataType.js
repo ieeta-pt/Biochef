@@ -546,6 +546,16 @@ function validateJson(content) {
   }
 }
 
+// A genome file: one line per sequence, its name and its length, as UCSC's
+// chrom.sizes and bedtools' -g files are
+function validateChromSizes(content) {
+  if (!content?.trim()) return false;
+  return content.trim().split(/\r?\n/).every(line => {
+    const fields = line.split('\t');
+    return fields.length === 2 && fields[0] && !fields[0].includes(' ') && /^[1-9]\d*$/.test(fields[1]);
+  });
+}
+
 function validateFai(content) {
   if (!content || !content.trim()) return false;
 
@@ -607,6 +617,7 @@ const validators = {
   bcf: validateBcf,
   newick: validateNewick,
   fai: validateFai,
+  chromSizes: validateChromSizes,
   json: validateJson,
   text: () => true, // Default fallback for TEXT
 };
