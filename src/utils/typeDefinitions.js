@@ -15,7 +15,7 @@ export const typeDefinitions = [
     scriptExtension: 'fa',
     uploadExtensions: ['.fasta', '.fa'],
     edgeColor: '#d35400',
-    example: '>seq1\nGTTCCAGTAGCGGCGTATCGTAGGTGACGTAGCAGTCGATCGCTAGCGAAGCGCTGACTAGCTCGATAGCGGCTACTCGTACGTAGTACGTAGCATACG\n>seq2\nAGCTGCTGATCGTGATCGAGCTCGATGCATCGATCGCTAGCGTACGTAGCTGACGTAGCGTGACTGATCGTAGCTGATCGTGACGTAGCTGACGTAGCTG',
+    example: '>seq1_human\nTTGATCCTTAATTGCGGCTTCGATTACTAAAAAACAGGGACAGCATCAACCAAACTGCTTACATTACTGTCGGCGCAACAGCGCGGAAACCGGTTGTTAA\n>seq2_cat\nTTGACCCTTAACTGCGGCTTCAATTACTAATAAACAGGGAAAGCATTACCCAAACTGCTTACATTACTGTCGGCGCAACAGCGCCGCAACCGATTGTTAA\n>seq3_mouse\nCTGACGTTTAAATGCGGCTGGAATTATTCAAAAACTGGTGAAGCATTTCCCAAGTTGCTTCCATTACAGTCTGCGGAACAGCGTCGAGAGCGATCGTAAA\n>seq4_dog\nCTGACGTCGAAATGCGGCTAGTATGATTAAAGAACTGGTAAAGCATTACCCAAATTGCTTCCATTACAGTCTGCGGAACAGCGTCGAAATCGATCGTAAA',
   },
   {
     id: 'EFA',
@@ -33,7 +33,7 @@ export const typeDefinitions = [
     scriptExtension: 'fq',
     uploadExtensions: ['.fastq', '.fq'],
     edgeColor: '#e67e22',
-    example: '@seq\nGCTAGCTGATCGTACGTAGCGTATCGTAGCTGATCGTACGATCGTAGCTAGCTGATCGTAGCTAGCTAGCTGATCGTAGCTAGCTGATCGTACGTAGCC\n+\n!"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~!!!!!',
+    example: '@read1\nGCTAAAGACAATTACATAACATACACGTCAGCACGAAACTTGTTGGCCCAGTGTGAATCGCTTAAGGGTTAAGTAAGTGT\n+\nIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII\n@read2\nGCACGAAACTTGTTGGCCCAGTGTGAATCGCTTAAGGGTTAAGTAAGTGTGATGCATACGCCTTTACTTGCTGTGTCCAC\n+\nIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII\n@read3\nCTTAAGGGTTAAGTAAGTGTGATGCATACGCCTTTACTTGCTGTGTCCACCCCATCGGACTGGCATTTTTATTACACTCA\n+\nIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII\n@read4\nCCTTTACTTGCTGTGTCCACCCCATCGGACTGGCATTTTTATTACACTCAGAAACAGAACTCGGGTAATTTTGACAGGTC\n+\nIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII\n@read5\nTGGCATTTTTATTACACTCAGAAACAGAACTCGGGTAATTTTGACAGGTCACGCAGAGGCGCGCCCTCCTGAAGTGCGTG\n+\nIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII\n@read6\nTCGGGTAATTTTGACAGGTCACGCAGAGGCGCGCCCTCCTGAAGTGCGTGGACACTCGCTATGAATCTCTGATTTACCCA\n+\nIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII',
   },
   {
     id: 'PackagedFASTQ',
@@ -131,7 +131,7 @@ export const typeDefinitions = [
     scriptExtension: 'vcf',
     uploadExtensions: ['.vcf'],
     edgeColor: '#6c5ce7',
-    example: '##fileformat=VCFv4.2\n##contig=<ID=chr1,length=1000000>\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\nchr1\t11\t.\tA\tG\t42\tPASS\t.\nchr1\t36\t.\tT\tC\t18\tPASS\t.',
+    example: '##fileformat=VCFv4.2\n##contig=<ID=seq,length=98>\n##FILTER=<ID=PASS,Description="All filters passed">\n##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tsample\nseq\t10\t.\tC\tA\t60\tPASS\t.\tGT\t0/1',
   },
   {
     id: 'LIST',
@@ -214,12 +214,85 @@ export const typeDefinitions = [
     format: 'binary'
   },
   {
+    id: 'BIGBED',
+    validator: 'bigbed',
+    defaultExtension: '.bb',
+    uploadExtensions: ['.bb', '.bigbed'],
+    edgeColor: '#8d6e63',
+    format: 'binary'
+  },
+  {
+    id: 'BIGWIG',
+    validator: 'bigwig',
+    defaultExtension: '.bw',
+    uploadExtensions: ['.bw', '.bigwig'],
+    edgeColor: '#5c6bc0',
+    format: 'binary'
+  },
+  {
+    id: 'FMD',
+    validator: 'fmd',
+    defaultExtension: '.fmd',
+    uploadExtensions: ['.fmd'],
+    edgeColor: '#6d4c41',
+    format: 'binary'
+  },
+  {
+    id: 'GTF',
+    validator: 'gtf',
+    defaultExtension: '.gtf',
+    uploadExtensions: ['.gtf'],
+    edgeColor: '#ab47bc',
+    example: 'seq\tStringTie\ttranscript\t1\t30\t1000\t+\t.\tgene_id "gene1"; transcript_id "tx1"; FPKM "12.34";\nseq\tStringTie\texon\t1\t30\t1000\t+\t.\tgene_id "gene1"; transcript_id "tx1"; exon_number "1";',
+  },
+  {
+    id: 'PAF',
+    validator: 'paf',
+    defaultExtension: '.paf',
+    uploadExtensions: ['.paf'],
+    edgeColor: '#26a69a',
+    example: 'queryA\t500\t10\t490\t+\ttargetA\t1000\t100\t580\t470\t480\t60\nqueryB\t300\t0\t300\t-\ttargetA\t1000\t650\t950\t290\t300\t60',
+  },
+  {
+    id: 'GFA',
+    validator: 'gfa',
+    defaultExtension: '.gfa',
+    uploadExtensions: ['.gfa'],
+    edgeColor: '#ef6c00',
+    example: 'H\tVN:Z:1.0\nS\ts1\tACGTACGTACGT\nS\ts2\tTTACGTACGTAC\nL\ts1\t+\ts2\t+\t4M\nP\tp1\ts1+,s2+\t*',
+  },
+  {
+    id: 'CLUSTAL',
+    validator: 'clustal',
+    defaultExtension: '.aln',
+    uploadExtensions: ['.aln', '.clustal', '.clw'],
+    edgeColor: '#7cb342',
+    example: 'CLUSTAL format alignment by MAFFT (v7.526)\n\n\nseq1            ACGTACGTAC-GTACGT\nseq2            ACGTACGAACTGTACGT\nseq3            ACGTACGTAC-GTACGA\n                ******* ** ***** \n',
+  },
+  {
+    id: 'SND',
+    validator: 'snd',
+    defaultExtension: '.snd',
+    uploadExtensions: ['.snd'],
+    edgeColor: '#ec407a',
+    example: '#sample\tgene1\tgene2\tgene3\ncellA\t0.95\t0\t1.2\ncellB\t0\t0.31\t0.8\ncellC\t1.1\t0.07\t0',
+  },
+  {
     id: 'SAM',
     validator: 'sam',
     defaultExtension: '.sam',
     uploadExtensions: ['.sam'],
     edgeColor: '#1aa3fd',
-    example: '@SQ	SN:ref	LN:45\n@SQ	SN:ref2	LN:40\nr001	163	ref	7	30	8M4I4M1D3M	=	37	39	TTAGATAAAGAGGATACTG	*	XX:B:S,12561,2,20,112\nr002	0	ref	9	30	1S2I6M1P1I1P1I4M2I	*	0	0	AAAAGATAAGGGATAAA	*\nr003	0	ref	9	30	5H6M	*	0	0	AGCTAA	*\nr004	0	ref	16	30	6M14N1I5M	*	0	0	ATAGCTCTCAGC	*\nr003	16	ref	29	30	6H5M	*	0	0	TAGGC	*\nr001	83	ref	37	30	9M	=	7	-39	CAGCGCCAT	*\nx1	0	ref2	1	30	20M	*	0	0	aggttttataaaacaaataa	????????????????????\nx2	0	ref2	2	30	21M	*	0	0	ggttttataaaacaaataatt	?????????????????????\nx3	0	ref2	6	30	9M4I13M	*	0	0	ttataaaacAAATaattaagtctaca	??????????????????????????\nx4	0	ref2	10	30	25M	*	0	0	CaaaTaattaagtctacagagcaac	?????????????????????????\nx5	0	ref2	12	30	24M	*	0	0	aaTaattaagtctacagagcaact	????????????????????????\nx6	0	ref2	14	30	23M	*	0	0	Taattaagtctacagagcaacta	???????????????????????',
+    example: '@HD\tVN:1.6\tSO:queryname\n@SQ\tSN:seq\tLN:98\nread1\t99\tseq\t1\t60\t40M\t=\t59\t98\tTTGCACTGACCTGAAGTCTTGGAGTATGACCGCGGCTCGG\tIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII\nread1\t147\tseq\t59\t60\t40M\t=\t1\t-98\tCTAGCGCTATAGGTGGTGCCGAAGGCGGTCTGTCGTCGTA\tIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII',
+  },
+  {
+    id: 'NEWICK',
+    validator: 'newick',
+    defaultExtension: '.nw',
+    scriptExtension: 'nw',
+    uploadExtensions: ['.nw', '.newick', '.tre', '.tree'],
+    edgeColor: '#00897b',
+    example: '((A:0.1,B:0.1)100:0.2,(C:0.1,D:0.1)100:0.2);\n((A:0.2,B:0.2)95:0.3,(C:0.2,D:0.2)95:0.3);\n((A:0.3,C:0.3)90:0.4,(B:0.3,D:0.3)90:0.4);',
   },
 ];
 
