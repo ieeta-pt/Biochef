@@ -354,7 +354,7 @@ const FileExplorer = ({ selectedFiles, setSelectedFiles, tree, setTree }) => {
                 });
 
                 try {
-                    const processedFile = await processFile(simulatedFile, validateData, (message, type) => showNotification(message, type));
+                    const processedFile = await processFile(simulatedFile, (message, type) => showNotification(message, type));
                     if (processedFile) {
                         const pathParts = fileName.split('/');
 
