@@ -554,8 +554,14 @@ export async function runTools(
         let inputFileName = undefined
         let stdinValue = undefined
 
+        // A sidecar is placed in the filesystem exactly like a file input, but is
+        // never put on the command line. Tools locate it by name instead: htslib
+        // looks for an index at <datafile>.csi, so the file has to be present
+        // under that name and absent from the arguments.
+        const isMountedInput = inputDefinition.mode === "file" || inputDefinition.mode === "sidecar"
+
         if (mode === "text") {
-          if (inputDefinition.mode === "file") {
+          if (isMountedInput) {
             inputFileName = resolveInputFileName(invocation.uniqueId, inputDefinition)
             const fileContent = value.kind === "binary" ? new Blob([value.data]) : value.data;
             await CLI.mount({ name: inputFileName, data: fileContent })
@@ -573,7 +579,7 @@ export async function runTools(
             : resolveInputFileName(invocation.uniqueId, inputDefinition)
           const sourceValue = outputs[source]?.[sourceOutput] ?? makeTextDataValue("")
 
-          if (inputDefinition.mode === "file") {
+          if (isMountedInput) {
             const fileContent = sourceValue.kind === "binary" ? new Blob([sourceValue.data]) : sourceValue.data;
             await CLI.mount({ name: inputFileName, data: fileContent })
           }
