@@ -15,6 +15,7 @@ const BINARY_MAGIC = {
   BIGWIG: [0x26, 0xfc, 0x8f, 0x88], // 0x888FFC26, little-endian
   BIGWIG_BE: [0x88, 0x8f, 0xfc, 0x26],
   FMD:  [0x52, 0x4c, 0x44, 0x03],   // "RLD\x03" (ropebwt3 fermi-delta index)
+  YAK:  [0x59, 0x41, 0x4b, 0x02],   // "YAK\x02" (yak k-mer hash table)
   KALLISTO_INDEX: [0x0d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // index version 13, little-endian
   BUS:  [0x42, 0x55, 0x53, 0x00],   // "BUS\0" (kallisto bus)
 };
@@ -346,6 +347,10 @@ function validateFmd(content) {
   return validateBinWithMagic(content, BINARY_MAGIC.FMD)
 }
 
+function validateYak(content) {
+  return validateBinWithMagic(content, BINARY_MAGIC.YAK)
+}
+
 function validateBai(content) {
   return validateBinWithMagic(content, BINARY_MAGIC.BAI)
 }
@@ -509,6 +514,7 @@ const validators = {
   bigbed: validateBigBed,
   bigwig: validateBigWig,
   fmd: validateFmd,
+  yak: validateYak,
   vcf: validateVcf,
   list: validateList,
   sam: validateSam,
