@@ -54,16 +54,18 @@ const WorkflowPage = () => {
   // load tool index on opening the page
   useEffect(() => {
     const fetchToolIndex = async () => {
-      await loadToolIndex();
-      setToolIndexLoaded(true);
+      const result = await loadToolIndex();
+      setToolIndexLoaded(!!result);
     };
 
     fetchToolIndex()
   }, []);
 
   const handleAddOperation = async (toolName) => {
-    await loadTool(toolName)
-    const tool = getTool(toolName)
+    const loaded = await loadTool(toolName);
+    if (!loaded) return;
+    const tool = getTool(toolName);
+    if (!tool) return;
     recipePanelRef.current.addWorkflowNode(tool);
   };
 

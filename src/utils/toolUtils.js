@@ -1,7 +1,14 @@
-import Aioli from "./aioli-custom/aioli"
+import Aioli from "@biowasm/aioli";
 import logger from "./logger";
 import { detectIsBinaryFile } from "./detectDataType";
 import { makeBinaryDataValue, makeTextDataValue } from './dataValue'
+import { verifySha256Digest } from "./artifactIntegrity";
+import {
+  DEFAULT_CATALOG_PACKAGE,
+  DEFAULT_CATALOG_PUBLIC_JWK,
+  validateCatalogEntry,
+  verifySignedCatalog,
+} from "./catalogTrust";
 
 const toolMap = new Map();
 const blobMap = new Map();
@@ -9,8 +16,17 @@ const REGISTRY_URL = process.env.REGISTRY_URL;
 const REPO_OWNER = process.env.REPO_OWNER;
 const REGISTRY_USERNAME = process.env.REGISTRY_USERNAME;
 const REGISTRY_PASSWORD = process.env.REGISTRY_PASSWORD;
+const CATALOG_PACKAGE = process.env.BIOCHEF_CATALOG_PACKAGE || DEFAULT_CATALOG_PACKAGE;
+const CATALOG_PUBLIC_JWK = process.env.BIOCHEF_CATALOG_PUBLIC_JWK || DEFAULT_CATALOG_PUBLIC_JWK;
+const ALLOW_UNSIGNED_LOCAL_CATALOG =
+  process.env.NODE_ENV === "development" &&
+  process.env.BIOCHEF_ALLOW_UNSIGNED_LOCAL_CATALOG === "true";
 
 const IS_GHCR = REGISTRY_URL?.includes("ghcr.io") || false;
+
+function authorizationHeaders(authorization) {
+  return authorization ? { Authorization: authorization } : {};
+}
 
 // TODO: use ID instead of tool name
 export function getTool(toolName) {
@@ -93,7 +109,9 @@ async function getAuthorizationAndBaseUrl(repo) {
     };
   } else {
     return {
-      authorization: "Basic " + btoa(`${REGISTRY_USERNAME}:${REGISTRY_PASSWORD}`),
+      authorization: REGISTRY_USERNAME && REGISTRY_PASSWORD
+        ? "Basic " + btoa(`${REGISTRY_USERNAME}:${REGISTRY_PASSWORD}`)
+        : null,
       base_url: `${REGISTRY_URL}/v2`,
     };
   }
@@ -104,7 +122,7 @@ async function fetchManifest(base_url, repo, tag, authorization) {
     const res = await fetch(`${base_url}/${repo}/manifests/${tag}`, {
       headers: {
         Accept: "application/vnd.oci.image.manifest.v1+json",
-        Authorization: authorization,
+        ...authorizationHeaders(authorization),
       },
     });
 
@@ -112,6 +130,12 @@ async function fetchManifest(base_url, repo, tag, authorization) {
       const text = await res.text();
       logger.error(`Failed to fetch manifest (${res.status}): ${repo}:${tag}\n${text}`);
       return false
+    }
+
+    if (tag.startsWith("sha256:")) {
+      const bytes = await res.arrayBuffer();
+      await verifySha256Digest(bytes, tag, `${repo}/manifest`);
+      return JSON.parse(new TextDecoder("utf-8").decode(bytes));
     }
 
     return await res.json();
@@ -122,11 +146,17 @@ async function fetchManifest(base_url, repo, tag, authorization) {
 }
 
 async function fetchBlob(base_url, repo, digest, authorization, accept) {
+  const arrayBuffer = await fetchBlobBytes(base_url, repo, digest, authorization, accept);
+  if (!arrayBuffer) return false;
+  return JSON.parse(new TextDecoder("utf-8").decode(arrayBuffer));
+}
+
+async function fetchBlobBytes(base_url, repo, digest, authorization, accept) {
   try {
     const res = await fetch(`${base_url}/${repo}/blobs/${digest}`, {
       headers: {
         Accept: accept,
-        Authorization: authorization,
+        ...authorizationHeaders(authorization),
       },
     });
 
@@ -140,7 +170,7 @@ async function fetchBlob(base_url, repo, digest, authorization, accept) {
 
       return false;
     }
-    return await res.json();
+    return await res.arrayBuffer();
 
   } catch (err) {
     logger.error(`fetchBlob network error for ${repo}@${digest}`, err);
@@ -148,21 +178,127 @@ async function fetchBlob(base_url, repo, digest, authorization, accept) {
   }
 }
 
-export async function loadToolIndex() {
-  const { authorization, base_url } = await getAuthorizationAndBaseUrl("biochef-plugins-index");
-  if (!authorization || !base_url) return false
+function findLayer(manifest, mediaType, fileName) {
+  const matchingLayers = manifest.layers?.filter(
+    layer =>
+      layer.mediaType === mediaType &&
+      layer.annotations?.["org.opencontainers.image.title"] === fileName
+  );
+  return matchingLayers?.length === 1 ? matchingLayers[0] : null;
+}
 
-  const manifest = await fetchManifest(base_url, "biochef-plugins-index", "index", authorization);
+function digestFromReference(digestReference) {
+  const digest = digestReference?.split("@").pop();
+  if (!digest?.startsWith("sha256:")) {
+    throw new Error(`Invalid immutable digest reference: ${digestReference}`);
+  }
+  return digest;
+}
+
+function isLoopbackRegistry(registryUrl) {
+  try {
+    const hostname = new URL(registryUrl).hostname;
+    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
+  } catch {
+    return false;
+  }
+}
+
+function requireLocalDevelopmentConfiguration() {
+  if (!isLoopbackRegistry(REGISTRY_URL)) {
+    throw new Error("Unsigned development catalogs require a loopback registry");
+  }
+  if (CATALOG_PACKAGE !== "biochef-dev-plugins-index") {
+    throw new Error("Unsigned development catalogs require the dedicated development package");
+  }
+}
+
+async function loadLocalToolIndex(base_url, authorization) {
+  requireLocalDevelopmentConfiguration();
+
+  const manifest = await fetchManifest(base_url, CATALOG_PACKAGE, "index", authorization);
+  if (!manifest) return false;
+  if (
+    manifest.annotations?.["biochef.index.environment"] !== "development" ||
+    manifest.annotations?.["biochef.index.signed"] !== "false"
+  ) {
+    logger.error("Unsigned development index annotations are missing or invalid");
+    return false;
+  }
+
+  const indexLayer = findLayer(manifest, "application/json", "index.json");
+  if (!indexLayer) {
+    logger.error("Unsigned development index layer is missing");
+    return false;
+  }
+
+  const indexJson = await fetchBlob(
+    base_url,
+    CATALOG_PACKAGE,
+    indexLayer.digest,
+    authorization,
+    "application/json",
+  );
+  if (!indexJson || typeof indexJson !== "object" || Array.isArray(indexJson)) return false;
+
+  const developmentTools = [];
+  for (const [repo, plugin] of Object.entries(indexJson)) {
+    if (!plugin || typeof plugin.name !== "string" || !plugin.name) {
+      throw new Error(`Invalid unsigned development index entry for ${repo}`);
+    }
+    developmentTools.push({
+      ...plugin,
+      repo,
+      localDevelopment: true,
+    });
+  }
+
+  toolMap.clear();
+  for (const bundle of developmentTools) {
+    toolMap.set(bundle.name, bundle);
+  }
+
+  logger.warn("Loaded an unsigned catalog from the loopback development registry");
+  return true;
+}
+
+export async function loadToolIndex() {
+  const { authorization, base_url } = await getAuthorizationAndBaseUrl(CATALOG_PACKAGE);
+  if (!base_url) return false
+
+  if (ALLOW_UNSIGNED_LOCAL_CATALOG) {
+    return loadLocalToolIndex(base_url, authorization);
+  }
+
+  const manifest = await fetchManifest(base_url, CATALOG_PACKAGE, "latest", authorization);
   if (!manifest) return false
 
-  const digest = manifest.layers[0].digest;
-  const indexJson = await fetchBlob(base_url, "biochef-plugins-index", digest, authorization, "application/vnd.oci.image.manifest.v1+json");
+  const catalogLayer = findLayer(manifest, "application/vnd.biochef.verified-catalog+json", "index.json");
+  const signatureLayer = findLayer(manifest, "application/vnd.biochef.catalog-signature+json", "index.sig.json");
+  if (!catalogLayer || !signatureLayer) {
+    logger.error("Verified catalog or catalog signature layer is missing");
+    return false;
+  }
 
-  for (const [key, plugin] of Object.entries(indexJson)) {
-    const bundle = {
+  const catalogBytes = await fetchBlobBytes(base_url, CATALOG_PACKAGE, catalogLayer.digest, authorization, "application/vnd.biochef.verified-catalog+json");
+  const signatureDocument = await fetchBlob(base_url, CATALOG_PACKAGE, signatureLayer.digest, authorization, "application/vnd.biochef.catalog-signature+json");
+  if (!catalogBytes || !signatureDocument) return false
+
+  const catalog = await verifySignedCatalog(catalogBytes, signatureDocument, CATALOG_PUBLIC_JWK, REGISTRY_URL, REPO_OWNER);
+
+  const verifiedTools = [];
+  for (const [key, plugin] of Object.entries(catalog.packages)) {
+    validateCatalogEntry(plugin);
+    verifiedTools.push({
       ...plugin,
-      repo: key
-    };
+      repo: plugin.package || key,
+      catalogEntry: plugin,
+    });
+  }
+
+  // Replace the visible catalogue only after every entry has passed validation.
+  toolMap.clear();
+  for (const bundle of verifiedTools) {
     toolMap.set(bundle.name, bundle);
   }
 
@@ -180,53 +316,90 @@ export async function loadTool(toolName) {
 
   const repo = bundleEntry.repo;
   const { authorization, base_url } = await getAuthorizationAndBaseUrl(repo);
-  if (!authorization || !base_url) return false;
+  if (!base_url) return false;
 
-  const manifest = await fetchManifest(base_url, repo, "latest", authorization);
+  const localDevelopment =
+    ALLOW_UNSIGNED_LOCAL_CATALOG && bundleEntry.localDevelopment === true;
+  if (localDevelopment) {
+    requireLocalDevelopmentConfiguration();
+  } else {
+    validateCatalogEntry(bundleEntry.catalogEntry || bundleEntry);
+  }
+
+  const manifestReference = localDevelopment
+    ? "latest"
+    : digestFromReference(bundleEntry.digest_reference);
+  const manifest = await fetchManifest(base_url, repo, manifestReference, authorization);
   if (!manifest) return false;
 
-  const bundleLayer = manifest.layers.find(
-    layer =>
-      layer.mediaType === "application/vnd.biochef.bundle+json" ||
-      layer.annotations?.["org.opencontainers.image.title"] === "bundle.json"
-  );
+  const bundleLayer = findLayer(manifest, "application/vnd.biochef.bundle+json", "bundle.json");
 
   if (!bundleLayer) {
     console.error(`No bundle.json layer found for ${repo}`);
     return;
   }
 
-  var bundle = await fetchBlob(base_url, repo, bundleLayer.digest, authorization, "application/vnd.oci.image.manifest.v1+json");
+  const bundleBytes = await fetchBlobBytes(base_url, repo, bundleLayer.digest, authorization, "application/vnd.biochef.bundle+json");
+  if (!bundleBytes) return false;
+  await verifySha256Digest(
+    bundleBytes,
+    localDevelopment ? bundleLayer.digest : bundleEntry.evidence.bundle_json,
+    `${repo}/bundle.json`,
+  );
+  var bundle = JSON.parse(new TextDecoder("utf-8").decode(bundleBytes));
   if (!bundle) return false
 
-  bundle = { ...toolMap.get(bundle.name), ...bundle }
+  if (localDevelopment) {
+    if (bundle.name !== bundleEntry.name) {
+      logger.error(`Loaded bundle does not match unsigned development index entry for ${repo}`);
+      return false;
+    }
+  } else if (
+    bundle.id !== bundleEntry.id ||
+    bundle.name !== bundleEntry.name ||
+    bundle.version !== bundleEntry.version ||
+    bundle.runtime?.wasm?.wasm_digest !== bundleEntry.runtime.wasm.wasm_digest ||
+    bundle.runtime?.wasm?.js_digest !== bundleEntry.runtime.wasm.js_digest ||
+    bundle.runtime?.wasm?.data_digest !== bundleEntry.runtime.wasm.data_digest
+  ) {
+    logger.error(`Loaded bundle does not match verified catalog entry for ${repo}`);
+    return false;
+  }
+
+  bundle = { ...bundleEntry, ...bundle }
 
   bundle.repo = repo;
-  toolMap.set(bundle.name, bundle);
+  bundle.localDevelopment = localDevelopment;
+  if (!localDevelopment) {
+    bundle.catalogEntry = bundleEntry.catalogEntry;
+  }
+  toolMap.set(toolName, bundle);
 
   return true
 }
 
-async function generateBlob(url, type, authorization) {
-  if (blobMap.has(url)) return blobMap.get(url);
+async function generateBlob(url, type, authorization, expectedDigest) {
+  const cacheKey = `${url}|${expectedDigest}`;
+  if (blobMap.has(cacheKey)) return blobMap.get(cacheKey);
 
   try {
     const res = await fetch(url, {
       headers: {
-        Authorization: authorization,
-        Accept: type
+        Accept: type,
+        ...authorizationHeaders(authorization),
       },
     });
     if (!res.ok) throw new Error(`Failed to fetch blob: ${res.status} ${res.statusText}`);
 
     const arrayBuffer = await res.arrayBuffer();
+    await verifySha256Digest(arrayBuffer, expectedDigest, url);
     const blob = new Blob([arrayBuffer], { type });
     const blobURL = URL.createObjectURL(blob);
-    blobMap.set(url, blobURL);
+    blobMap.set(cacheKey, blobURL);
     return blobURL;
   } catch (err) {
     console.error("Failed to load authenticated blob:", err);
-    return null;
+    throw err;
   }
 }
 
@@ -237,10 +410,17 @@ async function getToolBlobs(toolName) {
 
   const wasmUrl = `${base_url}/${toolConfig.repo}/blobs/${toolConfig.runtime.wasm.wasm_digest}`
   const jsUrl = `${base_url}/${toolConfig.repo}/blobs/${toolConfig.runtime.wasm.js_digest}`
-  const wasmBlob = await generateBlob(wasmUrl, "application/wasm", authorization)
-  const jsBlob = await generateBlob(jsUrl, "application/javascript", authorization)
+  const wasmBlob = await generateBlob(wasmUrl, "application/wasm", authorization, toolConfig.runtime.wasm.wasm_digest)
+  const jsBlob = await generateBlob(jsUrl, "application/javascript", authorization, toolConfig.runtime.wasm.js_digest)
+  const runtimeFiles = { [`${toolConfig.bin}.wasm`]: wasmBlob };
 
-  return [wasmBlob, jsBlob]
+  const dataDigest = toolConfig.runtime.wasm.data_digest;
+  if (dataDigest !== undefined) {
+    const dataUrl = `${base_url}/${toolConfig.repo}/blobs/${dataDigest}`;
+    runtimeFiles[`${toolConfig.bin}.data`] = await generateBlob(dataUrl, "application/octet-stream", authorization, dataDigest);
+  }
+
+  return { scriptUrl: jsBlob, runtimeFiles };
 }
 
 // aioli mounts every file flat into the shared data directory and symlinks it
@@ -337,173 +517,150 @@ export async function runTools(
   let outputs = {}
   let errors = {}
 
-  // prepare tools to be loaded by aioli
-  let aioliTools = []
+  // Each invocation gets an Aioli instance of its own, so a fresh Web Worker and
+  // a fresh module: a tool runs as it would in a new process. Reusing one
+  // module across the nodes that call the same tool ran main() again on the
+  // state the first call left, and a build that exits its runtime cannot run
+  // main() twice at all (#146). Files pass from one node to the next through
+  // the outputs below, which are already held here, not through a worker's
+  // file system. The downloaded runtime files are reused across invocations.
+  const toolBlobs = {}
+
   for (const invocation of toolInvocations) {
-    const toolAlreadyAdded = aioliTools.some((t) => t.tool == invocation.toolName)
-    if (toolAlreadyAdded) continue
-
-    const [wasmBlob, jsBlob] = await getToolBlobs(invocation.toolName)
-
-    const needsReinit = invocation.toolName.includes("GTO")
-
-    aioliTools.push({
-      // TODO(andrade) look again into what each argument does
+    toolBlobs[invocation.toolName] ??= await getToolBlobs(invocation.toolName)
+    const { scriptUrl, runtimeFiles } = toolBlobs[invocation.toolName]
+    const CLI = await new Aioli([{
       tool: invocation.toolName,
-      scriptUrl: jsBlob,
-      wasmUrl: wasmBlob,
+      scriptUrl,
+      runtimeFiles,
       loading: "lazy",
-      reinit: needsReinit,
-    })
-  }
+    }], {
+      printInterleaved: false,
+      debug: false,
+    });
 
-  const hasNonReinitTool = aioliTools.some((t) => t.reinit === false);
-  if (!hasNonReinitTool) aioliTools.push("base/1.0.0")
+    try {
+      // 1. Prepare the inputs
+      const toolDefinition = getTool(invocation.toolName)
+      // Emscripten builds argv with stringToUTF8OnStack, which reads .length:
+      // a number (an untouched recipe default) silently becomes "".
+      let args = invocation.toolArguments.map(String)
+      let lastArgs = [] // arguments that must appear after all flagged arguments.
 
-  // load tools
-  const CLI = await new Aioli(aioliTools, {
-    // TODO(andrade) look again into what each argument does
-    printInterleaved: false,
-    debug: false,
-  });
+      for (const inputDefinition of toolDefinition.io.inputs) {
+        if (!invocation.inputs[inputDefinition.name]) continue
+        const { mode, value } = invocation.inputs[inputDefinition.name];
 
-  // 1. Prepare the inputs
-  for (const invocation of toolInvocations) {
-    const toolDefinition = getTool(invocation.toolName)
-    let args = invocation.toolArguments
-    let lastArgs = [] // arguments that must appear after all flagged arguments.
+        let inputFileName = undefined
+        let stdinValue = undefined
 
-    for (const inputDefinition of toolDefinition.io.inputs) {
-      if (!invocation.inputs[inputDefinition.name]) continue
-      const { mode, value } = invocation.inputs[inputDefinition.name];
+        // A sidecar is placed in the filesystem exactly like a file input, but is
+        // never put on the command line. Tools locate it by name instead: htslib
+        // looks for an index at <datafile>.csi, so the file has to be present
+        // under that name and absent from the arguments.
+        const isMountedInput = inputDefinition.mode === "file" || inputDefinition.mode === "sidecar"
 
-      let inputFileName = undefined
-      let stdinValue = undefined
+        if (mode === "text") {
+          if (isMountedInput) {
+            inputFileName = resolveInputFileName(invocation.uniqueId, inputDefinition)
+            const fileContent = value.kind === "binary" ? new Blob([value.data]) : value.data;
+            await CLI.mount({ name: inputFileName, data: fileContent })
+          }
+          else if (inputDefinition.mode === "stdin") {
+            stdinValue = value.data
+          }
+        }
+        else if (mode === "output") {
+          const [source, sourceOutput] = value
+          // Named after the producing node's output, unless the input declares
+          // the name the tool expects.
+          inputFileName = inputDefinition.filename === undefined
+            ? `${source}-${sourceOutput}.txt`
+            : resolveInputFileName(invocation.uniqueId, inputDefinition)
+          const sourceValue = outputs[source]?.[sourceOutput] ?? makeTextDataValue("")
 
-      // A sidecar is placed in the filesystem exactly like a file input, but is
-      // never put on the command line. Tools locate it by name instead: htslib
-      // looks for an index at <datafile>.csi, so the file has to be present
-      // under that name and absent from the arguments.
-      const isMountedInput = inputDefinition.mode === "file" || inputDefinition.mode === "sidecar"
+          if (isMountedInput) {
+            const fileContent = sourceValue.kind === "binary" ? new Blob([sourceValue.data]) : sourceValue.data;
+            await CLI.mount({ name: inputFileName, data: fileContent })
+          }
+          else if (inputDefinition.mode === "stdin") {
+            stdinValue = sourceValue.data
+          }
+        }
 
-      if (mode === "text") {
-        if (isMountedInput) {
-          inputFileName = resolveInputFileName(invocation.uniqueId, inputDefinition)
-          const fileContent = value.kind === "binary" ? new Blob([value.data]) : value.data;
-          await CLI.mount({ name: inputFileName, data: fileContent })
+        if (inputDefinition.mode === "file") {
+          if (inputDefinition.flag) {
+            args.push(inputDefinition.flag)
+            args.push(inputFileName)
+          }
+          else {
+            lastArgs.push(inputFileName)
+          }
         }
         else if (inputDefinition.mode === "stdin") {
-          stdinValue = value.data
+          CLI.stdin = stdinValue
         }
-      }
-      else if (mode === "output") {
-        const [source, sourceOutput] = value
-        const producedFileName = `${source}-${sourceOutput}.txt`
-        inputFileName = producedFileName
+      };
 
-        if (inputDefinition.mode === "stdin") {
-          // Always read the name the producing node actually wrote. Renaming
-          // before this point would read a file that does not exist yet.
-          const fileData = await aioliReadFileHelper(CLI, producedFileName)
+      for (const outputDefinition of toolDefinition.io.outputs) {
+        if (outputDefinition.mode !== "file" || outputDefinition.flag == undefined) continue
 
-          if (!fileData) {
-            logger.warn(`[runTools] Input "${inputDefinition.name}" expected "${producedFileName}" from an earlier step, which was not produced`)
-          }
+        const outputTarget = outputDefinition.filename ?? `${invocation.uniqueId}-${outputDefinition.name}.txt`
 
-          stdinValue = fileData?.data
-        }
-        else if (isMountedInput && inputDefinition.filename !== undefined) {
-          // The producing node named the file after its own output. Re-mount it
-          // under the name this tool expects to see.
-          const desiredFileName = resolveInputFileName(invocation.uniqueId, inputDefinition)
-
-          if (desiredFileName !== producedFileName) {
-            const fileData = await aioliReadFileHelper(CLI, producedFileName)
-
-            if (fileData) {
-              await CLI.mount({
-                name: desiredFileName,
-                data: fileData.kind === "binary" ? new Blob([fileData.data]) : fileData.data,
-              })
-              inputFileName = desiredFileName
-            }
-          }
-        }
-      }
-
-      if (inputDefinition.mode === "file") {
-        if (inputDefinition.flag) {
-          args.push(inputDefinition.flag)
-          args.push(inputFileName)
+        if (outputDefinition.flag == "") {
+          lastArgs.push(outputTarget)
         }
         else {
-          lastArgs.push(inputFileName)
+          args.push(outputDefinition.flag)
+          args.push(outputTarget)
         }
       }
-      else if (inputDefinition.mode === "stdin") {
-        CLI.stdin = stdinValue
-      }
-    };
-
-    for (const outputDefinition of toolDefinition.io.outputs) {
-      if (outputDefinition.mode !== "file" || outputDefinition.flag == undefined) continue
-
-      const outputTarget = outputDefinition.filename ?? `${invocation.uniqueId}-${outputDefinition.name}.txt`
-
-      if (outputDefinition.flag == "") {
-        lastArgs.push(outputTarget)
-      }
-      else {
-        args.push(outputDefinition.flag)
-        args.push(outputTarget)
-      }
-    }
     
-    args = [...args, ...lastArgs]
+      args = [...args, ...lastArgs]
 
-    // 2. Run the tool
-    const { stdout, stderr } = await CLI.exec(invocation.toolName, args)
-    errors[invocation.uniqueId] = [stderr]
+      // 2. Run the tool
+      const { stdout, stderr } = await CLI.exec(invocation.toolName, args)
+      errors[invocation.uniqueId] = [stderr]
 
-    logger.log("[runMultipleTools]", invocation.toolName, {
-      args,
-      stdout,
-      stderr,
-    });
+      logger.log("[runMultipleTools]", invocation.toolName, {
+        args,
+        stdout,
+        stderr,
+      });
     
-    // Artificial delay for testing purposes
-    // const delay = 1000;
-    // await new Promise(resolve => setTimeout(resolve, delay));
+      // Artificial delay for testing purposes
+      // const delay = 1000;
+      // await new Promise(resolve => setTimeout(resolve, delay));
 
-    // 3. Use outputs to save results and prepare files for the next invocations
-    for (const outputDefinition of toolDefinition.io.outputs) {
-      const outputFileName = `${invocation.uniqueId}-${outputDefinition.name}.txt`
-      let result
+      // 3. Save the results; the invocations that use them mount them themselves
+      for (const outputDefinition of toolDefinition.io.outputs) {
+        let result
 
-      if (outputDefinition.mode === "stdout") {
-        await CLI.mount({ name: outputFileName, data: stdout })
-        result = makeTextDataValue(stdout)
-      }
-      else if (outputDefinition.mode === "file") {
-        const fileToRead = outputDefinition.filename ?? `${invocation.uniqueId}-${outputDefinition.name}.txt`
+        if (outputDefinition.mode === "stdout") {
+          result = makeTextDataValue(stdout)
+        }
+        else if (outputDefinition.mode === "file") {
+          const fileToRead = outputDefinition.filename ?? `${invocation.uniqueId}-${outputDefinition.name}.txt`
 
-        result = await aioliReadFileHelper(CLI, fileToRead)
-        if (!result) {
-          // TODO maybe have a proper way to handle this
-          result = makeTextDataValue("")
-          errors[invocation.uniqueId].push(`Output "${outputDefinition.name}" did not produce the expected file "${fileToRead}"`)
+          result = await aioliReadFileHelper(CLI, fileToRead)
+          if (!result) {
+            // TODO maybe have a proper way to handle this
+            result = makeTextDataValue("")
+            errors[invocation.uniqueId].push(`Output "${outputDefinition.name}" did not produce the expected file "${fileToRead}"`)
+          }
         }
 
-        if (result.kind == "binary") {
-          await CLI.mount({ name: outputFileName, data: new Blob([result.data]) })
-        }
-        else {
-          await CLI.mount({ name: outputFileName, data: result.data })
-        }
+        outputs[invocation.uniqueId] ??= {};
+        outputs[invocation.uniqueId][outputDefinition.name] = result;
       }
 
-      outputs[invocation.uniqueId] ??= {};
-      outputs[invocation.uniqueId][outputDefinition.name] = result;
+    } finally {
+      // The worker holds the module and its heap; nothing reads it after this.
+      try {
+        await CLI.close()
+      } catch (err) {
+        logger.warn("[runMultipleTools] Failed to close the Aioli worker", err)
+      }
     }
 
     // call the callback function after invocation is done
@@ -534,4 +691,11 @@ export function toolHasNoInputs(toolName) {
   if (!tool) return true;
 
   return !tool.io?.inputs || tool.io.inputs.length === 0;
+}
+
+export function getToolRuntimes(toolName) {
+  const tool = getTool(toolName);
+  if (!tool) return;
+
+  return tool.runtime?.modes
 }

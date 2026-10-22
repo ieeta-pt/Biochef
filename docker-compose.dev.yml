@@ -1,0 +1,46 @@
+services:
+  frontend:
+    image: node:26-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      REGISTRY_URL: http://localhost:5000
+      BIOCHEF_CATALOG_PACKAGE: biochef-dev-plugins-index
+      BIOCHEF_ALLOW_UNSIGNED_LOCAL_CATALOG: "true"
+    command: sh -c "npm install && npm start"
+    ports:
+      - "127.0.0.1:8082:8082"
+
+  registry:
+    image: registry:2
+    ports:
+      - "127.0.0.1:5000:5000"
+    volumes:
+      - biochef-registry:/var/lib/registry
+      - ./registry-config.yml:/etc/docker/registry/config.yml:ro
+
+  hub:
+    profiles:
+      - tools
+    image: ${BIOCHEF_HUB_IMAGE:-biochef-hub-dev:local}
+    build:
+      context: .
+      dockerfile: Dockerfile.hub.dev
+      args:
+        BIOCHEF_HUB_REPOSITORY: ${BIOCHEF_HUB_REPOSITORY:-https://github.com/ieeta-pt/biochef-hub.git}
+        BIOCHEF_HUB_REF: ${BIOCHEF_HUB_REF:-master}
+    working_dir: /work
+    volumes:
+      - ${BIOCHEF_RECIPES_ROOT:-.}:/recipes:ro
+      - biochef-hub-work:/work
+      # Share the host Docker daemon with the container so it can use the biowasm docker image.
+      - /var/run/docker.sock:/var/run/docker.sock
+    network_mode: service:registry
+    depends_on:
+      - registry
+
+volumes:
+  biochef-registry:
+  biochef-hub-work:
