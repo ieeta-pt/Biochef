@@ -246,6 +246,14 @@ export const typeDefinitions = [
     format: 'binary'
   },
   {
+    id: 'YAK',
+    validator: 'yak',
+    defaultExtension: '.yak',
+    uploadExtensions: ['.yak'],
+    edgeColor: '#5d4037',
+    format: 'binary'
+  },
+  {
     id: 'BGT',
     validator: 'bgt',
     defaultExtension: '.bgt',
