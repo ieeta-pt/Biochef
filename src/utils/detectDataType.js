@@ -189,6 +189,22 @@ function validateGfa(content) {
   return hasSegment;
 }
 
+function validateRgfa(content) {
+  if (!validateGfa(content)) return false;
+
+  // rGFA is GFA whose every segment carries its stable sequence (SN), its
+  // offset on it (SO) and its rank (SR), as minigraph writes them
+  for (const line of content.trim().split('\n')) {
+    const fields = line.split('\t');
+    if (fields[0] !== 'S') continue;
+    const tags = fields.slice(3);
+    if (!(tags.some(t => /^SN:Z:\S+$/.test(t))
+      && tags.some(t => /^SO:i:\d+$/.test(t))
+      && tags.some(t => /^SR:i:\d+$/.test(t)))) return false;
+  }
+  return true;
+}
+
 function validateClustal(content) {
   if (!content?.trim()) return false;
 
@@ -477,6 +493,7 @@ const validators = {
   gff: validateGff,
   gtf: validateGtf,
   paf: validatePaf,
+  rgfa: validateRgfa,
   gfa: validateGfa,
   clustal: validateClustal,
   snd: validateSnd,
