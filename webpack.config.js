@@ -106,6 +106,9 @@ module.exports = {
       "process.env.REPO_OWNER": JSON.stringify(process.env.REPO_OWNER),
       "process.env.REGISTRY_USERNAME": JSON.stringify(process.env.REGISTRY_USERNAME),
       "process.env.REGISTRY_PASSWORD": JSON.stringify(process.env.REGISTRY_PASSWORD),
+      "process.env.BIOCHEF_CATALOG_PACKAGE": JSON.stringify(process.env.BIOCHEF_CATALOG_PACKAGE),
+      "process.env.BIOCHEF_CATALOG_PUBLIC_JWK": JSON.stringify(process.env.BIOCHEF_CATALOG_PUBLIC_JWK),
+      "process.env.BIOCHEF_ALLOW_UNSIGNED_LOCAL_CATALOG": JSON.stringify(process.env.BIOCHEF_ALLOW_UNSIGNED_LOCAL_CATALOG),
     }),
   ],
   resolve: {
