@@ -55,7 +55,7 @@ BioChef includes a wide array of genomic tools, categorized for easy access:
 
 ### Prerequisites
 
-- Node.js (v16 or later)
+- Node.js (v22.15 or later)
 - Emscripten SDK (preferably v3.1.65) - only needed for rebuilding WASM modules
 - C compiler toolchain - only needed for rebuilding WASM modules
 - Python 3.x - only needed for regenerating JavaScript wrappers for WASM modules
