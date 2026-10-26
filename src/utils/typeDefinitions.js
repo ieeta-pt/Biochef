@@ -238,6 +238,14 @@ export const typeDefinitions = [
     format: 'binary'
   },
   {
+    id: 'YAK',
+    validator: 'yak',
+    defaultExtension: '.yak',
+    uploadExtensions: ['.yak'],
+    edgeColor: '#5d4037',
+    format: 'binary'
+  },
+  {
     id: 'GTF',
     validator: 'gtf',
     defaultExtension: '.gtf',
@@ -268,6 +276,22 @@ export const typeDefinitions = [
     uploadExtensions: ['.gfa'],
     edgeColor: '#ef6c00',
     example: 'H\tVN:Z:1.0\nS\ts1\tACGTACGTACGT\nS\ts2\tTTACGTACGTAC\nL\ts1\t+\ts2\t+\t4M\nP\tp1\ts1+,s2+\t*',
+  },
+  {
+    id: 'GAF',
+    validator: 'gaf',
+    defaultExtension: '.gaf',
+    uploadExtensions: ['.gaf'],
+    edgeColor: '#00acc1',
+    example: 'read1\t600\t153\t446\t+\t>s1>s2\t600\t153\t446\t293\t293\t60\nread1\t600\t10\t148\t+\t>s1\t300\t160\t298\t138\t138\t60',
+  },
+  {
+    id: 'WIG',
+    validator: 'wig',
+    defaultExtension: '.wig',
+    uploadExtensions: ['.wig', '.wiggle'],
+    edgeColor: '#ffa726',
+    example: 'variableStep chrom=seq span=5\n1\t1.5\n11\t3',
   },
   {
     id: 'CLUSTAL',
