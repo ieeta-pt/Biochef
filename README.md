@@ -1,9 +1,9 @@
 
 ![BioChef](img/BioChef.svg)
 
-[![Downloads](https://img.shields.io/github/downloads/ieeta-pt/Biochef/total)](https://github.com/ieeta-pt/Biochef/releases)
-[![License](https://img.shields.io/github/license/ieeta-pt/Biochef)](LICENSE)
-[![Version](https://img.shields.io/github/v/tag/ieeta-pt/Biochef)](https://github.com/ieeta-pt/Biochef/releases)
+[![Downloads](https://img.shields.io/github/downloads/ieeta-pt/biochef-app/total)](https://github.com/ieeta-pt/biochef-app/releases)
+[![License](https://img.shields.io/github/license/ieeta-pt/biochef-app)](LICENSE)
+[![Version](https://img.shields.io/github/v/tag/ieeta-pt/biochef-app)](https://github.com/ieeta-pt/biochef-app/releases)
 
 BioChef is a powerful web-based application for genomic sequence analysis and manipulation. It provides a user-friendly interface to execute various genomic tools from the GTO (Genomics-Proteomics Toolkit) suite directly in your browser using WebAssembly technology.
 
@@ -65,8 +65,8 @@ BioChef includes a wide array of genomic tools, categorized for easy access:
 
 1. Clone the repository:
    ```
-   git clone https://github.com/ieeta-pt/Biochef.git
-   cd Biochef
+   git clone https://github.com/ieeta-pt/biochef-app.git
+   cd biochef-app
    ```
 
 2. Install dependencies:
@@ -145,7 +145,8 @@ We welcome contributions to BioChef! Whether it's bug reports, feature requests,
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache License 2.0; see [LICENSE](LICENSE) and [NOTICE](NOTICE). 
+Code written before the change was released under the MIT License; its notice is kept in [LICENSE-MIT](LICENSE-MIT).
 
 ## Acknowledgments
 
